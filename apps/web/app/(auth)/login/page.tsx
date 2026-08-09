@@ -1,6 +1,8 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
+import { FadeIn, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -46,61 +48,69 @@ export default function LoginPage() {
 
   return (
     <main className={styles.page}>
-      <div className={styles.brand}>
+      <FadeIn className={styles.brand}>
         <div className={styles.wordmark}>
-          <Image src="/icons/icon-192.png" alt="" width={56} height={56} priority />
+          <Image src="/icons/icon-192.png" alt="" width={72} height={72} priority />
           <h1>Homebox AI</h1>
         </div>
         <p className={styles.tagline}>Your home inventory, remembered and organized by AI.</p>
-      </div>
+      </FadeIn>
 
-      <form className={styles.card} onSubmit={handleSubmit}>
-        <label className={styles.field}>
-          Email
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-          />
-        </label>
-        <label className={styles.field}>
-          Password
-          <input
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-          />
-        </label>
-        {error && (
-          <p className={styles.error} role="alert">
-            {error}
-          </p>
-        )}
-        <button type="submit" className={styles.submit} disabled={pending}>
-          {pending ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
-        </button>
-        <button
-          type="button"
-          className={styles.toggle}
-          onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
-        >
-          {mode === "sign-in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
-        </button>
-      </form>
+      <FadeIn delay={0.1}>
+        <form className={styles.card} onSubmit={handleSubmit}>
+          <label className={styles.field}>
+            Email
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+            />
+          </label>
+          <label className={styles.field}>
+            Password
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+            />
+          </label>
+          {error && (
+            <p className={styles.error} role="alert">
+              {error}
+            </p>
+          )}
+          <motion.button
+            type="submit"
+            className={styles.submit}
+            disabled={pending}
+            whileHover={pending ? undefined : { scale: 1.02 }}
+            whileTap={pending ? undefined : { scale: 0.98 }}
+          >
+            {pending ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
+          </motion.button>
+          <button
+            type="button"
+            className={styles.toggle}
+            onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+          >
+            {mode === "sign-in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+          </button>
+        </form>
+      </FadeIn>
 
-      <ul className={styles.features} style={{ listStyle: "none", padding: 0, margin: 0 }}>
+      <StaggerList className={styles.features}>
         {FEATURES.map((feature) => (
-          <li key={feature.label} className={styles.feature}>
+          <StaggerItem key={feature.label} className={styles.feature}>
             <span className={styles.icon}>{feature.icon}</span>
             <p>{feature.label}</p>
-          </li>
+          </StaggerItem>
         ))}
-      </ul>
+      </StaggerList>
     </main>
   );
 }

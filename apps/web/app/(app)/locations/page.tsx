@@ -3,6 +3,7 @@ import { locationQueries } from "@homebox-ai/db";
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { createLocationAction } from "./actions";
+import { LocationList } from "./location-list";
 
 export default async function LocationsPage() {
   const user = await getSessionUser();
@@ -14,6 +15,8 @@ export default async function LocationsPage() {
     if (!location) return "";
     return location.parentId ? `${pathFor(location.parentId)} / ${location.name}` : location.name;
   }
+
+  const paths = locations.map((location) => ({ id: location.id, path: pathFor(location.id) }));
 
   return (
     <div>
@@ -30,11 +33,7 @@ export default async function LocationsPage() {
         </select>
         <button type="submit">Add</button>
       </form>
-      <ul>
-        {locations.map((location) => (
-          <li key={location.id}>{pathFor(location.id)}</li>
-        ))}
-      </ul>
+      <LocationList paths={paths} />
     </div>
   );
 }

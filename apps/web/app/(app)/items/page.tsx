@@ -3,6 +3,7 @@ import { itemQueries, labelQueries, locationQueries } from "@homebox-ai/db";
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { createItemAction } from "./actions";
+import { ItemList } from "./item-list";
 
 export default async function ItemsPage() {
   const user = await getSessionUser();
@@ -42,14 +43,7 @@ export default async function ItemsPage() {
         </fieldset>
         <button type="submit">Add</button>
       </form>
-      <ul>
-        {items.map((item) => (
-          <li key={item.id}>
-            {item.name}
-            {item.locationId ? ` — ${locationNameById.get(item.locationId) ?? ""}` : ""}
-          </li>
-        ))}
-      </ul>
+      <ItemList items={items} locationNameById={locationNameById} />
     </div>
   );
 }

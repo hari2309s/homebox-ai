@@ -1,3 +1,4 @@
+import { FadeIn } from "@homebox-ai/ui";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
@@ -10,7 +11,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div>
-      <nav style={{ display: "flex", gap: "1rem", padding: "1rem", borderBottom: "1px solid #ddd" }}>
+      <FadeIn
+        as="nav"
+        style={{ display: "flex", gap: "1rem", padding: "1rem", borderBottom: "1px solid #ddd" }}
+      >
         <Link href="/items">Items</Link>
         <Link href="/locations">Locations</Link>
         <Link href="/labels">Labels</Link>
@@ -18,8 +22,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <Link href="/capture">Capture</Link>
         <Link href="/receipts">Receipts</Link>
         <Link href="/maintenance">Maintenance</Link>
-      </nav>
-      <main style={{ padding: "1rem" }}>{children}</main>
+      </FadeIn>
+      <FadeIn delay={0.1} style={{ padding: "1rem" }}>
+        {children}
+      </FadeIn>
     </div>
   );
 }
