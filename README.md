@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="apps/web/public/icons/icon-animated.svg" width="120" height="120" alt="Homebox AI icon">
+  <img src="apps/web/public/icons/icon-512.png" width="120" height="120" alt="Homebox AI icon">
 </p>
 
 <h1 align="center">Homebox AI</h1>
