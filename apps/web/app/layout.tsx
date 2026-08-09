@@ -16,6 +16,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* Rendered directly, not just via `metadata`, so it doesn't blank out (browsers then show the URL) between dynamic-route navigations. */}
+        <title>Homebox AI</title>
+      </head>
       <body>{children}</body>
     </html>
   );

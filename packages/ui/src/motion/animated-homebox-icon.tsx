@@ -121,7 +121,13 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false }: AnimatedHo
     }
 
     function handleCaretActivity(event: Event) {
-      if (isTypingElement(event.target)) updateFromCaret(event.target);
+      if (!isTypingElement(event.target)) return;
+      updateFromCaret(event.target);
+      // A little "talking" chomp on every keystroke, so the mouth stays
+      // visibly alive throughout typing rather than only at focus-in.
+      if (event.type === "input") {
+        animate(mouthScale, [1, 1.08, 1], { duration: 0.12, ease: "easeOut" });
+      }
     }
 
     window.addEventListener("pointermove", handlePointerMove);
@@ -136,7 +142,7 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false }: AnimatedHo
       document.removeEventListener("keyup", handleCaretActivity, true);
       document.removeEventListener("click", handleCaretActivity, true);
     };
-  }, [leftPupilX, leftPupilY, rightPupilX, rightPupilY]);
+  }, [leftPupilX, leftPupilY, rightPupilX, rightPupilY, mouthScale]);
 
   // Ambient blinking on a randomized interval, so it reads as alive rather than mechanical.
   useEffect(() => {
