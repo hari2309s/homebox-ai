@@ -100,7 +100,7 @@ export default function LoginPage() {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.2 }}
-              className="overflow-hidden rounded-md bg-accent/10 px-3 py-2 text-sm text-[#f2564a]"
+              className="overflow-hidden rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover"
             >
               {error}
             </motion.p>
@@ -113,7 +113,7 @@ export default function LoginPage() {
           whileHover={pending ? undefined : { scale: 1.02 }}
           whileTap={pending ? undefined : { scale: 0.97 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="cursor-pointer rounded-md bg-accent px-3 py-3 font-bold text-white transition-colors duration-150 hover:bg-[#f2564a] disabled:cursor-default disabled:opacity-60"
+          className="cursor-pointer rounded-md bg-accent px-3 py-3 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.span
