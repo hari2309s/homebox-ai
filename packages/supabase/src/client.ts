@@ -2,8 +2,8 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-import { supabaseAnonKey, supabaseUrl } from "./env";
+import { supabasePublishableKey, supabaseUrl } from "./env";
 
 export function createSupabaseBrowserClient() {
-  return createBrowserClient(supabaseUrl(), supabaseAnonKey());
+  return createBrowserClient(supabaseUrl(), supabasePublishableKey());
 }
