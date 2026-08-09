@@ -19,10 +19,15 @@ const COPY = {
   "sign-up": { heading: "Create your account", subtitle: "Start organizing with AI" },
 };
 
+const inputClassName =
+  "rounded-md border border-border bg-white px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20";
+
 export default function LoginPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -32,17 +37,19 @@ export default function LoginPage() {
     setMode(mode === "sign-in" ? "sign-up" : "sign-in");
     setError(null);
     setInfo(null);
+    setName("");
+    setConfirmPassword("");
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
     setInfo(null);
-    setPending(true);
 
     const supabase = createSupabaseBrowserClient();
 
     if (mode === "sign-in") {
+      setPending(true);
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
       setPending(false);
       if (authError) {
@@ -54,7 +61,17 @@ export default function LoginPage() {
       return;
     }
 
-    const { data, error: authError } = await supabase.auth.signUp({ email, password });
+    if (password !== confirmPassword) {
+      setError("Passwords don't match.");
+      return;
+    }
+
+    setPending(true);
+    const { data, error: authError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name.trim() } },
+    });
     setPending(false);
 
     if (authError) {
@@ -111,6 +128,29 @@ export default function LoginPage() {
           </motion.div>
         </AnimatePresence>
 
+        <AnimatePresence initial={false}>
+          {mode === "sign-up" && (
+            <motion.label
+              key="name"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-1.5 overflow-hidden text-sm font-semibold text-ink"
+            >
+              Name
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+                className={inputClassName}
+              />
+            </motion.label>
+          )}
+        </AnimatePresence>
+
         <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
           Email
           <input
@@ -119,7 +159,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
-            className="rounded-md border border-border bg-white px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20"
+            className={inputClassName}
           />
         </label>
         <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
@@ -131,9 +171,33 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-            className="rounded-md border border-border bg-white px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20"
+            className={inputClassName}
           />
         </label>
+
+        <AnimatePresence initial={false}>
+          {mode === "sign-up" && (
+            <motion.label
+              key="confirm-password"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-1.5 overflow-hidden text-sm font-semibold text-ink"
+            >
+              Confirm password
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                className={inputClassName}
+              />
+            </motion.label>
+          )}
+        </AnimatePresence>
 
         <AnimatePresence>
           {error && (
