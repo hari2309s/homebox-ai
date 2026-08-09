@@ -14,29 +14,59 @@ const FEATURES = [
   { icon: "🔧", label: "Get maintenance & warranty reminders" },
 ];
 
+const COPY = {
+  "sign-in": { heading: "Welcome back", subtitle: "Sign in to your inventory" },
+  "sign-up": { heading: "Create your account", subtitle: "Start organizing with AI" },
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  function switchMode() {
+    setMode(mode === "sign-in" ? "sign-up" : "sign-in");
+    setError(null);
+    setInfo(null);
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
+    setInfo(null);
     setPending(true);
 
     const supabase = createSupabaseBrowserClient();
-    const { error: authError } =
-      mode === "sign-in"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
 
+    if (mode === "sign-in") {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+      setPending(false);
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+      router.replace("/items");
+      router.refresh();
+      return;
+    }
+
+    const { data, error: authError } = await supabase.auth.signUp({ email, password });
     setPending(false);
 
     if (authError) {
       setError(authError.message);
+      return;
+    }
+
+    // The project requires email confirmation, so signUp succeeds without
+    // creating a session — there's nothing to redirect into yet.
+    if (!data.session) {
+      setInfo("Check your email to confirm your account, then sign in.");
+      setMode("sign-in");
       return;
     }
 
@@ -67,6 +97,20 @@ export default function LoginPage() {
         transition={{ type: "spring", stiffness: 260, damping: 24, delay: 0.15 }}
         className="flex w-full max-w-sm flex-col gap-5 rounded-lg bg-surface p-8 shadow-card"
       >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={mode}
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 6 }}
+            transition={{ duration: 0.18 }}
+            className="flex flex-col gap-1"
+          >
+            <h2 className="text-lg font-bold text-ink">{COPY[mode].heading}</h2>
+            <p className="text-sm text-muted">{COPY[mode].subtitle}</p>
+          </motion.div>
+        </AnimatePresence>
+
         <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
           Email
           <input
@@ -105,6 +149,19 @@ export default function LoginPage() {
               {error}
             </motion.p>
           )}
+          {info && (
+            <motion.p
+              key="info"
+              role="status"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden rounded-md bg-surface-soft px-3 py-2 text-sm text-ink"
+            >
+              {info}
+            </motion.p>
+          )}
         </AnimatePresence>
 
         <motion.button
@@ -131,7 +188,7 @@ export default function LoginPage() {
 
         <button
           type="button"
-          onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+          onClick={switchMode}
           className="cursor-pointer self-center border-none bg-transparent text-sm font-semibold text-ink"
         >
           <AnimatePresence mode="wait" initial={false}>
