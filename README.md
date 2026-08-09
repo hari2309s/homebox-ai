@@ -42,7 +42,7 @@
 | Auth (Supabase email/password) + protected app shell | ✅ Done |
 | Items / Locations / Labels CRUD | ✅ Done |
 | Natural-language search & chat over your inventory | ✅ Done |
-| Photo → structured item entry | 🚧 Planned |
+| Photo → structured item entry | ✅ Done |
 | Receipt import → batch item entry | 🚧 Planned |
 | Maintenance & warranty assistant | 🚧 Planned |
 | Installable PWA (offline app shell) | ✅ Done |

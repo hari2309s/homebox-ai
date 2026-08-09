@@ -30,3 +30,19 @@ body {
   color: var(--color-body);
   font-family: var(--font-sans);
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Next.js wraps each route segment in its own unstyled div, which breaks
+   height propagation for pages (like chat) that need to fill the remaining
+   viewport height. Unwrapping it from layout lets the page's own root
+   element size itself against .app-content directly. */
+.app-content > div {
+  display: contents;
+}

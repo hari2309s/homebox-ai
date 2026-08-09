@@ -1,4 +1,6 @@
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import type { BaseLanguageModelInput } from "@langchain/core/language_models/base";
+import type { Runnable } from "@langchain/core/runnables";
 import type { z } from "zod";
 
 import { createCerebrasModel } from "./providers/cerebras";
@@ -67,9 +69,13 @@ export function getModelForTask(task: TaskType): BaseChatModel {
  * the schema to the fallback composite, which would fail — see
  * `getModelListForTask`'s doc comment).
  */
-export function getStructuredModelForTask<T extends z.ZodTypeAny>(task: TaskType, schema: T) {
+export function getStructuredModelForTask<T extends z.ZodTypeAny>(
+  task: TaskType,
+  schema: T,
+): Runnable<BaseLanguageModelInput, z.infer<T>> {
   const models = getModelListForTask(task);
   const [primary, ...fallbacks] = models.map((model) => model.withStructuredOutput(schema));
   if (!primary) throw new Error(`No providers configured for task "${task}"`);
-  return fallbacks.length > 0 ? primary.withFallbacks(fallbacks) : primary;
+  const structured = fallbacks.length > 0 ? primary.withFallbacks(fallbacks) : primary;
+  return structured as unknown as Runnable<BaseLanguageModelInput, z.infer<T>>;
 }

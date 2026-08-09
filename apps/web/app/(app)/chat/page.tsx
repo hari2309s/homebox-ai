@@ -39,9 +39,19 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed, sessionId }),
       });
-      const data = await response.json();
+
+      // A crashed/timed-out function can return an empty or non-JSON body —
+      // parse defensively instead of letting `.json()` throw a raw parse error.
+      let data: { reply?: string; error?: string } = {};
+      try {
+        data = await response.json();
+      } catch {
+        // handled by the `!response.ok` / missing-reply checks below
+      }
+
       if (!response.ok) throw new Error(data.error ?? "Something went wrong");
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.reply }]);
+      if (!data.reply) throw new Error("Something went wrong");
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.reply! }]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -56,12 +66,10 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight text-ink">Chat</h1>
-
-      <div className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4">
+    <div className="flex h-full flex-col bg-surface-soft">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {messages.length === 0 ? (
-          <FadeIn className="flex flex-col items-center gap-3 py-6 text-center">
+          <FadeIn className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <p className="text-sm text-muted">Ask about your inventory in plain English.</p>
             <div className="flex flex-wrap justify-center gap-2">
               {SUGGESTIONS.map((suggestion) => (
@@ -92,14 +100,14 @@ export default function ChatPage() {
         )}
 
         {pending && (
-          <div className="flex w-fit items-center gap-2 self-start rounded-lg bg-white px-4 py-2.5 text-muted">
+          <div className="mt-3 flex w-fit items-center gap-2 self-start rounded-lg bg-white px-4 py-2.5 text-muted">
             <Spinner size={16} />
             <span className="text-sm">Thinking…</span>
           </div>
         )}
 
         {error && (
-          <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
+          <p role="alert" className="mt-3 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
             {error}
           </p>
         )}
@@ -107,7 +115,7 @@ export default function ChatPage() {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex gap-2">
+      <form onSubmit={handleSubmit} className="flex shrink-0 gap-2 border-t border-border bg-white p-4 sm:p-6">
         <Input
           value={input}
           onChange={(event) => setInput(event.target.value)}

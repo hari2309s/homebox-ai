@@ -11,14 +11,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!user) redirect("/login");
 
   return (
-    <div className="min-h-dvh bg-white">
+    <div className="flex h-dvh flex-col bg-white">
       <FadeIn
         as="nav"
-        className="flex flex-wrap items-center gap-1 border-b border-border bg-surface-soft px-4 py-2.5"
+        className="no-scrollbar flex shrink-0 items-center gap-1 overflow-x-auto border-b border-border bg-surface-soft px-4 py-2.5"
       >
         <NavLinks />
       </FadeIn>
-      <div className="mx-auto max-w-4xl p-6">{children}</div>
+      <div className="app-content flex-1 overflow-y-auto">{children}</div>
     </div>
   );
 }

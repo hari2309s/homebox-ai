@@ -1,4 +1,5 @@
 import { HumanMessage } from "@langchain/core/messages";
+import type { RunnableConfig } from "@langchain/core/runnables";
 
 import { getStructuredModelForTask } from "../router";
 import { itemDraftSchema } from "../schemas/item-draft";
@@ -9,18 +10,21 @@ import { itemDraftSchema } from "../schemas/item-draft";
  * step — a future critique/verification node can be added here without
  * changing the caller's contract.
  */
-export async function runPhotoToItemGraph(imageDataUrl: string) {
+export async function runPhotoToItemGraph(imageDataUrl: string, config?: RunnableConfig) {
   const model = getStructuredModelForTask("vision", itemDraftSchema);
 
-  return model.invoke([
-    new HumanMessage({
-      content: [
-        {
-          type: "text",
-          text: "Identify the single most prominent item in this photo for a home inventory app. Suggest a concise name, short description, a likely label/category, and a likely storage location if inferable from the surroundings.",
-        },
-        { type: "image_url", image_url: { url: imageDataUrl } },
-      ],
-    }),
-  ]);
+  return model.invoke(
+    [
+      new HumanMessage({
+        content: [
+          {
+            type: "text",
+            text: "Identify the single most prominent item in this photo for a home inventory app. Suggest a concise name, short description, a likely label/category, and a likely storage location if inferable from the surroundings.",
+          },
+          { type: "image_url", image_url: { url: imageDataUrl } },
+        ],
+      }),
+    ],
+    config,
+  );
 }

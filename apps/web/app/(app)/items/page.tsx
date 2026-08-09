@@ -19,9 +19,7 @@ export default async function ItemsPage() {
   const locationNameById = new Map(locations.map((location) => [location.id, location.name]));
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight text-ink">Items</h1>
-
+    <div className="flex flex-col gap-6 p-4 sm:p-6">
       <form
         action={createItemAction}
         className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:flex-wrap sm:items-center"

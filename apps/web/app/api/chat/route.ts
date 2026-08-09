@@ -19,16 +19,20 @@ export async function POST(request: Request) {
     tags: ["chat"],
   });
 
-  const graph = createChatSearchGraph(user.id);
-  const result = await graph.invoke(
-    { messages: [new HumanMessage(message)] },
-    { callbacks: [langfuseHandler], runName: "chat-search" },
-  );
-  const lastMessage = result.messages.at(-1);
-
   after(async () => {
     await langfuseSpanProcessor.forceFlush();
   });
 
-  return NextResponse.json({ reply: lastMessage?.content ?? "" });
+  try {
+    const graph = createChatSearchGraph(user.id);
+    const result = await graph.invoke(
+      { messages: [new HumanMessage(message)] },
+      { callbacks: [langfuseHandler], runName: "chat-search" },
+    );
+    const lastMessage = result.messages.at(-1);
+    return NextResponse.json({ reply: lastMessage?.content ?? "" });
+  } catch (error) {
+    console.error("chat-search graph failed:", error);
+    return NextResponse.json({ error: "The assistant is temporarily unavailable. Try again shortly." }, { status: 502 });
+  }
 }

@@ -20,9 +20,7 @@ export default async function LocationsPage() {
   const paths = locations.map((location) => ({ id: location.id, path: pathFor(location.id) }));
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight text-ink">Locations</h1>
-
+    <div className="flex flex-col gap-6 p-4 sm:p-6">
       <form
         action={createLocationAction}
         className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center"

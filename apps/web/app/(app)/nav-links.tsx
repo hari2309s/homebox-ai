@@ -25,7 +25,7 @@ export function NavLinks() {
           <Link
             key={link.href}
             href={link.href}
-            className="relative rounded-md px-3 py-1.5 text-sm font-semibold"
+            className="relative shrink-0 whitespace-nowrap rounded-md px-3 py-2.5 text-sm font-semibold"
           >
             {active && (
               <motion.span
