@@ -26,7 +26,21 @@ const TASK_PROVIDER_CHAINS: Record<TaskType, Array<() => BaseChatModel>> = {
  */
 export function getModelForTask(task: TaskType): BaseChatModel {
   const factories = TASK_PROVIDER_CHAINS[task];
-  const [primary, ...fallbacks] = factories.map((factory) => factory());
+
+  // Each factory throws synchronously if its own API key is missing. Build
+  // the chain from whichever providers are actually configured, in priority
+  // order, rather than letting one missing fallback key take down providers
+  // ahead of it in the chain (which .map() would do).
+  const available: BaseChatModel[] = [];
+  for (const factory of factories) {
+    try {
+      available.push(factory());
+    } catch {
+      // Not configured — skip it.
+    }
+  }
+
+  const [primary, ...fallbacks] = available;
   if (!primary) throw new Error(`No providers configured for task "${task}"`);
   return fallbacks.length > 0 ? (primary.withFallbacks(fallbacks) as unknown as BaseChatModel) : primary;
 }
