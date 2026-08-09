@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -24,13 +25,20 @@ export function NavLinks() {
           <Link
             key={link.href}
             href={link.href}
-            className={
-              active
-                ? "rounded-md bg-surface px-3 py-1.5 text-sm font-semibold text-ink"
-                : "rounded-md px-3 py-1.5 text-sm font-semibold text-muted transition-colors duration-150 hover:text-ink"
-            }
+            className="relative rounded-md px-3 py-1.5 text-sm font-semibold"
           >
-            {link.label}
+            {active && (
+              <motion.span
+                layoutId="nav-active-pill"
+                className="absolute inset-0 rounded-md bg-surface"
+                transition={{ type: "spring", stiffness: 380, damping: 30 }}
+              />
+            )}
+            <span
+              className={`relative transition-colors duration-150 ${active ? "text-ink" : "text-muted hover:text-ink"}`}
+            >
+              {link.label}
+            </span>
           </Link>
         );
       })}

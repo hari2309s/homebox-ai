@@ -1,5 +1,5 @@
 import { locationQueries } from "@homebox-ai/db";
-import { Button, Input, Select } from "@homebox-ai/ui";
+import { Input, Select, SubmitButton } from "@homebox-ai/ui";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
@@ -36,7 +36,7 @@ export default async function LocationsPage() {
             </option>
           ))}
         </Select>
-        <Button type="submit">Add</Button>
+        <SubmitButton>Add</SubmitButton>
       </form>
 
       <LocationList paths={paths} />

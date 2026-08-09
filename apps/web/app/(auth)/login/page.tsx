@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { FadeIn, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { FadeIn, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -243,9 +243,9 @@ export default function LoginPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.15 }}
-              className="inline-block"
+              className="inline-flex items-center gap-2"
             >
-              {pending ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
+              {pending ? <Spinner size={16} /> : mode === "sign-in" ? "Sign in" : "Create account"}
             </motion.span>
           </AnimatePresence>
         </motion.button>

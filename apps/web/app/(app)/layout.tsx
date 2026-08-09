@@ -18,9 +18,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       >
         <NavLinks />
       </FadeIn>
-      <FadeIn delay={0.1} className="mx-auto max-w-4xl p-6">
-        {children}
-      </FadeIn>
+      <div className="mx-auto max-w-4xl p-6">{children}</div>
     </div>
   );
 }

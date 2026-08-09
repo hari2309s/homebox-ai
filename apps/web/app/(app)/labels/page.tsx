@@ -1,5 +1,5 @@
 import { labelQueries } from "@homebox-ai/db";
-import { Button, Input } from "@homebox-ai/ui";
+import { Input, SubmitButton } from "@homebox-ai/ui";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
@@ -19,7 +19,7 @@ export default async function LabelsPage() {
         className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center"
       >
         <Input name="name" placeholder="New label name" required className="sm:flex-1" />
-        <Button type="submit">Add</Button>
+        <SubmitButton>Add</SubmitButton>
       </form>
 
       <LabelList labels={labels} />

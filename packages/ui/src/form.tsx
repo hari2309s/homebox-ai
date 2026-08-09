@@ -2,6 +2,9 @@
 
 import { motion } from "framer-motion";
 import type { ComponentProps } from "react";
+import { useFormStatus } from "react-dom";
+
+import { Spinner } from "./spinner";
 
 const fieldClassName =
   "rounded-md border border-border bg-white px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20";
@@ -30,5 +33,20 @@ export function Button({ className, ...props }: ComponentProps<typeof motion.but
       )}
       {...props}
     />
+  );
+}
+
+/**
+ * A `Button` that reads pending state from the enclosing `<form action={...}>`
+ * via `useFormStatus` — must be rendered as a descendant of that form, not
+ * the form element itself. Shows a spinner and disables automatically while
+ * the server action is in flight, no local state needed at the call site.
+ */
+export function SubmitButton({ children, ...props }: ComponentProps<typeof Button>) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending} {...props}>
+      {pending ? <Spinner size={16} /> : children}
+    </Button>
   );
 }
