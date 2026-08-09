@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { FadeIn, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { CursorFollowIcon, FadeIn, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -32,6 +32,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [formFocused, setFormFocused] = useState(false);
 
   function switchMode() {
     setMode(mode === "sign-in" ? "sign-up" : "sign-in");
@@ -100,7 +101,9 @@ export default function LoginPage() {
             animate={{ scale: 1, rotate: 0, opacity: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.05 }}
           >
-            <Image src="/icons/icon-192.png" alt="" width={72} height={72} priority className="rounded-[18%]" />
+            <CursorFollowIcon attentive={formFocused}>
+              <Image src="/icons/icon-192.png" alt="" width={72} height={72} priority className="rounded-[18%]" />
+            </CursorFollowIcon>
           </motion.div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">Homebox AI</h1>
         </div>
@@ -109,6 +112,10 @@ export default function LoginPage() {
 
       <motion.form
         onSubmit={handleSubmit}
+        onFocus={() => setFormFocused(true)}
+        onBlur={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) setFormFocused(false);
+        }}
         initial={{ opacity: 0, y: 16, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 260, damping: 24, delay: 0.15 }}
