@@ -1,8 +1,18 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": [
+    "SUPABASE_SECRET_KEY",
+    "DATABASE_URL",
+    "GOOGLE_API_KEY",
+    "GROQ_API_KEY",
+    "CEREBRAS_API_KEY",
+    "OPENROUTER_API_KEY",
+    "OPENROUTER_VISION_MODEL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "dev": {
