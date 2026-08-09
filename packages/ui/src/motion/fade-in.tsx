@@ -23,7 +23,7 @@ export function FadeIn<T extends Tag = "div">({ as, delay = 0, y = 12, ...props 
     <MotionTag
       initial={{ opacity: 0, y }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       {...(props as any)}
     />

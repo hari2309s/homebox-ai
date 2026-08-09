@@ -2,12 +2,10 @@
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
 import { FadeIn, StaggerItem, StaggerList } from "@homebox-ai/ui";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-
-import styles from "./login.module.css";
 
 const FEATURES = [
   { icon: "🔍", label: "Ask “where's my passport?” in plain English" },
@@ -47,67 +45,118 @@ export default function LoginPage() {
   }
 
   return (
-    <main className={styles.page}>
-      <FadeIn className={styles.brand}>
-        <div className={styles.wordmark}>
-          <Image src="/icons/icon-192.png" alt="" width={72} height={72} priority />
-          <h1>Homebox AI</h1>
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-10 px-6 py-12">
+      <FadeIn className="flex flex-col items-center gap-2 text-center">
+        <div className="flex flex-col items-center gap-2">
+          <motion.div
+            initial={{ scale: 0.5, rotate: -12, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.05 }}
+          >
+            <Image src="/icons/icon-192.png" alt="" width={72} height={72} priority className="rounded-[18%]" />
+          </motion.div>
+          <h1 className="text-2xl font-bold tracking-tight text-ink">Homebox AI</h1>
         </div>
-        <p className={styles.tagline}>Your home inventory, remembered and organized by AI.</p>
+        <p className="max-w-md text-base text-muted">Your home inventory, remembered and organized by AI.</p>
       </FadeIn>
 
-      <FadeIn delay={0.1}>
-        <form className={styles.card} onSubmit={handleSubmit}>
-          <label className={styles.field}>
-            Email
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-            />
-          </label>
-          <label className={styles.field}>
-            Password
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-            />
-          </label>
+      <motion.form
+        onSubmit={handleSubmit}
+        initial={{ opacity: 0, y: 16, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 24, delay: 0.15 }}
+        className="flex w-full max-w-sm flex-col gap-5 rounded-lg bg-surface p-8 shadow-card"
+      >
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
+          Email
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            className="rounded-md border border-border bg-white px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20"
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
+          Password
+          <input
+            type="password"
+            required
+            minLength={8}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+            className="rounded-md border border-border bg-white px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20"
+          />
+        </label>
+
+        <AnimatePresence>
           {error && (
-            <p className={styles.error} role="alert">
+            <motion.p
+              key="error"
+              role="alert"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden rounded-md bg-accent/10 px-3 py-2 text-sm text-[#f2564a]"
+            >
               {error}
-            </p>
+            </motion.p>
           )}
-          <motion.button
-            type="submit"
-            className={styles.submit}
-            disabled={pending}
-            whileHover={pending ? undefined : { scale: 1.02 }}
-            whileTap={pending ? undefined : { scale: 0.98 }}
-          >
-            {pending ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
-          </motion.button>
-          <button
-            type="button"
-            className={styles.toggle}
-            onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
-          >
-            {mode === "sign-in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
-          </button>
-        </form>
-      </FadeIn>
+        </AnimatePresence>
 
-      <StaggerList className={styles.features}>
+        <motion.button
+          type="submit"
+          disabled={pending}
+          whileHover={pending ? undefined : { scale: 1.02 }}
+          whileTap={pending ? undefined : { scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className="cursor-pointer rounded-md bg-accent px-3 py-3 font-bold text-white transition-colors duration-150 hover:bg-[#f2564a] disabled:cursor-default disabled:opacity-60"
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={pending ? "pending" : mode}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              className="inline-block"
+            >
+              {pending ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
+            </motion.span>
+          </AnimatePresence>
+        </motion.button>
+
+        <button
+          type="button"
+          onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+          className="cursor-pointer self-center border-none bg-transparent text-sm font-semibold text-ink"
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={mode}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.15 }}
+              className="inline-block underline underline-offset-4"
+            >
+              {mode === "sign-in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+            </motion.span>
+          </AnimatePresence>
+        </button>
+      </motion.form>
+
+      <StaggerList className="grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
         {FEATURES.map((feature) => (
-          <StaggerItem key={feature.label} className={styles.feature}>
-            <span className={styles.icon}>{feature.icon}</span>
-            <p>{feature.label}</p>
+          <StaggerItem
+            key={feature.label}
+            className="flex items-start gap-2.5 rounded-md bg-surface-soft px-3.5 py-3"
+          >
+            <span className="text-lg leading-none">{feature.icon}</span>
+            <p className="m-0 text-sm leading-snug text-body">{feature.label}</p>
           </StaggerItem>
         ))}
       </StaggerList>

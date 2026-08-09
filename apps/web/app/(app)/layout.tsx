@@ -11,10 +11,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div>
-      <FadeIn
-        as="nav"
-        style={{ display: "flex", gap: "1rem", padding: "1rem", borderBottom: "1px solid #ddd" }}
-      >
+      <FadeIn as="nav" className="flex gap-4 border-b border-border p-4">
         <Link href="/items">Items</Link>
         <Link href="/locations">Locations</Link>
         <Link href="/labels">Labels</Link>
@@ -23,7 +20,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <Link href="/receipts">Receipts</Link>
         <Link href="/maintenance">Maintenance</Link>
       </FadeIn>
-      <FadeIn delay={0.1} style={{ padding: "1rem" }}>
+      <FadeIn delay={0.1} className="p-4">
         {children}
       </FadeIn>
     </div>
