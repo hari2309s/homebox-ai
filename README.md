@@ -1,8 +1,12 @@
 <p align="center">
-  <img src="apps/web/public/icons/icon-512.png" width="120" height="120" alt="Homebox AI icon">
+  <img src="apps/web/public/icons/icon-animated.svg" width="120" height="120" alt="Homebox AI icon">
 </p>
 
 <h1 align="center">Homebox AI</h1>
+
+<p align="center">
+  An AI-native home inventory PWA — natural-language search, photo-to-item entry, receipt import, and a maintenance/warranty assistant, built on Next.js + Supabase (Postgres/Auth/Storage) + LangGraph.
+</p>
 
 <p align="center">
   <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white" alt="Next.js"></a>
@@ -20,9 +24,30 @@
   <a href="https://langfuse.com"><img src="https://img.shields.io/badge/Langfuse-0A0A0A?style=flat&logo=langfuse&logoColor=white" alt="Langfuse"></a>
 </p>
 
-An AI-native home inventory PWA — natural-language search, photo-to-item entry, receipt import, and a maintenance/warranty assistant, built on Next.js + Supabase (Postgres/Auth/Storage) + LangGraph.
+## Contents
 
-See the full architecture and milestone plan in this session's plan file; this README covers day-to-day setup.
+- [Features](#features)
+- [Stack](#stack)
+- [Prerequisites](#prerequisites)
+- [First-time setup](#first-time-setup)
+- [Running the app](#running-the-app)
+- [Deploying](#deploying)
+- [Project layout](#project-layout)
+- [Tracing (Langfuse)](#tracing-langfuse)
+
+## Features
+
+| Feature | Status |
+| --- | --- |
+| Auth (Supabase email/password) + protected app shell | ✅ Done |
+| Items / Locations / Labels CRUD | ✅ Done |
+| Natural-language search & chat over your inventory | 🚧 Planned |
+| Photo → structured item entry | 🚧 Planned |
+| Receipt import → batch item entry | 🚧 Planned |
+| Maintenance & warranty assistant | 🚧 Planned |
+| Installable PWA (offline app shell) | ✅ Done |
+
+The three AI features share one LangGraph-based router (`packages/ai`) that fans each task out across free-tier providers with fallback — see [Stack](#stack).
 
 ## Stack
 
@@ -60,7 +85,7 @@ pnpm db:migrate
 for f in packages/db/src/policies/*.sql; do psql "$DATABASE_URL" -f "$f"; done
 ```
 
-Then in the Supabase Studio (URL printed by `supabase start`, or your cloud project's dashboard), create an `attachments` Storage bucket before applying `storage_attachments.sql` — that policy references the bucket by name and will fail if it doesn't exist yet.
+Then, in the Supabase Studio (URL printed by `supabase start`, or your cloud project's dashboard), create an `attachments` Storage bucket before applying `storage_attachments.sql` — that policy references the bucket by name and will fail if it doesn't exist yet.
 
 ## Running the app
 
@@ -76,15 +101,15 @@ pnpm dev
 ## Project layout
 
 ```
-apps/web       Next.js app (UI + API routes)
+apps/web             Next.js app (UI + API routes)
   instrumentation.ts / instrumentation-node.ts  OpenTelemetry + Langfuse span processor setup
-packages/db    Drizzle schema, migrations, RLS policies, query functions
-packages/supabase  Server/browser Supabase clients, session middleware, storage helpers
-packages/ai    LangGraph orchestration: provider factories, task router, one graph per AI feature
-  tracing.ts   Langfuse callback handler factory — pass to a graph's invoke() config
-packages/ui    Shared components (Framer Motion primitives)
-packages/config  Shared tsconfig
-supabase/      Supabase CLI project config (local dev emulation)
+packages/db           Drizzle schema, migrations, RLS policies, query functions
+packages/supabase     Server/browser Supabase clients, session middleware, storage helpers
+packages/ai           LangGraph orchestration: provider factories, task router, one graph per AI feature
+  tracing.ts          Langfuse callback handler factory — pass to a graph's invoke() config
+packages/ui           Shared components (Framer Motion primitives)
+packages/config       Shared tsconfig
+supabase/             Supabase CLI project config (local dev emulation)
 ```
 
 ## Tracing (Langfuse)
