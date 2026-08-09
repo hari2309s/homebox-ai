@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useAnimationControls, useMotionValue, useSpring } from "framer-motion";
+import { animate, motion, useMotionValue, useSpring } from "framer-motion";
 import { useEffect, useRef } from "react";
 
 // Traced from apps/web/public/icons/icon-512.png via potrace (per-color-layer
@@ -25,6 +25,39 @@ const EYES = {
 const MOUTH_CENTER = { cx: 256, cy: 361 };
 const MAX_PUPIL_OFFSET = 18; // eye radius 35.2 minus pupil radius 15.2, minus a small safety margin
 
+function isTypingElement(el: EventTarget | null): el is HTMLInputElement | HTMLTextAreaElement {
+  return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement;
+}
+
+// Lazily created so this module never touches `document` during SSR.
+let caretCanvas: HTMLCanvasElement | null = null;
+
+// Inputs don't expose caret pixel coordinates directly, so this measures the
+// text up to the caret with a canvas using the input's own font metrics.
+function getCaretClientPos(el: HTMLInputElement | HTMLTextAreaElement) {
+  const rect = el.getBoundingClientRect();
+  const style = getComputedStyle(el);
+  caretCanvas ??= document.createElement("canvas");
+  const ctx = caretCanvas.getContext("2d")!;
+  ctx.font = `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+
+  const caretIndex = el.selectionEnd ?? el.value.length;
+  const textBeforeCaret =
+    el instanceof HTMLInputElement && el.type === "password"
+      ? "•".repeat(caretIndex)
+      : el.value.slice(0, caretIndex);
+  const textWidth = ctx.measureText(textBeforeCaret).width;
+
+  const paddingLeft = parseFloat(style.paddingLeft) || 0;
+  const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+  const x = rect.left + borderLeft + paddingLeft + textWidth - el.scrollLeft;
+
+  return {
+    x: Math.min(Math.max(x, rect.left), rect.right),
+    y: rect.top + rect.height / 2,
+  };
+}
+
 interface AnimatedHomeboxIconProps {
   size?: number;
   /** Triggers an attentive wide-eye + smile pulse — e.g. while a form field has focus. */
@@ -44,18 +77,23 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false }: AnimatedHo
   const rpx = useSpring(rightPupilX, pupilSpring);
   const rpy = useSpring(rightPupilY, pupilSpring);
 
-  const leftEyeControls = useAnimationControls();
-  const rightEyeControls = useAnimationControls();
-  const mouthControls = useAnimationControls();
+  const leftEyeScaleY = useMotionValue(1);
+  const rightEyeScaleY = useMotionValue(1);
+  const mouthScale = useMotionValue(1);
 
   useEffect(() => {
-    function handlePointerMove(event: PointerEvent) {
-      const svg = svgRef.current;
-      if (!svg) return;
-      const rect = svg.getBoundingClientRect();
-      const localX = ((event.clientX - rect.left) / rect.width) * 512;
-      const localY = ((event.clientY - rect.top) / rect.height) * 512;
+    const svg = svgRef.current;
+    if (!svg) return;
 
+    function toLocal(clientX: number, clientY: number) {
+      const rect = svg!.getBoundingClientRect();
+      return {
+        x: ((clientX - rect.left) / rect.width) * 512,
+        y: ((clientY - rect.top) / rect.height) * 512,
+      };
+    }
+
+    function lookAt(localX: number, localY: number) {
       for (const [eye, setX, setY] of [
         [EYES.left, leftPupilX, leftPupilY],
         [EYES.right, rightPupilX, rightPupilY],
@@ -69,8 +107,35 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false }: AnimatedHo
       }
     }
 
+    function updateFromCaret(el: HTMLInputElement | HTMLTextAreaElement) {
+      const pos = getCaretClientPos(el);
+      const local = toLocal(pos.x, pos.y);
+      lookAt(local.x, local.y);
+    }
+
+    // While a text field is focused, the caret — not the mouse — drives the pupils.
+    function handlePointerMove(event: PointerEvent) {
+      if (isTypingElement(document.activeElement)) return;
+      const local = toLocal(event.clientX, event.clientY);
+      lookAt(local.x, local.y);
+    }
+
+    function handleCaretActivity(event: Event) {
+      if (isTypingElement(event.target)) updateFromCaret(event.target);
+    }
+
     window.addEventListener("pointermove", handlePointerMove);
-    return () => window.removeEventListener("pointermove", handlePointerMove);
+    document.addEventListener("focusin", handleCaretActivity);
+    document.addEventListener("input", handleCaretActivity, true);
+    document.addEventListener("keyup", handleCaretActivity, true);
+    document.addEventListener("click", handleCaretActivity, true);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("focusin", handleCaretActivity);
+      document.removeEventListener("input", handleCaretActivity, true);
+      document.removeEventListener("keyup", handleCaretActivity, true);
+      document.removeEventListener("click", handleCaretActivity, true);
+    };
   }, [leftPupilX, leftPupilY, rightPupilX, rightPupilY]);
 
   // Ambient blinking on a randomized interval, so it reads as alive rather than mechanical.
@@ -81,13 +146,13 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false }: AnimatedHo
         await new Promise((resolve) => setTimeout(resolve, 2800 + Math.random() * 2400));
         if (cancelled) return;
         await Promise.all([
-          leftEyeControls.start({ scaleY: 0.08 }, { duration: 0.09, ease: "easeIn" }),
-          rightEyeControls.start({ scaleY: 0.08 }, { duration: 0.09, ease: "easeIn" }),
+          animate(leftEyeScaleY, 0.08, { duration: 0.09, ease: "easeIn" }),
+          animate(rightEyeScaleY, 0.08, { duration: 0.09, ease: "easeIn" }),
         ]);
         if (cancelled) return;
         await Promise.all([
-          leftEyeControls.start({ scaleY: 1 }, { duration: 0.14, ease: "easeOut" }),
-          rightEyeControls.start({ scaleY: 1 }, { duration: 0.14, ease: "easeOut" }),
+          animate(leftEyeScaleY, 1, { duration: 0.14, ease: "easeOut" }),
+          animate(rightEyeScaleY, 1, { duration: 0.14, ease: "easeOut" }),
         ]);
       }
     }
@@ -95,28 +160,28 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false }: AnimatedHo
     return () => {
       cancelled = true;
     };
-  }, [leftEyeControls, rightEyeControls]);
+  }, [leftEyeScaleY, rightEyeScaleY]);
 
   // Independent one-shot reaction layered on top of the ambient blink loop —
   // eyes widen and the mouth stretches into a slightly bigger smile.
   useEffect(() => {
     if (!attentive) return;
-    leftEyeControls.start({ scaleY: [1, 1.25, 1] }, { duration: 0.35, ease: "easeOut" });
-    rightEyeControls.start({ scaleY: [1, 1.25, 1] }, { duration: 0.35, ease: "easeOut" });
-    mouthControls.start({ scale: [1, 1.15, 1] }, { duration: 0.35, ease: "easeOut" });
-  }, [attentive, leftEyeControls, rightEyeControls, mouthControls]);
+    animate(leftEyeScaleY, [1, 1.25, 1], { duration: 0.35, ease: "easeOut" });
+    animate(rightEyeScaleY, [1, 1.25, 1], { duration: 0.35, ease: "easeOut" });
+    animate(mouthScale, [1, 1.15, 1], { duration: 0.35, ease: "easeOut" });
+  }, [attentive, leftEyeScaleY, rightEyeScaleY, mouthScale]);
 
   return (
     <svg ref={svgRef} viewBox="0 0 512 512" width={size} height={size}>
       <path d={PATHS.body} fill="#F7DEAE" />
       <path d={PATHS.roof} fill="#FB7369" />
 
-      <motion.g animate={leftEyeControls} style={{ transformOrigin: `${EYES.left.cx}px ${EYES.left.cy}px` }}>
+      <motion.g style={{ scaleY: leftEyeScaleY, transformOrigin: `${EYES.left.cx}px ${EYES.left.cy}px` }}>
         <path d={PATHS.leftEye} fill="#FFFFFF" />
         <motion.path d={PATHS.leftPupil} fill="#4A254B" style={{ x: lpx, y: lpy }} />
       </motion.g>
 
-      <motion.g animate={rightEyeControls} style={{ transformOrigin: `${EYES.right.cx}px ${EYES.right.cy}px` }}>
+      <motion.g style={{ scaleY: rightEyeScaleY, transformOrigin: `${EYES.right.cx}px ${EYES.right.cy}px` }}>
         <path d={PATHS.rightEye} fill="#FFFFFF" />
         <motion.path d={PATHS.rightPupil} fill="#4A254B" style={{ x: rpx, y: rpy }} />
       </motion.g>
@@ -124,8 +189,7 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false }: AnimatedHo
       <motion.path
         d={PATHS.mouth}
         fill="#4A254B"
-        animate={mouthControls}
-        style={{ transformOrigin: `${MOUTH_CENTER.cx}px ${MOUTH_CENTER.cy}px` }}
+        style={{ scale: mouthScale, transformOrigin: `${MOUTH_CENTER.cx}px ${MOUTH_CENTER.cy}px` }}
       />
     </svg>
   );
