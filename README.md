@@ -85,7 +85,6 @@ packages/ai    LangGraph orchestration: provider factories, task router, one gra
 packages/ui    Shared components (Framer Motion primitives)
 packages/config  Shared tsconfig
 supabase/      Supabase CLI project config (local dev emulation)
-.claude/skills/langfuse  Langfuse's official skill (github.com/langfuse/skills) — fetch its docs before changing any tracing code
 ```
 
 ## Tracing (Langfuse)
@@ -108,5 +107,3 @@ after(async () => {
 ```
 
 `runName` matters — without it, traces show up unnamed in the Langfuse UI (the trace-level `name`/`input`/`output` fields are deprecated in Langfuse v4+; what you actually see and search on is the **root observation's** name/input/output, which the `CallbackHandler` sets automatically from the graph's input/output as long as `runName` is set).
-
-When adding tracing to a new graph, don't implement from memory — the Langfuse skill in `.claude/skills/langfuse/` has the current best practices and a required post-implementation audit step (run it, fetch the real trace back via `npx langfuse-cli`, check it against `references/instrumentation.md`, fix any gaps).
