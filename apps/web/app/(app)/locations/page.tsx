@@ -1,4 +1,5 @@
 import { locationQueries } from "@homebox-ai/db";
+import { Button, Input, Select } from "@homebox-ai/ui";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
@@ -19,20 +20,25 @@ export default async function LocationsPage() {
   const paths = locations.map((location) => ({ id: location.id, path: pathFor(location.id) }));
 
   return (
-    <div>
-      <h1>Locations</h1>
-      <form action={createLocationAction} style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
-        <input name="name" placeholder="New location name" required />
-        <select name="parentId" defaultValue="">
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold tracking-tight text-ink">Locations</h1>
+
+      <form
+        action={createLocationAction}
+        className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center"
+      >
+        <Input name="name" placeholder="New location name" required className="sm:flex-1" />
+        <Select name="parentId" defaultValue="">
           <option value="">No parent (top-level)</option>
           {locations.map((location) => (
             <option key={location.id} value={location.id}>
               {pathFor(location.id)}
             </option>
           ))}
-        </select>
-        <button type="submit">Add</button>
+        </Select>
+        <Button type="submit">Add</Button>
       </form>
+
       <LocationList paths={paths} />
     </div>
   );

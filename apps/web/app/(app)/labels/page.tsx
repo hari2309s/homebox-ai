@@ -1,4 +1,5 @@
 import { labelQueries } from "@homebox-ai/db";
+import { Button, Input } from "@homebox-ai/ui";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
@@ -10,12 +11,17 @@ export default async function LabelsPage() {
   const labels = user ? await labelQueries.listLabels(user.id) : [];
 
   return (
-    <div>
-      <h1>Labels</h1>
-      <form action={createLabelAction} style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
-        <input name="name" placeholder="New label name" required />
-        <button type="submit">Add</button>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold tracking-tight text-ink">Labels</h1>
+
+      <form
+        action={createLabelAction}
+        className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center"
+      >
+        <Input name="name" placeholder="New label name" required className="sm:flex-1" />
+        <Button type="submit">Add</Button>
       </form>
+
       <LabelList labels={labels} />
     </div>
   );

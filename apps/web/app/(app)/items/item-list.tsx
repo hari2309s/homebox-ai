@@ -8,12 +8,21 @@ interface ItemListProps {
 }
 
 export function ItemList({ items, locationNameById }: ItemListProps) {
+  if (items.length === 0) {
+    return <p className="text-sm text-muted">No items yet — add your first one above.</p>;
+  }
+
   return (
-    <StaggerList>
+    <StaggerList className="flex list-none flex-col gap-2 p-0 m-0">
       {items.map((item) => (
-        <StaggerItem key={item.id}>
-          {item.name}
-          {item.locationId ? ` — ${locationNameById.get(item.locationId) ?? ""}` : ""}
+        <StaggerItem
+          key={item.id}
+          className="flex items-center justify-between rounded-md border border-border px-4 py-3"
+        >
+          <span className="font-medium text-ink">{item.name}</span>
+          {item.locationId && (
+            <span className="text-sm text-muted">{locationNameById.get(item.locationId) ?? ""}</span>
+          )}
         </StaggerItem>
       ))}
     </StaggerList>

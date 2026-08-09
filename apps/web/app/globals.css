@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* packages/ui lives outside this app's own directory tree, so Tailwind's
+   automatic content detection needs an explicit nudge to scan it too. */
+@source "../../../packages/ui/src";
+
 @theme {
   --color-surface: #f7deae;
   --color-surface-soft: #fbf1de;

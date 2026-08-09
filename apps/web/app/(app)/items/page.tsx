@@ -1,4 +1,5 @@
 import { itemQueries, labelQueries, locationQueries } from "@homebox-ai/db";
+import { Button, Input, Select } from "@homebox-ai/ui";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
@@ -18,31 +19,35 @@ export default async function ItemsPage() {
   const locationNameById = new Map(locations.map((location) => [location.id, location.name]));
 
   return (
-    <div>
-      <h1>Items</h1>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold tracking-tight text-ink">Items</h1>
+
       <form
         action={createItemAction}
-        style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.5rem", alignItems: "center" }}
+        className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:flex-wrap sm:items-center"
       >
-        <input name="name" placeholder="New item name" required />
-        <select name="locationId" defaultValue="">
+        <Input name="name" placeholder="New item name" required className="sm:flex-1" />
+        <Select name="locationId" defaultValue="">
           <option value="">No location</option>
           {locations.map((location) => (
             <option key={location.id} value={location.id}>
               {location.name}
             </option>
           ))}
-        </select>
-        <fieldset style={{ display: "flex", gap: "0.5rem", border: "none", padding: 0 }}>
-          {labels.map((label) => (
-            <label key={label.id} style={{ display: "flex", gap: "0.25rem", alignItems: "center" }}>
-              <input type="checkbox" name="labelIds" value={label.id} />
-              {label.name}
-            </label>
-          ))}
-        </fieldset>
-        <button type="submit">Add</button>
+        </Select>
+        {labels.length > 0 && (
+          <fieldset className="flex flex-wrap gap-3 border-none p-0">
+            {labels.map((label) => (
+              <label key={label.id} className="flex items-center gap-1.5 text-sm text-body">
+                <input type="checkbox" name="labelIds" value={label.id} className="accent-accent" />
+                {label.name}
+              </label>
+            ))}
+          </fieldset>
+        )}
+        <Button type="submit">Add</Button>
       </form>
+
       <ItemList items={items} locationNameById={locationNameById} />
     </div>
   );
