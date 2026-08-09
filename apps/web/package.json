@@ -15,6 +15,8 @@
     "@homebox-ai/supabase": "workspace:*",
     "@homebox-ai/ui": "workspace:*",
     "@langchain/core": "^0.3.0",
+    "@langfuse/otel": "^5.10.0",
+    "@opentelemetry/sdk-node": "^0.221.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.46.0",
     "framer-motion": "^11.11.0",

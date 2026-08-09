@@ -17,6 +17,7 @@
   <a href="https://pnpm.io"><img src="https://img.shields.io/badge/pnpm-F69220?style=flat&logo=pnpm&logoColor=white" alt="pnpm"></a>
   <a href="https://web.dev/explore/progressive-web-apps"><img src="https://img.shields.io/badge/PWA-5A0FC8?style=flat&logo=pwa&logoColor=white" alt="PWA"></a>
   <a href="https://vercel.com"><img src="https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white" alt="Vercel"></a>
+  <a href="https://langfuse.com"><img src="https://img.shields.io/badge/Langfuse-0A0A0A?style=flat&logo=langfuse&logoColor=white" alt="Langfuse"></a>
 </p>
 
 An AI-native home inventory PWA — natural-language search, photo-to-item entry, receipt import, and a maintenance/warranty assistant, built on Next.js + Supabase (Postgres/Auth/Storage) + LangGraph.
@@ -31,6 +32,7 @@ See the full architecture and milestone plan in this session's plan file; this R
 - **Auth**: Supabase Auth (email/password)
 - **Files**: Supabase Storage (`attachments` bucket)
 - **AI**: LangGraph.js orchestration (`packages/ai`) routing across four free-tier providers (Gemini, Groq, Cerebras, OpenRouter) with task-based fallback chains
+- **Tracing**: [Langfuse](https://langfuse.com) via OpenTelemetry — every AI graph invocation is traced (model, tokens, tool calls, full conversation) with per-user/per-session/per-feature attribution
 
 ## Prerequisites
 
@@ -38,6 +40,7 @@ See the full architecture and milestone plan in this session's plan file; this R
 - Docker (for `supabase start`'s local emulation stack)
 - [Supabase CLI](https://supabase.com/docs/guides/cli)
 - API keys for whichever of Gemini / Groq / Cerebras / OpenRouter you want working locally (the AI features degrade gracefully if some are missing, per the router's fallback chains — but at least one per task type is needed for that feature to work at all)
+- A free [Langfuse](https://cloud.langfuse.com) project (for tracing — optional locally, but without it you're flying blind on what the AI graphs are actually doing)
 
 ## First-time setup
 
@@ -74,10 +77,36 @@ pnpm dev
 
 ```
 apps/web       Next.js app (UI + API routes)
+  instrumentation.ts / instrumentation-node.ts  OpenTelemetry + Langfuse span processor setup
 packages/db    Drizzle schema, migrations, RLS policies, query functions
 packages/supabase  Server/browser Supabase clients, session middleware, storage helpers
 packages/ai    LangGraph orchestration: provider factories, task router, one graph per AI feature
+  tracing.ts   Langfuse callback handler factory — pass to a graph's invoke() config
 packages/ui    Shared components (Framer Motion primitives)
 packages/config  Shared tsconfig
 supabase/      Supabase CLI project config (local dev emulation)
+.claude/skills/langfuse  Langfuse's official skill (github.com/langfuse/skills) — fetch its docs before changing any tracing code
 ```
+
+## Tracing (Langfuse)
+
+Every AI graph invocation should be traced. The pattern (see `apps/web/app/api/chat/route.ts` for a full example):
+
+```ts
+import { createLangfuseHandler } from "@homebox-ai/ai";
+import { after } from "next/server";
+import { langfuseSpanProcessor } from "../../../instrumentation-node";
+
+const langfuseHandler = createLangfuseHandler({ userId, sessionId, tags: ["chat"] });
+const result = await graph.invoke(input, { callbacks: [langfuseHandler], runName: "chat-search" });
+
+// Serverless functions can be frozen right after the response — schedule the
+// flush so buffered spans actually get sent before that happens.
+after(async () => {
+  await langfuseSpanProcessor.forceFlush();
+});
+```
+
+`runName` matters — without it, traces show up unnamed in the Langfuse UI (the trace-level `name`/`input`/`output` fields are deprecated in Langfuse v4+; what you actually see and search on is the **root observation's** name/input/output, which the `CallbackHandler` sets automatically from the graph's input/output as long as `runName` is set).
+
+When adding tracing to a new graph, don't implement from memory — the Langfuse skill in `.claude/skills/langfuse/` has the current best practices and a required post-implementation audit step (run it, fetch the real trace back via `npx langfuse-cli`, check it against `references/instrumentation.md`, fix any gaps).

@@ -1,10 +1,10 @@
 import { HumanMessage } from "@langchain/core/messages";
 
-import { getModelForTask } from "../router";
+import { getStructuredModelForTask } from "../router";
 import { receiptDraftSchema } from "../schemas/item-draft";
 
 export async function runReceiptImportGraph(imageDataUrl: string) {
-  const model = getModelForTask("vision").withStructuredOutput(receiptDraftSchema);
+  const model = getStructuredModelForTask("vision", receiptDraftSchema);
 
   return model.invoke([
     new HumanMessage({

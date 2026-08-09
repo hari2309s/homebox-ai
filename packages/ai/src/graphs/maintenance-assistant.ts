@@ -1,7 +1,7 @@
 import { itemQueries, maintenanceQueries } from "@homebox-ai/db";
 import { HumanMessage } from "@langchain/core/messages";
 
-import { getModelForTask } from "../router";
+import { getStructuredModelForTask } from "../router";
 import { maintenanceSuggestionSchema } from "../schemas/maintenance-suggestion";
 
 export async function runMaintenanceAssistantGraph(userId: string, itemId: string) {
@@ -11,7 +11,7 @@ export async function runMaintenanceAssistantGraph(userId: string, itemId: strin
   ]);
   if (!item) throw new Error("Item not found");
 
-  const model = getModelForTask("reasoning").withStructuredOutput(maintenanceSuggestionSchema);
+  const model = getStructuredModelForTask("reasoning", maintenanceSuggestionSchema);
 
   return model.invoke([
     new HumanMessage(

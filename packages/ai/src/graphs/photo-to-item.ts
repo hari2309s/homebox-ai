@@ -1,6 +1,6 @@
 import { HumanMessage } from "@langchain/core/messages";
 
-import { getModelForTask } from "../router";
+import { getStructuredModelForTask } from "../router";
 import { itemDraftSchema } from "../schemas/item-draft";
 
 /**
@@ -10,7 +10,7 @@ import { itemDraftSchema } from "../schemas/item-draft";
  * changing the caller's contract.
  */
 export async function runPhotoToItemGraph(imageDataUrl: string) {
-  const model = getModelForTask("vision").withStructuredOutput(itemDraftSchema);
+  const model = getStructuredModelForTask("vision", itemDraftSchema);
 
   return model.invoke([
     new HumanMessage({

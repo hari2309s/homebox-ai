@@ -1,4 +1,5 @@
-export { getModelForTask, type TaskType } from "./router";
+export { getModelForTask, getModelListForTask, getStructuredModelForTask, type TaskType } from "./router";
+export { createLangfuseHandler, type TracingContext } from "./tracing";
 
 export { createChatSearchGraph } from "./graphs/chat-search";
 export { runPhotoToItemGraph } from "./graphs/photo-to-item";
