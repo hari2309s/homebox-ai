@@ -1,0 +1,22 @@
+{
+  "name": "@homebox-ai/supabase",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts",
+    "./middleware": "./src/middleware.ts",
+    "./storage": "./src/storage.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.5.0",
+    "@supabase/supabase-js": "^2.46.0"
+  },
+  "devDependencies": {
+    "@homebox-ai/config": "workspace:*",
+    "@types/node": "^22.0.0",
+    "next": "^15.0.0",
+    "typescript": "^5.7.0"
+  }
+}

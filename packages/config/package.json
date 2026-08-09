@@ -1,0 +1,9 @@
+{
+  "name": "@homebox-ai/config",
+  "private": true,
+  "version": "0.0.0",
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json"
+  }
+}

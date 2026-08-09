@@ -1,0 +1,8 @@
+{
+  "extends": "@homebox-ai/config/tsconfig/base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "WebWorker"],
+    "noEmit": true
+  },
+  "include": ["app/sw.ts"]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "@homebox-ai/web",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@homebox-ai/ai": "workspace:*",
+    "@homebox-ai/db": "workspace:*",
+    "@homebox-ai/supabase": "workspace:*",
+    "@homebox-ai/ui": "workspace:*",
+    "@langchain/core": "^0.3.0",
+    "@supabase/ssr": "^0.5.0",
+    "@supabase/supabase-js": "^2.46.0",
+    "framer-motion": "^11.11.0",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@homebox-ai/config": "workspace:*",
+    "@serwist/next": "^9.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "serwist": "^9.0.0",
+    "typescript": "^5.7.0"
+  }
+}
