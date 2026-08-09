@@ -1,9 +1,8 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { CursorFollowIcon, FadeIn, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { AnimatedHomeboxIcon, FadeIn, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -101,9 +100,7 @@ export default function LoginPage() {
             animate={{ scale: 1, rotate: 0, opacity: 1 }}
             transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.05 }}
           >
-            <CursorFollowIcon attentive={formFocused}>
-              <Image src="/icons/icon-192.png" alt="" width={72} height={72} priority className="rounded-[18%]" />
-            </CursorFollowIcon>
+            <AnimatedHomeboxIcon size={96} attentive={formFocused} />
           </motion.div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">Homebox AI</h1>
         </div>
