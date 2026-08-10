@@ -43,7 +43,7 @@
 | Items / Locations / Labels CRUD | ✅ Done |
 | Natural-language search & chat over your inventory | ✅ Done |
 | Photo → structured item entry | ✅ Done |
-| Receipt import → batch item entry | 🚧 Planned |
+| Receipt import → batch item entry | ✅ Done |
 | Maintenance & warranty assistant | 🚧 Planned |
 | Installable PWA (offline app shell) | ✅ Done |
 

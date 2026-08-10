@@ -66,10 +66,10 @@ export function Button({ className, ...props }: ComponentProps<typeof motion.but
  * the form element itself. Shows a spinner and disables automatically while
  * the server action is in flight, no local state needed at the call site.
  */
-export function SubmitButton({ children, ...props }: ComponentProps<typeof Button>) {
+export function SubmitButton({ children, disabled, ...props }: ComponentProps<typeof Button>) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} {...props}>
+    <Button type="submit" disabled={pending || disabled} {...props}>
       {pending ? <Spinner size={16} /> : children}
     </Button>
   );
