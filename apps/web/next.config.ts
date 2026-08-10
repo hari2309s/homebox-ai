@@ -1,5 +1,15 @@
+import path from "node:path";
+import { loadEnvConfig } from "@next/env";
 import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
+
+// Next only auto-loads .env.local from this app's own directory, but the
+// shared .env.local (also read by Drizzle Kit) lives at the monorepo root.
+// forceReload (4th arg): Next's own startup already calls loadEnvConfig
+// against this app's own directory (finding nothing) and caches that empty
+// result — without forcing a reload here, this call would just return that
+// stale cache instead of actually reading the monorepo root's files.
+loadEnvConfig(path.join(process.cwd(), "..", ".."), process.env.NODE_ENV !== "production", console, true);
 
 const withSerwist = withSerwistInit({
   swSrc: "app/sw.ts",

@@ -6,6 +6,7 @@ import type { ComponentProps } from "react";
 const TAGS = {
   div: motion.div,
   nav: motion.nav,
+  header: motion.header,
 } as const;
 
 type Tag = keyof typeof TAGS;

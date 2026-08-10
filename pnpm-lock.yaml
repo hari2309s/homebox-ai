@@ -60,6 +60,9 @@ importers:
       '@homebox-ai/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@next/env':
+        specifier: ^15.0.0
+        version: 15.5.23
       '@serwist/next':
         specifier: ^9.0.0
         version: 9.5.12(next@15.5.23(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
@@ -145,6 +148,9 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.20.1
+      dotenv:
+        specifier: ^16.4.0
+        version: 16.4.5
       drizzle-kit:
         specifier: ^0.28.0
         version: 0.28.1

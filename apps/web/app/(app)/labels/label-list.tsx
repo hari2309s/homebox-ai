@@ -1,10 +1,10 @@
 "use client";
 
-import { StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { EmptyState, StaggerItem, StaggerList } from "@homebox-ai/ui";
 
 export function LabelList({ labels }: { labels: { id: string; name: string }[] }) {
   if (labels.length === 0) {
-    return <p className="text-sm text-muted">No labels yet — add your first one above.</p>;
+    return <EmptyState>No labels yet — add your first one above.</EmptyState>;
   }
 
   return (

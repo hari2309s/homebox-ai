@@ -4,6 +4,7 @@ import { Input, SubmitButton } from "@homebox-ai/ui";
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { createLabelAction } from "./actions";
+import { CrudShell } from "../crud-shell";
 import { LabelList } from "./label-list";
 
 export default async function LabelsPage() {
@@ -11,16 +12,18 @@ export default async function LabelsPage() {
   const labels = user ? await labelQueries.listLabels(user.id) : [];
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
-      <form
-        action={createLabelAction}
-        className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center"
-      >
-        <Input name="name" placeholder="New label name" required className="sm:flex-1" />
-        <SubmitButton>Add</SubmitButton>
-      </form>
-
+    <CrudShell
+      form={
+        <form
+          action={createLabelAction}
+          className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center md:rounded-md md:bg-transparent md:p-0"
+        >
+          <Input name="name" placeholder="New label name" required className="sm:flex-1" />
+          <SubmitButton>Add</SubmitButton>
+        </form>
+      }
+    >
       <LabelList labels={labels} />
-    </div>
+    </CrudShell>
   );
 }

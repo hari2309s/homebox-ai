@@ -24,9 +24,15 @@ export function Spinner({ size = 20, className, ...props }: SpinnerProps) {
   );
 }
 
+/**
+ * `h-full` centers it exactly within a bounded-height ancestor (e.g. the
+ * (app) shell's content pane); `min-h-[50vh]` is the fallback for contexts
+ * without one (e.g. the root-level loading.tsx), where `h-full` alone would
+ * collapse to the content's natural height instead of actually centering.
+ */
 export function PageLoader() {
   return (
-    <div className="flex items-center justify-center py-24 text-accent">
+    <div className="flex h-full min-h-[50vh] items-center justify-center text-accent">
       <Spinner size={32} />
     </div>
   );

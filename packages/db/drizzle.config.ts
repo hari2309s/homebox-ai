@@ -1,4 +1,12 @@
+import path from "node:path";
+import { config } from "dotenv";
 import { defineConfig } from "drizzle-kit";
+
+// drizzle-kit runs with this package's directory as cwd, but the shared
+// .env.local (also loaded by apps/web/next.config.ts) lives at the monorepo
+// root — Next auto-loads .env.local from an app's own directory, but nothing
+// does that for plain Node CLIs like drizzle-kit.
+config({ path: path.join(process.cwd(), "..", "..", ".env.local") });
 
 export default defineConfig({
   schema: "./src/schema.ts",

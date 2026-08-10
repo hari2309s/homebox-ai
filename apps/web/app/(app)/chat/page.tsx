@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, FadeIn, Input, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { motion } from "framer-motion";
 import type { FormEvent } from "react";
 import { useRef, useState } from "react";
 
@@ -15,6 +16,21 @@ const SUGGESTIONS = [
   "What's in the garage?",
   "Anything with a warranty expiring soon?",
 ];
+
+function TypingDots() {
+  return (
+    <div className="flex items-center gap-1">
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={i}
+          className="h-1.5 w-1.5 rounded-full bg-muted"
+          animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
+          transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function ChatPage() {
   const [sessionId] = useState(() => crypto.randomUUID());
@@ -89,8 +105,10 @@ export default function ChatPage() {
             {messages.map((message) => (
               <StaggerItem
                 key={message.id}
-                className={`max-w-[80%] whitespace-pre-wrap rounded-lg px-4 py-2.5 text-sm ${
-                  message.role === "user" ? "self-end bg-accent text-white" : "self-start bg-white text-body"
+                className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
+                  message.role === "user"
+                    ? "self-end rounded-br-sm bg-accent text-white"
+                    : "self-start rounded-bl-sm bg-white text-body"
                 }`}
               >
                 {message.content}
@@ -100,9 +118,8 @@ export default function ChatPage() {
         )}
 
         {pending && (
-          <div className="mt-3 flex w-fit items-center gap-2 self-start rounded-lg bg-white px-4 py-2.5 text-muted">
-            <Spinner size={16} />
-            <span className="text-sm">Thinking…</span>
+          <div className="mt-3 flex w-fit items-center self-start rounded-2xl rounded-bl-sm bg-white px-4 py-3">
+            <TypingDots />
           </div>
         )}
 

@@ -62,9 +62,11 @@ interface AnimatedHomeboxIconProps {
   size?: number;
   /** Triggers an attentive wide-eye + smile pulse — e.g. while a form field has focus. */
   attentive?: boolean;
+  /** e.g. responsive `h-*`/`w-*` utilities — overrides the `size` prop's rendered dimensions. */
+  className?: string;
 }
 
-export function AnimatedHomeboxIcon({ size = 96, attentive = false }: AnimatedHomeboxIconProps) {
+export function AnimatedHomeboxIcon({ size = 96, attentive = false, className }: AnimatedHomeboxIconProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   const leftPupilX = useMotionValue(0);
@@ -178,7 +180,7 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false }: AnimatedHo
   }, [attentive, leftEyeScaleY, rightEyeScaleY, mouthScale]);
 
   return (
-    <svg ref={svgRef} viewBox="0 0 512 512" width={size} height={size}>
+    <svg ref={svgRef} viewBox="0 0 512 512" width={size} height={size} className={className}>
       <path d={PATHS.body} fill="#F7DEAE" />
       <path d={PATHS.roof} fill="#FB7369" />
 

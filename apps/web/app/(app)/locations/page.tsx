@@ -4,6 +4,7 @@ import { Input, Select, SubmitButton } from "@homebox-ai/ui";
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { createLocationAction } from "./actions";
+import { CrudShell } from "../crud-shell";
 import { LocationList } from "./location-list";
 
 export default async function LocationsPage() {
@@ -20,24 +21,26 @@ export default async function LocationsPage() {
   const paths = locations.map((location) => ({ id: location.id, path: pathFor(location.id) }));
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6">
-      <form
-        action={createLocationAction}
-        className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center"
-      >
-        <Input name="name" placeholder="New location name" required className="sm:flex-1" />
-        <Select name="parentId" defaultValue="">
-          <option value="">No parent (top-level)</option>
-          {locations.map((location) => (
-            <option key={location.id} value={location.id}>
-              {pathFor(location.id)}
-            </option>
-          ))}
-        </Select>
-        <SubmitButton>Add</SubmitButton>
-      </form>
-
+    <CrudShell
+      form={
+        <form
+          action={createLocationAction}
+          className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center md:rounded-md md:bg-transparent md:p-0"
+        >
+          <Input name="name" placeholder="New location name" required className="sm:flex-1" />
+          <Select name="parentId" defaultValue="">
+            <option value="">No parent (top-level)</option>
+            {locations.map((location) => (
+              <option key={location.id} value={location.id}>
+                {pathFor(location.id)}
+              </option>
+            ))}
+          </Select>
+          <SubmitButton>Add</SubmitButton>
+        </form>
+      }
+    >
       <LocationList paths={paths} />
-    </div>
+    </CrudShell>
   );
 }
