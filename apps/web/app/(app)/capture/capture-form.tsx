@@ -70,42 +70,58 @@ export function CaptureForm({ locations, labels }: CaptureFormProps) {
     ? labels.find((label) => label.name.toLowerCase() === suggestedLabel.toLowerCase())?.id
     : undefined;
 
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col items-start gap-3 rounded-lg bg-surface-soft p-4">
-        <label className="cursor-pointer rounded-md bg-accent px-4 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-accent-hover">
-          {previewUrl ? "Retake photo" : "Take or upload a photo"}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
+  const photoPicker = (
+    <label className="cursor-pointer rounded-md bg-accent px-4 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-accent-hover">
+      {previewUrl ? "Retake photo" : "Take or upload a photo"}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileChange}
+        className="hidden"
+      />
+    </label>
+  );
 
+  if (!draft) {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-4 text-center sm:p-6">
+          {previewUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- locally-selected blob URL, not a network image
+            <img src={previewUrl} alt="" className="max-h-64 w-auto rounded-md object-contain" />
+          ) : (
+            <p className="text-sm text-muted">Take or upload a photo to get started.</p>
+          )}
+          {analyzing && (
+            <div className="flex items-center gap-2 text-muted">
+              <Spinner size={16} />
+              <span className="text-sm">Looking at your photo…</span>
+            </div>
+          )}
+          {error && (
+            <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
+              {error}
+            </p>
+          )}
+        </div>
+        <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
+          <div className="flex md:mx-auto md:w-full md:max-w-2xl">{photoPicker}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form action={handleSubmit} className="flex h-full flex-col">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6 md:mx-auto md:w-full md:max-w-2xl">
         {previewUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- locally-selected blob URL, not a network image
-          <img src={previewUrl} alt="" className="max-h-64 w-auto rounded-md object-contain" />
+          <img src={previewUrl} alt="" className="max-h-48 w-auto self-center rounded-md object-contain" />
         )}
 
-        {analyzing && (
-          <div className="flex items-center gap-2 text-muted">
-            <Spinner size={16} />
-            <span className="text-sm">Looking at your photo…</span>
-          </div>
-        )}
-      </div>
-
-      {error && (
-        <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
-          {error}
-        </p>
-      )}
-
-      {draft && (
-        <form action={handleSubmit} className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4">
+        <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
             Name
             <Input name="name" defaultValue={draft.name} required />
@@ -155,18 +171,27 @@ export function CaptureForm({ locations, labels }: CaptureFormProps) {
               ))}
             </fieldset>
           )}
-          <div className="flex items-center gap-3">
-            <SubmitButton>Save item</SubmitButton>
-            <button
-              type="button"
-              onClick={reset}
-              className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
-            >
-              Start over
-            </button>
-          </div>
-        </form>
-      )}
-    </div>
+        </div>
+
+        {error && (
+          <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
+            {error}
+          </p>
+        )}
+      </div>
+
+      <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
+        <div className="flex items-center gap-3 md:mx-auto md:w-full md:max-w-2xl">
+          <SubmitButton>Save item</SubmitButton>
+          <button
+            type="button"
+            onClick={reset}
+            className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
+          >
+            Start over
+          </button>
+        </div>
+      </div>
+    </form>
   );
 }

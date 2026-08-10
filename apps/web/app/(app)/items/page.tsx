@@ -24,7 +24,7 @@ export default async function ItemsPage() {
       form={
         <form
           action={createItemAction}
-          className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 md:rounded-md md:bg-transparent md:p-0"
+          className="flex flex-col gap-3"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Input name="name" placeholder="New item name" required className="sm:flex-1" />

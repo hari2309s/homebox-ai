@@ -1,7 +1,7 @@
 "use client";
 
 import type { MaintenanceSuggestion } from "@homebox-ai/ai";
-import { Button, Select, Spinner } from "@homebox-ai/ui";
+import { Button, EmptyState, Select, Spinner } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { acceptMaintenanceSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
@@ -47,65 +47,71 @@ export function MaintenancePanel({ items }: MaintenancePanelProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center">
-        <Select value={itemId} onChange={(event) => setItemId(event.target.value)} className="sm:flex-1">
-          <option value="">Choose an item…</option>
-          {items.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.name}
-            </option>
-          ))}
-        </Select>
-        <Button type="button" onClick={handleGetSuggestions} disabled={!itemId || loading}>
-          {loading ? <Spinner size={16} /> : "Get suggestions"}
-        </Button>
+    <div className="flex h-full flex-col">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6 md:mx-auto md:w-full md:max-w-2xl">
+        {error && (
+          <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
+            {error}
+          </p>
+        )}
+
+        {suggestions ? (
+          <div className="flex flex-col gap-3">
+            {suggestions.warrantyExpiringSoon && (
+              <p className="rounded-md bg-accent/10 px-3 py-2 text-sm font-semibold text-accent-hover">
+                This item&apos;s warranty is expiring within 60 days.
+              </p>
+            )}
+            {suggestions.suggestions.length === 0 ? (
+              <p className="text-sm text-muted">No maintenance suggested right now.</p>
+            ) : (
+              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {suggestions.suggestions.map((suggestion, index) => {
+                  const accepted = acceptedNames.has(suggestion.name);
+                  return (
+                    <li
+                      key={`${suggestion.name}-${index}`}
+                      className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3"
+                    >
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium text-ink">{suggestion.name}</span>
+                        <span className="text-sm text-muted">{suggestion.reason}</span>
+                        <span className="text-xs text-muted">By {suggestion.recommendedDate}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={() => handleAccept(suggestion)}
+                        disabled={accepted}
+                        className="shrink-0"
+                      >
+                        {accepted ? "Added" : "Add to log"}
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <EmptyState>Choose an item below to get maintenance and warranty suggestions.</EmptyState>
+        )}
       </div>
 
-      {error && (
-        <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
-          {error}
-        </p>
-      )}
-
-      {suggestions && (
-        <div className="flex flex-col gap-3">
-          {suggestions.warrantyExpiringSoon && (
-            <p className="rounded-md bg-accent/10 px-3 py-2 text-sm font-semibold text-accent-hover">
-              This item&apos;s warranty is expiring within 60 days.
-            </p>
-          )}
-          {suggestions.suggestions.length === 0 ? (
-            <p className="text-sm text-muted">No maintenance suggested right now.</p>
-          ) : (
-            <ul className="m-0 flex list-none flex-col gap-2 p-0">
-              {suggestions.suggestions.map((suggestion, index) => {
-                const accepted = acceptedNames.has(suggestion.name);
-                return (
-                  <li
-                    key={`${suggestion.name}-${index}`}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3"
-                  >
-                    <div className="flex flex-col gap-0.5">
-                      <span className="font-medium text-ink">{suggestion.name}</span>
-                      <span className="text-sm text-muted">{suggestion.reason}</span>
-                      <span className="text-xs text-muted">By {suggestion.recommendedDate}</span>
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={() => handleAccept(suggestion)}
-                      disabled={accepted}
-                      className="shrink-0"
-                    >
-                      {accepted ? "Added" : "Add to log"}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+      <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center md:mx-auto md:w-full md:max-w-2xl">
+          <Select value={itemId} onChange={(event) => setItemId(event.target.value)} className="sm:flex-1">
+            <option value="">Choose an item…</option>
+            {items.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </Select>
+          <Button type="button" onClick={handleGetSuggestions} disabled={!itemId || loading}>
+            {loading ? <Spinner size={16} /> : "Get suggestions"}
+          </Button>
         </div>
-      )}
+      </div>
     </div>
   );
 }

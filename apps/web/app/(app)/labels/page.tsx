@@ -16,7 +16,7 @@ export default async function LabelsPage() {
       form={
         <form
           action={createLabelAction}
-          className="flex flex-col gap-3 rounded-lg bg-surface-soft p-4 sm:flex-row sm:items-center md:rounded-md md:bg-transparent md:p-0"
+          className="flex flex-col gap-3 sm:flex-row sm:items-center"
         >
           <Input name="name" placeholder="New label name" required className="sm:flex-1" />
           <SubmitButton>Add</SubmitButton>

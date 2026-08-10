@@ -11,7 +11,7 @@ export default async function ReceiptsPage() {
     : [[], []];
 
   return (
-    <div className="flex flex-col gap-6 p-4 sm:p-6 md:mx-auto md:w-full md:max-w-2xl">
+    <div className="h-full">
       <ReceiptForm locations={locations} labels={labels} />
     </div>
   );
