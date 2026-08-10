@@ -44,7 +44,7 @@
 | Natural-language search & chat over your inventory | ✅ Done |
 | Photo → structured item entry | ✅ Done |
 | Receipt import → batch item entry | ✅ Done |
-| Maintenance & warranty assistant | 🚧 Planned |
+| Maintenance & warranty assistant | ✅ Done |
 | Installable PWA (offline app shell) | ✅ Done |
 
 The three AI features share one LangGraph-based router (`packages/ai`) that fans each task out across free-tier providers with fallback — see [Stack](#stack).
