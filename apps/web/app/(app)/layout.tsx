@@ -18,6 +18,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       >
         <AnimatedHomeboxIcon size={28} className="h-7 w-7 md:h-10 md:w-10" />
         <span className="font-bold text-ink md:text-lg">Homebox AI</span>
+        <div id="header-actions" className="ml-auto flex items-center gap-2" />
       </FadeIn>
       <div className="app-content flex-1 overflow-y-auto">{children}</div>
       <BottomNav />
