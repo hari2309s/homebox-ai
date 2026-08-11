@@ -8,3 +8,4 @@ export * as itemQueries from "./queries/items";
 export * as itemLabelQueries from "./queries/item-labels";
 export * as attachmentQueries from "./queries/attachments";
 export * as maintenanceQueries from "./queries/maintenance";
+export * as chatQueries from "./queries/chat";

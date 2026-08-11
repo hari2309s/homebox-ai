@@ -2,9 +2,11 @@
 
 import { Button, FadeIn, Input, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { motion } from "framer-motion";
-import type { FormEvent } from "react";
-import { useRef, useState } from "react";
+import type { ComponentProps, FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { listChatSessionsAction, loadChatSessionAction } from "./actions";
+import { HistorySheet } from "./history-sheet";
 import { MessageContent } from "./message-content";
 
 interface ChatMessage {
@@ -13,11 +15,27 @@ interface ChatMessage {
   content: string;
 }
 
+interface ChatSession {
+  sessionId: string;
+  title: string;
+  lastMessageAt: string;
+}
+
 const SUGGESTIONS = [
   "Where's my passport?",
   "What's in the garage?",
   "Anything with a warranty expiring soon?",
 ];
+
+function HistoryIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M3 12a9 9 0 1 0 2.6-6.36" />
+      <path d="M3 4v5h5" />
+      <path d="M12 8v4l3 2" />
+    </svg>
+  );
+}
 
 function TypingDots() {
   return (
@@ -35,12 +53,39 @@ function TypingDots() {
 }
 
 export default function ChatPage() {
-  const [sessionId] = useState(() => crypto.randomUUID());
+  const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    listChatSessionsAction().then(setSessions).catch(() => {});
+  }, []);
+
+  function startNewChat() {
+    setSessionId(crypto.randomUUID());
+    setMessages([]);
+    setError(null);
+    setHistoryOpen(false);
+  }
+
+  async function switchToSession(id: string) {
+    setHistoryOpen(false);
+    if (id === sessionId) return;
+    setError(null);
+    setMessages([]);
+    setSessionId(id);
+    try {
+      const history = await loadChatSessionAction(id);
+      setMessages(history);
+    } catch {
+      setError("Couldn't load that conversation");
+    }
+  }
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
@@ -70,6 +115,7 @@ export default function ChatPage() {
       if (!response.ok) throw new Error(data.error ?? "Something went wrong");
       if (!data.reply) throw new Error("Something went wrong");
       setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.reply! }]);
+      listChatSessionsAction().then(setSessions).catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -85,6 +131,17 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-full flex-col bg-surface-soft">
+      <div className="flex shrink-0 items-center justify-between border-b border-border bg-white px-4 py-2.5 sm:px-6">
+        <span className="text-sm font-semibold text-ink">Chat</span>
+        <button
+          type="button"
+          onClick={() => setHistoryOpen(true)}
+          aria-label="Conversation history"
+          className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent"
+        >
+          <HistoryIcon className="h-5 w-5" />
+        </button>
+      </div>
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {messages.length === 0 ? (
           <FadeIn className="flex h-full flex-col items-center justify-center gap-3 text-center">
@@ -146,6 +203,15 @@ export default function ChatPage() {
           {pending ? <Spinner size={16} /> : "Send"}
         </Button>
       </form>
+
+      <HistorySheet
+        open={historyOpen}
+        sessions={sessions}
+        activeSessionId={sessionId}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={switchToSession}
+        onNewChat={startNewChat}
+      />
     </div>
   );
 }

@@ -20,6 +20,8 @@ export const authUsers = authSchema.table("users", {
 
 export const attachmentType = pgEnum("attachment_type", ["photo", "receipt", "manual"]);
 
+export const chatMessageRole = pgEnum("chat_message_role", ["user", "assistant"]);
+
 export const locations = pgTable("locations", {
   id: uuid("id").primaryKey().defaultRandom(),
   ownerId: uuid("owner_id")
@@ -83,6 +85,17 @@ export const attachments = pgTable("attachments", {
   // Path within the Supabase Storage "attachments" bucket, not a local filesystem path.
   storagePath: text("storage_path").notNull(),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  sessionId: uuid("session_id").notNull(),
+  role: chatMessageRole("role").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const maintenanceEntries = pgTable("maintenance_entries", {
