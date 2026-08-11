@@ -1,10 +1,13 @@
 import { AnimatedHomeboxIcon, FadeIn } from "@homebox-ai/ui";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { BottomNav } from "./bottom-nav";
+import { LogoutButton } from "./logout-button";
+import { SettingsIcon } from "./settings-icon";
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
@@ -18,7 +21,17 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       >
         <AnimatedHomeboxIcon size={28} className="h-7 w-7 md:h-10 md:w-10" />
         <span className="font-bold text-ink md:text-lg">Homebox AI</span>
-        <div id="header-actions" className="ml-auto flex items-center gap-2" />
+        <div className="ml-auto flex items-center gap-1">
+          <div id="header-actions" className="flex items-center gap-1" />
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            className="rounded-md p-1 text-ink transition-colors duration-150 hover:text-accent"
+          >
+            <SettingsIcon className="h-5 w-5 md:h-6 md:w-6" />
+          </Link>
+          <LogoutButton />
+        </div>
       </FadeIn>
       <div className="app-content flex-1 overflow-y-auto">{children}</div>
       <BottomNav />
