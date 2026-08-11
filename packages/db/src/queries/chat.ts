@@ -28,6 +28,16 @@ export function listChatMessages(userId: string, sessionId: string) {
   );
 }
 
+export function listAllChatMessages(userId: string) {
+  return withRLS(userId, (tx) =>
+    tx
+      .select()
+      .from(chatMessages)
+      .where(eq(chatMessages.ownerId, userId))
+      .orderBy(asc(chatMessages.sessionId), asc(chatMessages.createdAt)),
+  );
+}
+
 export function listChatSessions(userId: string) {
   return withRLS(userId, (tx) =>
     tx

@@ -7,7 +7,8 @@
     "./server": "./src/server.ts",
     "./client": "./src/client.ts",
     "./middleware": "./src/middleware.ts",
-    "./storage": "./src/storage.ts"
+    "./storage": "./src/storage.ts",
+    "./admin": "./src/admin.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.0",

@@ -17,6 +17,10 @@ export function listMaintenanceForItem(userId: string, itemId: string) {
   );
 }
 
+export function listAllMaintenance(userId: string) {
+  return withRLS(userId, (tx) => tx.select().from(maintenanceEntries).where(eq(maintenanceEntries.ownerId, userId)));
+}
+
 export function createMaintenanceEntry(userId: string, data: CreateMaintenanceEntryInput) {
   return withRLS(userId, (tx) =>
     tx

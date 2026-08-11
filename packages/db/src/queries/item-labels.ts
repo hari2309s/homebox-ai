@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 
-import { itemLabels } from "../schema";
+import { itemLabels, items } from "../schema";
 import { withRLS } from "../rls";
 
 // RLS on item_labels checks ownership via the referenced items/labels rows
@@ -20,4 +20,14 @@ export function setItemLabels(userId: string, itemId: string, labelIds: string[]
 
 export function listLabelsForItem(userId: string, itemId: string) {
   return withRLS(userId, (tx) => tx.select().from(itemLabels).where(eq(itemLabels.itemId, itemId)));
+}
+
+export function listAllItemLabelsForUser(userId: string) {
+  return withRLS(userId, (tx) =>
+    tx
+      .select({ itemId: itemLabels.itemId, labelId: itemLabels.labelId })
+      .from(itemLabels)
+      .innerJoin(items, eq(itemLabels.itemId, items.id))
+      .where(eq(items.ownerId, userId)),
+  );
 }
