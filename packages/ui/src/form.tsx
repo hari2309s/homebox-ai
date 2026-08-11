@@ -52,7 +52,7 @@ export function Button({ className, ...props }: ComponentProps<typeof motion.but
       whileTap={props.disabled ? undefined : { scale: 0.97 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       className={cx(
-        "cursor-pointer rounded-md bg-accent px-4 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60",
+        "flex cursor-pointer items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60",
         className,
       )}
       {...props}

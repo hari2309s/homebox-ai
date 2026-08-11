@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import type { FormEvent } from "react";
 import { useRef, useState } from "react";
 
+import { MessageContent } from "./message-content";
+
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -105,13 +107,13 @@ export default function ChatPage() {
             {messages.map((message) => (
               <StaggerItem
                 key={message.id}
-                className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm ${
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
                   message.role === "user"
-                    ? "self-end rounded-br-sm bg-accent text-white"
+                    ? "self-end whitespace-pre-wrap rounded-br-sm bg-accent text-white"
                     : "self-start rounded-bl-sm bg-white text-body"
                 }`}
               >
-                {message.content}
+                {message.role === "assistant" ? <MessageContent content={message.content} /> : message.content}
               </StaggerItem>
             ))}
           </StaggerList>

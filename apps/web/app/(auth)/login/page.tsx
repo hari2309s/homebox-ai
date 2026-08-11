@@ -51,11 +51,13 @@ export default function LoginPage() {
     if (mode === "sign-in") {
       setPending(true);
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-      setPending(false);
       if (authError) {
+        setPending(false);
         setError(authError.message);
         return;
       }
+      // Left pending — about to navigate away, so resetting it here would just
+      // flash the button back to "Sign in" for a moment before the page changes.
       router.replace("/items");
       router.refresh();
       return;
@@ -72,9 +74,9 @@ export default function LoginPage() {
       password,
       options: { data: { full_name: name.trim() } },
     });
-    setPending(false);
 
     if (authError) {
+      setPending(false);
       setError(authError.message);
       return;
     }
@@ -82,11 +84,13 @@ export default function LoginPage() {
     // The project requires email confirmation, so signUp succeeds without
     // creating a session — there's nothing to redirect into yet.
     if (!data.session) {
+      setPending(false);
       setInfo("Check your email to confirm your account, then sign in.");
       setMode("sign-in");
       return;
     }
 
+    // Left pending for the same reason as the sign-in branch above.
     router.replace("/items");
     router.refresh();
   }
@@ -239,7 +243,7 @@ export default function LoginPage() {
             whileHover={pending ? undefined : { scale: 1.02 }}
             whileTap={pending ? undefined : { scale: 0.97 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            className="cursor-pointer rounded-md bg-accent px-3 py-3 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
+            className="flex cursor-pointer items-center justify-center rounded-md bg-accent px-3 py-3 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
           >
             <AnimatePresence mode="wait" initial={false}>
               <motion.span

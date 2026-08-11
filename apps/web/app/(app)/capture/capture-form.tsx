@@ -107,7 +107,7 @@ export function CaptureForm({ locations, labels }: CaptureFormProps) {
           )}
         </div>
         <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
-          <div className="flex md:mx-auto md:w-full md:max-w-2xl">{photoPicker}</div>
+          <div className="flex justify-center md:mx-auto md:w-full md:max-w-2xl">{photoPicker}</div>
         </div>
       </div>
     );
@@ -181,7 +181,7 @@ export function CaptureForm({ locations, labels }: CaptureFormProps) {
       </div>
 
       <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
-        <div className="flex items-center gap-3 md:mx-auto md:w-full md:max-w-2xl">
+        <div className="flex items-center justify-center gap-3 md:mx-auto md:w-full md:max-w-2xl">
           <SubmitButton>Save item</SubmitButton>
           <button
             type="button"
