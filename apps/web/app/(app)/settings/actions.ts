@@ -5,9 +5,21 @@ import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase
 import { deleteAllUserAttachments } from "@homebox-ai/supabase/storage";
 import { redirect } from "next/navigation";
 
-export async function deleteAccountAction() {
+export async function deleteAccountAction(formData: FormData) {
   const user = await getSessionUser();
   if (!user) throw new Error("Not authenticated");
+
+  // Re-check the "type your email to confirm" gate server-side — the client
+  // only disables the submit button, which isn't a real guard against an
+  // irreversible action being triggered without it (e.g. a submitted form
+  // missing its expected fields).
+  const confirmation = String(formData.get("confirm") ?? "")
+    .trim()
+    .toLowerCase();
+  const email = user.email?.trim().toLowerCase();
+  if (!email || confirmation !== email) {
+    throw new Error("Confirmation text does not match your account email.");
+  }
 
   const admin = createSupabaseAdminClient();
 

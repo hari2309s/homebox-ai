@@ -7,7 +7,10 @@ import { deleteAccountAction } from "./actions";
 
 export function DeleteAccountForm({ email }: { email: string }) {
   const [confirmText, setConfirmText] = useState("");
-  const confirmed = confirmText.trim().toLowerCase() === email.toLowerCase();
+  // Guard against the empty-string trap: with no email, an empty confirmText
+  // would trivially equal "", enabling the button without the user typing
+  // anything.
+  const confirmed = email.trim().length > 0 && confirmText.trim().toLowerCase() === email.toLowerCase();
 
   return (
     <form action={deleteAccountAction} className="flex flex-col gap-3">
@@ -17,7 +20,12 @@ export function DeleteAccountForm({ email }: { email: string }) {
       </p>
       <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
         Type <span className="font-mono">{email}</span> to confirm
-        <Input value={confirmText} onChange={(event) => setConfirmText(event.target.value)} autoComplete="off" />
+        <Input
+          name="confirm"
+          value={confirmText}
+          onChange={(event) => setConfirmText(event.target.value)}
+          autoComplete="off"
+        />
       </label>
       <SubmitButton disabled={!confirmed} className="self-start">
         Delete my account
