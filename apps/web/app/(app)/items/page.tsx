@@ -1,5 +1,5 @@
 import { itemQueries, labelQueries, locationQueries } from "@homebox-ai/db";
-import { Input, Select, SubmitButton } from "@homebox-ai/ui";
+import { Button, Input, Select, SubmitButton } from "@homebox-ai/ui";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
@@ -7,11 +7,16 @@ import { createItemAction } from "./actions";
 import { CrudShell } from "../crud-shell";
 import { ItemList } from "./item-list";
 
-export default async function ItemsPage() {
+interface ItemsPageProps {
+  searchParams: Promise<{ q?: string; locationId?: string }>;
+}
+
+export default async function ItemsPage({ searchParams }: ItemsPageProps) {
+  const { q, locationId: filterLocationId } = await searchParams;
   const user = await getSessionUser();
   const [items, locations, labels] = user
     ? await Promise.all([
-        itemQueries.searchItems(user.id),
+        itemQueries.searchItems(user.id, { query: q, locationId: filterLocationId }),
         locationQueries.listLocations(user.id),
         labelQueries.listLabels(user.id),
       ])
@@ -51,6 +56,18 @@ export default async function ItemsPage() {
         </form>
       }
     >
+      <form method="GET" className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Input name="q" defaultValue={q ?? ""} placeholder="Search items…" className="sm:flex-1" />
+        <Select name="locationId" defaultValue={filterLocationId ?? ""}>
+          <option value="">All locations</option>
+          {locations.map((location) => (
+            <option key={location.id} value={location.id}>
+              {location.name}
+            </option>
+          ))}
+        </Select>
+        <Button type="submit">Search</Button>
+      </form>
       <ItemList items={items} locationNameById={locationNameById} />
     </CrudShell>
   );

@@ -36,6 +36,8 @@ export interface CreateItemInput {
   quantity?: number;
   purchasePrice?: string;
   purchaseDate?: string;
+  salePrice?: string;
+  saleDate?: string;
   warrantyExpires?: string;
   locationId?: string | null;
   notes?: string;
@@ -50,7 +52,20 @@ export function createItem(userId: string, data: CreateItemInput) {
   );
 }
 
-export function updateItem(userId: string, itemId: string, data: Partial<CreateItemInput>) {
+export interface UpdateItemInput {
+  name?: string;
+  description?: string | null;
+  quantity?: number;
+  purchasePrice?: string | null;
+  purchaseDate?: string | null;
+  salePrice?: string | null;
+  saleDate?: string | null;
+  warrantyExpires?: string | null;
+  locationId?: string | null;
+  notes?: string | null;
+}
+
+export function updateItem(userId: string, itemId: string, data: UpdateItemInput) {
   return withRLS(userId, (tx) =>
     tx
       .update(items)

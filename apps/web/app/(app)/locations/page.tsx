@@ -18,7 +18,7 @@ export default async function LocationsPage() {
     return location.parentId ? `${pathFor(location.parentId)} / ${location.name}` : location.name;
   }
 
-  const paths = locations.map((location) => ({ id: location.id, path: pathFor(location.id) }));
+  const pathById = new Map(locations.map((location) => [location.id, pathFor(location.id)]));
 
   return (
     <CrudShell
@@ -40,7 +40,7 @@ export default async function LocationsPage() {
         </form>
       }
     >
-      <LocationList paths={paths} />
+      <LocationList locations={locations} pathById={pathById} />
     </CrudShell>
   );
 }
