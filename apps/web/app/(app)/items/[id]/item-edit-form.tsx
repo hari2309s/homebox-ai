@@ -10,16 +10,26 @@ interface ItemEditFormProps {
     name: string;
     description: string | null;
     quantity: number;
+    assetId: number | null;
+    serialNumber: string | null;
+    modelNumber: string | null;
+    manufacturer: string | null;
+    insured: boolean;
+    archived: boolean;
+    lifetimeWarranty: boolean;
     purchasePrice: string | null;
     purchaseDate: string | null;
+    purchaseFrom: string | null;
     salePrice: string | null;
     saleDate: string | null;
+    soldTo: string | null;
+    soldNotes: string | null;
     warrantyExpires: string | null;
     locationId: string | null;
     notes: string | null;
   };
   locations: { id: string; name: string }[];
-  labels: { id: string; name: string }[];
+  labels: { id: string; name: string; color: string | null }[];
   selectedLabelIds: string[];
 }
 
@@ -29,6 +39,12 @@ export function ItemEditForm({ item, locations, labels, selectedLabelIds }: Item
   return (
     <form action={updateItemAction} className="flex flex-col gap-4 rounded-md border border-border bg-surface-soft p-4">
       <input type="hidden" name="itemId" value={item.id} />
+
+      {item.assetId != null && (
+        <span className="self-start rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-muted">
+          Asset #{String(item.assetId).padStart(4, "0")}
+        </span>
+      )}
 
       <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
         Name
@@ -60,6 +76,21 @@ export function ItemEditForm({ item, locations, labels, selectedLabelIds }: Item
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
+          Manufacturer
+          <Input name="manufacturer" defaultValue={item.manufacturer ?? ""} />
+        </label>
+        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
+          Model number
+          <Input name="modelNumber" defaultValue={item.modelNumber ?? ""} />
+        </label>
+        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
+          Serial number
+          <Input name="serialNumber" defaultValue={item.serialNumber ?? ""} />
+        </label>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
           Purchase price
           <Input name="purchasePrice" defaultValue={item.purchasePrice ?? ""} placeholder="0.00" />
         </label>
@@ -67,7 +98,16 @@ export function ItemEditForm({ item, locations, labels, selectedLabelIds }: Item
           Purchase date
           <Input name="purchaseDate" type="date" defaultValue={item.purchaseDate ?? ""} />
         </label>
+        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
+          Purchased from
+          <Input name="purchaseFrom" defaultValue={item.purchaseFrom ?? ""} />
+        </label>
       </div>
+
+      <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
+        Warranty expires
+        <Input name="warrantyExpires" type="date" defaultValue={item.warrantyExpires ?? ""} />
+      </label>
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
@@ -78,17 +118,41 @@ export function ItemEditForm({ item, locations, labels, selectedLabelIds }: Item
           Sale date
           <Input name="saleDate" type="date" defaultValue={item.saleDate ?? ""} />
         </label>
+        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
+          Sold to
+          <Input name="soldTo" defaultValue={item.soldTo ?? ""} />
+        </label>
       </div>
 
       <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-        Warranty expires
-        <Input name="warrantyExpires" type="date" defaultValue={item.warrantyExpires ?? ""} />
+        Sale notes
+        <Input name="soldNotes" defaultValue={item.soldNotes ?? ""} />
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
         Notes
         <Input name="notes" defaultValue={item.notes ?? ""} />
       </label>
+
+      <fieldset className="flex flex-wrap gap-4 border-none p-0">
+        <label className="flex items-center gap-1.5 text-sm text-body">
+          <input type="checkbox" name="insured" defaultChecked={item.insured} className="accent-accent" />
+          Insured
+        </label>
+        <label className="flex items-center gap-1.5 text-sm text-body">
+          <input
+            type="checkbox"
+            name="lifetimeWarranty"
+            defaultChecked={item.lifetimeWarranty}
+            className="accent-accent"
+          />
+          Lifetime warranty
+        </label>
+        <label className="flex items-center gap-1.5 text-sm text-body">
+          <input type="checkbox" name="archived" defaultChecked={item.archived} className="accent-accent" />
+          Archived
+        </label>
+      </fieldset>
 
       {labels.length > 0 && (
         <fieldset className="flex flex-wrap gap-3 border-none p-0">
@@ -101,6 +165,9 @@ export function ItemEditForm({ item, locations, labels, selectedLabelIds }: Item
                 defaultChecked={selected.has(label.id)}
                 className="accent-accent"
               />
+              {label.color && (
+                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: label.color }} />
+              )}
               {label.name}
             </label>
           ))}

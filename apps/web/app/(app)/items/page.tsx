@@ -8,15 +8,16 @@ import { CrudShell } from "../crud-shell";
 import { ItemList } from "./item-list";
 
 interface ItemsPageProps {
-  searchParams: Promise<{ q?: string; locationId?: string }>;
+  searchParams: Promise<{ q?: string; locationId?: string; archived?: string }>;
 }
 
 export default async function ItemsPage({ searchParams }: ItemsPageProps) {
-  const { q, locationId: filterLocationId } = await searchParams;
+  const { q, locationId: filterLocationId, archived } = await searchParams;
+  const includeArchived = archived === "1";
   const user = await getSessionUser();
   const [items, locations, labels] = user
     ? await Promise.all([
-        itemQueries.searchItems(user.id, { query: q, locationId: filterLocationId }),
+        itemQueries.searchItems(user.id, { query: q, locationId: filterLocationId, includeArchived }),
         locationQueries.listLocations(user.id),
         labelQueries.listLabels(user.id),
       ])
@@ -48,6 +49,9 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
               {labels.map((label) => (
                 <label key={label.id} className="flex items-center gap-1.5 text-sm text-body">
                   <input type="checkbox" name="labelIds" value={label.id} className="accent-accent" />
+                  {label.color && (
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: label.color }} />
+                  )}
                   {label.name}
                 </label>
               ))}
@@ -66,6 +70,10 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
             </option>
           ))}
         </Select>
+        <label className="flex shrink-0 items-center gap-1.5 text-sm text-body">
+          <input type="checkbox" name="archived" value="1" defaultChecked={includeArchived} className="accent-accent" />
+          Show archived
+        </label>
         <Button type="submit">Search</Button>
       </form>
       <ItemList items={items} locationNameById={locationNameById} />

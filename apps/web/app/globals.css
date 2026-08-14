@@ -57,3 +57,19 @@ body {
 .app-content > div {
   display: contents;
 }
+
+/* The item label page (/items/[id]/label) prints just its own content —
+   hide the shared chrome and let the fixed-height app shell expand so the
+   full label isn't clipped to one viewport's worth of height. */
+@media print {
+  #app-shell {
+    height: auto;
+  }
+  #app-header,
+  #app-bottom-nav {
+    display: none;
+  }
+  .app-content {
+    overflow: visible;
+  }
+}

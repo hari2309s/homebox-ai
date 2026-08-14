@@ -11,8 +11,9 @@ export async function createLabelAction(formData: FormData) {
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) throw new Error("Name is required");
+  const color = String(formData.get("color") ?? "").trim();
 
-  await labelQueries.createLabel(user.id, { name });
+  await labelQueries.createLabel(user.id, { name, color: color || null });
   revalidatePath("/labels");
 }
 
@@ -23,8 +24,9 @@ export async function updateLabelAction(formData: FormData) {
   const id = String(formData.get("id") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
   if (!id || !name) throw new Error("Name is required");
+  const color = String(formData.get("color") ?? "").trim();
 
-  await labelQueries.updateLabel(user.id, id, { name });
+  await labelQueries.updateLabel(user.id, id, { name, color: color || null });
   revalidatePath("/labels");
 }
 

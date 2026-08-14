@@ -2,6 +2,7 @@ import { getSessionUser } from "@homebox-ai/supabase/server";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { CsvImportForm } from "./csv-import-form";
 import { DeleteAccountForm } from "./delete-account-form";
 import { DisplayNameForm } from "./display-name-form";
 import { PasswordForm } from "./password-form";
@@ -47,6 +48,14 @@ export default async function SettingsPage() {
         >
           Export data
         </a>
+
+        <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
+          <p className="text-sm text-body">Export or import items as a CSV spreadsheet.</p>
+          <a href="/api/export/csv" download className="self-start text-sm font-semibold text-ink underline underline-offset-4">
+            Export items as CSV
+          </a>
+          <CsvImportForm />
+        </div>
       </SettingsSection>
 
       <SettingsSection title="Danger zone">

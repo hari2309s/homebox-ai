@@ -5,7 +5,7 @@ import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import { getDb } from "./client";
 import type * as schema from "./schema";
 
-type Tx = PgTransaction<PostgresJsQueryResultHKT, typeof schema>;
+export type Tx = PgTransaction<PostgresJsQueryResultHKT, typeof schema>;
 
 /**
  * Runs `fn` inside a transaction scoped to `userId` so Postgres RLS policies

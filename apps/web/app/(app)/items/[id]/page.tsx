@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
 import { getAttachmentSignedUrl } from "@homebox-ai/supabase/storage";
 
+import { AttachmentsSection } from "./attachments-section";
 import { DeleteItemButton } from "./delete-item-button";
 import { ItemEditForm } from "./item-edit-form";
 
@@ -53,28 +54,23 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
         <DeleteItemButton itemId={item.id} itemName={item.name} />
       </div>
 
-      <h1 className="text-lg font-bold text-ink">{item.name}</h1>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-bold text-ink">{item.name}</h1>
+          {item.archived && (
+            <span className="rounded-full bg-muted/20 px-2.5 py-1 text-xs font-semibold text-muted">Archived</span>
+          )}
+        </div>
+        <Link href={`/items/${item.id}/label`} className="shrink-0 text-sm font-semibold text-ink underline underline-offset-4">
+          Print label
+        </Link>
+      </div>
 
       <ItemEditForm item={item} locations={locations} labels={labels} selectedLabelIds={selectedLabelIds} />
 
-      {attachmentsWithUrls.length > 0 && (
-        <Section title="Attachments">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {attachmentsWithUrls.map((attachment) =>
-              attachment.url ? (
-                <a key={attachment.id} href={attachment.url} target="_blank" rel="noreferrer" className="block">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL, not a static/local asset */}
-                  <img
-                    src={attachment.url}
-                    alt={attachment.type}
-                    className="aspect-square w-full rounded-md border border-border object-cover"
-                  />
-                </a>
-              ) : null,
-            )}
-          </div>
-        </Section>
-      )}
+      <Section title="Attachments">
+        <AttachmentsSection itemId={item.id} attachments={attachmentsWithUrls} />
+      </Section>
 
       <Section title="Maintenance history">
         {maintenanceEntries.length === 0 ? (

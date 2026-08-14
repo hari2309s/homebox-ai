@@ -14,9 +14,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!user) redirect("/login");
 
   return (
-    <div className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-white md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
+    <div id="app-shell" className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-white md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
       <FadeIn
         as="header"
+        id="app-header"
         className="flex shrink-0 items-center gap-2 rounded-b-lg border-b border-border bg-surface-soft px-4 py-2 md:gap-3 md:px-6 md:py-3"
       >
         <div className="flex shrink-0 items-center justify-center rounded-md bg-white p-1 md:rounded-lg md:p-1.5">

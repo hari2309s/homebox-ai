@@ -15,6 +15,13 @@
       "when": 1786452790358,
       "tag": "0001_military_iron_lad",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786702766196,
+      "tag": "0002_item_enrichment_fields",
+      "breakpoints": true
     }
   ]
 }

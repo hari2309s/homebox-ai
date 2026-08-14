@@ -97,7 +97,10 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="no-scrollbar flex shrink-0 overflow-x-auto rounded-t-lg border-t border-border bg-surface-soft">
+    <nav
+      id="app-bottom-nav"
+      className="no-scrollbar flex shrink-0 overflow-x-auto rounded-t-lg border-t border-border bg-surface-soft"
+    >
       {LINKS.map(({ href, label, icon: LinkIcon }) => {
         const active = pathname === href;
         return (

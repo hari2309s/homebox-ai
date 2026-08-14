@@ -8,6 +8,18 @@ import { deleteLabelAction, updateLabelAction } from "./actions";
 interface LabelRecord {
   id: string;
   name: string;
+  color: string | null;
+}
+
+// Simple relative-luminance check so chip text stays readable against
+// whatever custom color the user picked, instead of assuming light or dark.
+function textColorFor(hex: string | null): string | undefined {
+  if (!hex || !/^#[0-9a-f]{6}$/i.test(hex)) return undefined;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#4a254b" : "#ffffff";
 }
 
 export function LabelList({ labels }: { labels: LabelRecord[] }) {
@@ -26,6 +38,7 @@ export function LabelList({ labels }: { labels: LabelRecord[] }) {
 
 function LabelChip({ label }: { label: LabelRecord }) {
   const [editing, setEditing] = useState(false);
+  const textColor = textColorFor(label.color);
 
   if (editing) {
     return (
@@ -39,6 +52,13 @@ function LabelChip({ label }: { label: LabelRecord }) {
         >
           <input type="hidden" name="id" value={label.id} />
           <Input name="name" defaultValue={label.name} required className="h-7 w-28 px-2 py-1 text-sm" />
+          <input
+            type="color"
+            name="color"
+            defaultValue={label.color ?? "#f7deae"}
+            aria-label="Label color"
+            className="h-7 w-8 shrink-0 cursor-pointer rounded border border-border bg-white p-0.5"
+          />
           <SubmitButton className="h-7 px-2.5 py-1 text-xs">Save</SubmitButton>
           <button
             type="button"
@@ -53,11 +73,15 @@ function LabelChip({ label }: { label: LabelRecord }) {
   }
 
   return (
-    <StaggerItem className="flex items-center gap-2 rounded-full bg-surface px-3.5 py-1.5 text-sm font-medium text-ink">
+    <StaggerItem
+      className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium ${label.color ? "" : "bg-surface text-ink"}`}
+      style={label.color ? { backgroundColor: label.color, color: textColor } : undefined}
+    >
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="cursor-pointer border-none bg-transparent p-0 text-sm font-medium text-ink"
+        className="cursor-pointer border-none bg-transparent p-0 text-sm font-medium"
+        style={label.color ? { color: textColor } : undefined}
       >
         {label.name}
       </button>
@@ -71,7 +95,8 @@ function LabelChip({ label }: { label: LabelRecord }) {
         <button
           type="submit"
           aria-label={`Delete ${label.name}`}
-          className="cursor-pointer border-none bg-transparent text-xs text-muted hover:text-accent-hover"
+          className="cursor-pointer border-none bg-transparent text-xs opacity-70 hover:opacity-100"
+          style={{ color: textColor }}
         >
           ✕
         </button>

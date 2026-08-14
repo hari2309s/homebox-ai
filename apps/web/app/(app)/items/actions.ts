@@ -1,10 +1,11 @@
 "use server";
 
-import { itemLabelQueries, itemQueries } from "@homebox-ai/db";
+import { attachmentQueries, itemLabelQueries, itemQueries } from "@homebox-ai/db";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { getSessionUser } from "@homebox-ai/supabase/server";
+import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
+import { uploadAttachment } from "@homebox-ai/supabase/storage";
 
 export async function createItemAction(formData: FormData) {
   const user = await getSessionUser();
@@ -49,10 +50,19 @@ export async function updateItemAction(formData: FormData) {
     name,
     description: nullableField(formData, "description"),
     quantity: quantityRaw ? Number(quantityRaw) : 1,
+    serialNumber: nullableField(formData, "serialNumber"),
+    modelNumber: nullableField(formData, "modelNumber"),
+    manufacturer: nullableField(formData, "manufacturer"),
+    insured: formData.get("insured") === "on",
+    archived: formData.get("archived") === "on",
+    lifetimeWarranty: formData.get("lifetimeWarranty") === "on",
     purchasePrice: nullableField(formData, "purchasePrice"),
     purchaseDate: nullableField(formData, "purchaseDate"),
+    purchaseFrom: nullableField(formData, "purchaseFrom"),
     salePrice: nullableField(formData, "salePrice"),
     saleDate: nullableField(formData, "saleDate"),
+    soldTo: nullableField(formData, "soldTo"),
+    soldNotes: nullableField(formData, "soldNotes"),
     warrantyExpires: nullableField(formData, "warrantyExpires"),
     locationId: nullableField(formData, "locationId"),
     notes: nullableField(formData, "notes"),
@@ -73,4 +83,56 @@ export async function deleteItemAction(formData: FormData) {
   await itemQueries.deleteItem(user.id, itemId);
   revalidatePath("/items");
   redirect("/items");
+}
+
+const ATTACHMENT_TYPES = new Set(["photo", "receipt", "manual", "warranty"]);
+
+export async function uploadItemAttachmentAction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  if (!itemId) throw new Error("Missing item id");
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) throw new Error("Choose a file to upload");
+
+  const typeRaw = String(formData.get("type") ?? "manual");
+  const type = ATTACHMENT_TYPES.has(typeRaw) ? (typeRaw as "photo" | "receipt" | "manual" | "warranty") : "manual";
+
+  const supabase = await createSupabaseServerClient();
+  const path = await uploadAttachment(supabase, user.id, itemId, file, file.name || "attachment");
+  await attachmentQueries.createAttachment(user.id, { itemId, type, storagePath: path });
+
+  revalidatePath(`/items/${itemId}`);
+}
+
+export async function deleteAttachmentAction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  const attachmentId = String(formData.get("attachmentId") ?? "").trim();
+  const storagePath = String(formData.get("storagePath") ?? "").trim();
+  if (!itemId || !attachmentId) throw new Error("Missing attachment id");
+
+  await attachmentQueries.deleteAttachment(user.id, attachmentId);
+  if (storagePath) {
+    const supabase = await createSupabaseServerClient();
+    await supabase.storage.from("attachments").remove([storagePath]);
+  }
+
+  revalidatePath(`/items/${itemId}`);
+}
+
+export async function setPrimaryAttachmentAction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  const attachmentId = String(formData.get("attachmentId") ?? "").trim();
+  if (!itemId || !attachmentId) throw new Error("Missing attachment id");
+
+  await attachmentQueries.setPrimaryAttachment(user.id, itemId, attachmentId);
+  revalidatePath(`/items/${itemId}`);
 }

@@ -19,6 +19,13 @@ export default async function LabelsPage() {
           className="flex flex-col gap-3 sm:flex-row sm:items-center"
         >
           <Input name="name" placeholder="New label name" required className="sm:flex-1" />
+          <input
+            type="color"
+            name="color"
+            defaultValue="#f7deae"
+            aria-label="Label color"
+            className="h-10 w-12 shrink-0 cursor-pointer rounded-md border border-border bg-white p-1"
+          />
           <SubmitButton>Add</SubmitButton>
         </form>
       }

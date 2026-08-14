@@ -1,5 +1,6 @@
 import {
   type AnyPgColumn,
+  boolean,
   date,
   integer,
   numeric,
@@ -18,7 +19,7 @@ export const authUsers = authSchema.table("users", {
   id: uuid("id").primaryKey(),
 });
 
-export const attachmentType = pgEnum("attachment_type", ["photo", "receipt", "manual"]);
+export const attachmentType = pgEnum("attachment_type", ["photo", "receipt", "manual", "warranty"]);
 
 export const chatMessageRole = pgEnum("chat_message_role", ["user", "assistant"]);
 
@@ -38,6 +39,8 @@ export const labels = pgTable("labels", {
     .notNull()
     .references(() => authUsers.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  // Hex color (e.g. "#fb7369") shown behind the label chip; null falls back to the default chip style.
+  color: text("color"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -49,10 +52,22 @@ export const items = pgTable("items", {
   name: text("name").notNull(),
   description: text("description"),
   quantity: integer("quantity").notNull().default(1),
+  // Sequential per-owner number (not a global sequence — see itemQueries.createItem),
+  // shown zero-padded for printable asset labels. Null on items that predate this field.
+  assetId: integer("asset_id"),
+  serialNumber: text("serial_number"),
+  modelNumber: text("model_number"),
+  manufacturer: text("manufacturer"),
+  insured: boolean("insured").notNull().default(false),
+  archived: boolean("archived").notNull().default(false),
+  lifetimeWarranty: boolean("lifetime_warranty").notNull().default(false),
   purchasePrice: numeric("purchase_price", { precision: 12, scale: 2 }),
   purchaseDate: date("purchase_date"),
+  purchaseFrom: text("purchase_from"),
   salePrice: numeric("sale_price", { precision: 12, scale: 2 }),
   saleDate: date("sale_date"),
+  soldTo: text("sold_to"),
+  soldNotes: text("sold_notes"),
   warrantyExpires: date("warranty_expires"),
   locationId: uuid("location_id").references(() => locations.id, { onDelete: "set null" }),
   notes: text("notes"),
@@ -84,6 +99,7 @@ export const attachments = pgTable("attachments", {
   type: attachmentType("type").notNull(),
   // Path within the Supabase Storage "attachments" bucket, not a local filesystem path.
   storagePath: text("storage_path").notNull(),
+  isPrimary: boolean("is_primary").notNull().default(false),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
