@@ -134,7 +134,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-surface-soft">
+    <div className="flex h-full flex-col bg-white">
       {headerActionsEl &&
         createPortal(
           <button
@@ -148,65 +148,69 @@ export default function ChatPage() {
           headerActionsEl,
         )}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        {messages.length === 0 ? (
-          <FadeIn className="flex h-full flex-col items-center justify-center gap-3 text-center">
-            <p className="text-sm text-muted">Ask about your inventory in plain English.</p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {SUGGESTIONS.map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  onClick={() => sendMessage(suggestion)}
-                  className="cursor-pointer rounded-full border border-border bg-white px-3 py-1.5 text-sm text-body transition-colors duration-150 hover:border-accent"
+        <div className="mx-auto flex h-full w-full max-w-2xl flex-col">
+          {messages.length === 0 ? (
+            <FadeIn className="flex h-full flex-col items-center justify-center gap-3 text-center">
+              <p className="text-sm text-muted">Ask about your inventory in plain English.</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => sendMessage(suggestion)}
+                    className="cursor-pointer rounded-full border border-border bg-surface-soft px-3 py-1.5 text-sm text-body transition-colors duration-150 hover:border-accent"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </FadeIn>
+          ) : (
+            <StaggerList className="m-0 flex list-none flex-col gap-3 p-0">
+              {messages.map((message) => (
+                <StaggerItem
+                  key={message.id}
+                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
+                    message.role === "user"
+                      ? "self-end whitespace-pre-wrap rounded-br-sm bg-accent text-white"
+                      : "self-start rounded-bl-sm border border-border bg-surface-soft text-body"
+                  }`}
                 >
-                  {suggestion}
-                </button>
+                  {message.role === "assistant" ? <MessageContent content={message.content} /> : message.content}
+                </StaggerItem>
               ))}
+            </StaggerList>
+          )}
+
+          {pending && (
+            <div className="mt-3 flex w-fit items-center self-start rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-3">
+              <TypingDots />
             </div>
-          </FadeIn>
-        ) : (
-          <StaggerList className="m-0 flex list-none flex-col gap-3 p-0">
-            {messages.map((message) => (
-              <StaggerItem
-                key={message.id}
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
-                  message.role === "user"
-                    ? "self-end whitespace-pre-wrap rounded-br-sm bg-accent text-white"
-                    : "self-start rounded-bl-sm bg-white text-body"
-                }`}
-              >
-                {message.role === "assistant" ? <MessageContent content={message.content} /> : message.content}
-              </StaggerItem>
-            ))}
-          </StaggerList>
-        )}
+          )}
 
-        {pending && (
-          <div className="mt-3 flex w-fit items-center self-start rounded-2xl rounded-bl-sm bg-white px-4 py-3">
-            <TypingDots />
-          </div>
-        )}
+          {error && (
+            <p role="alert" className="mt-3 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
+              {error}
+            </p>
+          )}
 
-        {error && (
-          <p role="alert" className="mt-3 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
-            {error}
-          </p>
-        )}
-
-        <div ref={bottomRef} />
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex shrink-0 gap-2 border-t border-border bg-white p-4 sm:p-6">
-        <Input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder="Ask about your inventory…"
-          className="flex-1"
-          disabled={pending}
-        />
-        <Button type="submit" disabled={pending || !input.trim()}>
-          {pending ? <Spinner size={16} /> : "Send"}
-        </Button>
+      <form onSubmit={handleSubmit} className="flex shrink-0 justify-center gap-2 border-t border-border bg-white p-4 sm:p-6">
+        <div className="mx-auto flex w-full max-w-2xl gap-2">
+          <Input
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            placeholder="Ask about your inventory…"
+            className="flex-1"
+            disabled={pending}
+          />
+          <Button type="submit" disabled={pending || !input.trim()}>
+            {pending ? <Spinner size={16} /> : "Send"}
+          </Button>
+        </div>
       </form>
 
       <HistorySheet
