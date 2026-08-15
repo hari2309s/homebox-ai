@@ -1,82 +1,201 @@
-<p align="center">
-  <img src="apps/web/public/icons/icon-512.png" width="120" height="120" alt="Homebox AI icon">
-</p>
+<div align="center">
 
-<h1 align="center">Homebox AI</h1>
+<img src="apps/web/public/icons/icon-512.png" width="100" height="100" alt="Homebox AI icon">
 
-<p align="center">
-  An AI-native home inventory PWA — natural-language search, photo-to-item entry, receipt import, and a maintenance/warranty assistant, built on Next.js + Supabase (Postgres/Auth/Storage) + LangGraph.
-</p>
+# Homebox AI
 
-<p align="center">
-  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-000000?style=flat&logo=next.js&logoColor=white" alt="Next.js"></a>
-  <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript"></a>
-  <a href="https://react.dev"><img src="https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black" alt="React"></a>
-  <a href="https://supabase.com"><img src="https://img.shields.io/badge/Supabase-3FCF8E?style=flat&logo=supabase&logoColor=white" alt="Supabase"></a>
-  <a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL"></a>
-  <a href="https://orm.drizzle.team"><img src="https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=flat&logo=drizzle&logoColor=black" alt="Drizzle ORM"></a>
-  <a href="https://www.langchain.com/langgraph"><img src="https://img.shields.io/badge/LangGraph.js-1C3C3C?style=flat&logo=langchain&logoColor=white" alt="LangGraph.js"></a>
-  <a href="https://www.framer.com/motion/"><img src="https://img.shields.io/badge/Framer_Motion-0055FF?style=flat&logo=framer&logoColor=white" alt="Framer Motion"></a>
-  <a href="https://turbo.build/repo"><img src="https://img.shields.io/badge/Turborepo-EF4444?style=flat&logo=turborepo&logoColor=white" alt="Turborepo"></a>
-  <a href="https://pnpm.io"><img src="https://img.shields.io/badge/pnpm-F69220?style=flat&logo=pnpm&logoColor=white" alt="pnpm"></a>
-  <a href="https://web.dev/explore/progressive-web-apps"><img src="https://img.shields.io/badge/PWA-5A0FC8?style=flat&logo=pwa&logoColor=white" alt="PWA"></a>
-  <a href="https://vercel.com"><img src="https://img.shields.io/badge/Vercel-000000?style=flat&logo=vercel&logoColor=white" alt="Vercel"></a>
-  <a href="https://langfuse.com"><img src="https://img.shields.io/badge/Langfuse-0A0A0A?style=flat&logo=langfuse&logoColor=white" alt="Langfuse"></a>
-</p>
+### Know what you own, and where it is.
 
-## Contents
+An AI-native home inventory PWA — search your stuff in plain English, snap a photo to log an item, import a receipt as a batch of items, and let a warranty assistant nudge you before things expire.
 
-- [Features](#features)
-- [Stack](#stack)
-- [Prerequisites](#prerequisites)
-- [First-time setup](#first-time-setup)
-- [Running the app](#running-the-app)
-- [Deploying](#deploying)
-- [Project layout](#project-layout)
-- [Tracing (Langfuse)](#tracing-langfuse)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/hari2309s/homebox-ai)
+
+![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer_Motion-animations-0055FF?logo=framer&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)
+
+![LangGraph](https://img.shields.io/badge/LangGraph.js-agent_orchestration-1C3C3C?logo=langchain&logoColor=white)
+![LLM Router](https://img.shields.io/badge/LLM_Router-4_providers-F55036?logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini-vision_%2B_reasoning-4285F4?logo=google&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-tool_calling-F55036?logoColor=white)
+
+![Supabase](https://img.shields.io/badge/Supabase-Postgres_%2B_Auth_%2B_Storage-3ECF8E?logo=supabase&logoColor=white)
+![Drizzle ORM](https://img.shields.io/badge/Drizzle_ORM-C5F74F?logo=drizzle&logoColor=black)
+![Row Level Security](https://img.shields.io/badge/RLS-Postgres_policies-4169E1?logo=postgresql&logoColor=white)
+![Langfuse](https://img.shields.io/badge/Langfuse-observability-0A0A0A?logo=langfuse&logoColor=white)
+
+![pnpm](https://img.shields.io/badge/pnpm-workspaces-F69220?logo=pnpm&logoColor=white)
+![Turborepo](https://img.shields.io/badge/Turborepo-monorepo-EF4444?logo=turborepo&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-deployment-000000?logo=vercel&logoColor=white)
+
+</div>
+
+---
 
 ## Features
 
-| Feature | Status |
-| --- | --- |
-| Auth (Supabase email/password) + protected app shell | ✅ Done |
-| Items / Locations / Labels CRUD | ✅ Done |
-| Natural-language search & chat over your inventory | ✅ Done |
-| Photo → structured item entry | ✅ Done |
-| Receipt import → batch item entry | ✅ Done |
-| Maintenance & warranty assistant | ✅ Done |
-| Installable PWA (offline app shell) | ✅ Done |
+- 🔍 **Natural-language inventory search** — ask "where's my passport?" or "what's in the garage?" in plain English; a LangGraph tool-calling agent looks it up for real, grounded in your actual data
+- 📸 **Photo → item** — snap or upload a photo, a vision model drafts a name, description, label, and location guess for you to confirm
+- 🧾 **Receipt import** — upload a receipt/invoice photo, extract every line item as a batch of draft items in one pass
+- 🔔 **Proactive AI nudges** — a daily cron checks for warranties expiring soon and messages you in chat unprompted, with an unread badge on the Chat tab; idempotent by design, so re-running the check never double-sends
+- 🛠️ **Maintenance & warranty tracking** — log service history per item (create/edit/delete), see warranty status at a glance
+- 📦 **Homebox-parity item fields** — serial number, model number, manufacturer, purchase/sale price & date, insured, lifetime warranty, sequential asset IDs, item nesting (an item can live "inside" another item, not just a location)
+- 🏷️ **Labels with color** and nested **locations** (locations can contain locations)
+- 🖨️ **Printable item labels** — QR code linking straight back to the item, for sticking on a box or shelf
+- 👨‍👩‍👧 **Household sharing** — invite one other person by link; they get full read/write access to your whole inventory under one shared owner scope, enforced by Postgres Row Level Security, not just app-layer checks
+- 📤 **Three export formats** — plain JSON backup, a CSV spreadsheet (round-trips back in), and a full ZIP backup that bundles the real attachment files alongside the data — all imports merge additively and never delete or overwrite existing data
+- 📱 **Installable PWA** — app-shell caching via Serwist for a fast, installable experience (full offline CRUD sync is an explicit non-goal for v1)
+- 🌓 **Warm, custom design system** — hand-tuned color palette, Framer Motion transitions throughout, no generic component-library look
 
-The three AI features share one LangGraph-based router (`packages/ai`) that fans each task out across free-tier providers with fallback — see [Stack](#stack).
+---
 
-## Stack
+## How it works
 
-- **Monorepo**: pnpm workspaces + Turborepo
-- **App**: Next.js (App Router), deployed to Vercel
-- **Data**: Supabase Postgres, schema/queries via Drizzle ORM (`packages/db`), access controlled by Postgres Row Level Security — not just app-layer checks
-- **Auth**: Supabase Auth (email/password)
-- **Files**: Supabase Storage (`attachments` bucket)
-- **AI**: LangGraph.js orchestration (`packages/ai`) routing across four free-tier providers (Gemini, Groq, Cerebras, OpenRouter) with task-based fallback chains
-- **Tracing**: [Langfuse](https://langfuse.com) via OpenTelemetry — every AI graph invocation is traced (model, tokens, tool calls, full conversation) with per-user/per-session/per-feature attribution
+```
+You ask something in chat
+        │
+        ▼
+LangGraph tool-calling agent (Groq → Cerebras → OpenRouter, first healthy wins)
+        │
+        ▼
+Tools query YOUR data only — every query is scoped to your effective owner id
+(search_items · get_item · list_locations · list_labels)
+        │
+        ▼
+Conversational reply, grounded in what's actually in your inventory
+```
 
-## Prerequisites
+Photo capture and receipt import follow the same shape but with a vision-capable chain (Gemini → OpenRouter) and structured-output extraction instead of tool calls. The maintenance assistant reasons over an item's purchase date and service history (Cerebras → Groq → OpenRouter) to suggest upcoming tasks and flag warranties expiring within 60 days.
 
-- Node >= 20, pnpm (`corepack enable`)
+Every provider chain is a plain ordered list in `packages/ai/src/router.ts` — one provider failing (bad key, rate limit, quota) transparently falls through to the next, per task type.
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 15 (App Router) + TypeScript, React 19 |
+| Styling | Tailwind CSS v4, hand-authored design tokens (`apps/web/app/globals.css`) |
+| Animation | Framer Motion |
+| PWA | Serwist service worker + web manifest |
+| AI orchestration | LangGraph.js — `createReactAgent` for chat/search, single-shot structured-output calls for vision/reasoning |
+| LLM router | Custom task-based router (`packages/ai/src/router.ts`), one ordered fallback chain per task type |
+| LLM — tool calling (chat) | Groq `llama-3.3-70b-versatile` → Cerebras → OpenRouter |
+| LLM — vision (photo/receipt) | Gemini → OpenRouter free vision model |
+| LLM — reasoning (maintenance) | Cerebras → Groq → OpenRouter |
+| Database | Supabase Postgres, schema/queries via Drizzle ORM |
+| Access control | Postgres Row Level Security on every table — the real security boundary, not just app-layer checks; a single `has_shared_access()` function backs the household-sharing policies |
+| Auth | Supabase Auth (email/password) |
+| File storage | Supabase Storage (`attachments` bucket) |
+| Observability | Langfuse via OpenTelemetry — every AI graph invocation traced with per-user/session/feature attribution |
+| Scheduled jobs | Vercel Cron (`vercel.json`) → `Bearer $CRON_SECRET`-gated route, compared with `timingSafeEqual` |
+| Monorepo | pnpm workspaces + Turborepo |
+| Deployment | Vercel (`apps/web`) + Supabase (Postgres/Auth/Storage) |
+
+---
+
+## Project structure
+
+```
+homebox-ai/
+├── apps/
+│   └── web/                             # Next.js app (UI + API routes)
+│       └── app/
+│           ├── (auth)/login/            # Supabase Auth email/password, preserves ?redirectTo
+│           ├── (app)/
+│           │   ├── items/[id]/          # item detail: fields, attachments, maintenance, label/QR print
+│           │   ├── locations/           # nested locations CRUD
+│           │   ├── labels/              # colored labels CRUD
+│           │   ├── chat/                # NL search UI, session history, unread nudges
+│           │   ├── capture/             # photo → item draft review
+│           │   ├── receipts/            # receipt → batch item review
+│           │   ├── maintenance/         # maintenance dashboard
+│           │   ├── join/[token]/        # accept a household-sharing invite
+│           │   └── settings/            # profile, household, exports/imports, account deletion
+│           └── api/
+│               ├── chat/                # chat-search graph
+│               ├── export/{csv,zip}/    # data export routes
+│               └── notifiers/warranty-check/  # daily cron: proactive warranty nudges
+├── packages/
+│   ├── db/                              # Drizzle schema, migrations, RLS policies, query functions
+│   │   ├── src/schema.ts                # items, locations, labels, attachments, maintenance_entries,
+│   │   │                                #   chat_messages, shared_access, shared_access_invites
+│   │   ├── src/access.ts                # resolveEffectiveOwnerId() — the sharing indirection layer
+│   │   └── src/policies/                # one RLS policy file per table
+│   ├── supabase/                        # server/browser Supabase clients, session middleware, storage helpers
+│   ├── ai/                              # LangGraph orchestration
+│   │   ├── src/providers/               # gemini · groq · cerebras · openrouter model factories
+│   │   ├── src/router.ts                # task → ordered provider chain, with fallback
+│   │   ├── src/graphs/                  # chat-search · photo-to-item · receipt-import · maintenance-assistant
+│   │   └── src/tracing.ts               # Langfuse callback handler factory
+│   ├── ui/                              # shared components, Framer Motion primitives
+│   └── config/                          # shared tsconfig
+└── supabase/                            # Supabase CLI project config (local dev emulation)
+```
+
+---
+
+## Getting started
+
+### Prerequisites
+
+- Node.js >= 20, pnpm (`corepack enable`)
 - Docker (for `supabase start`'s local emulation stack)
 - [Supabase CLI](https://supabase.com/docs/guides/cli)
-- API keys for whichever of Gemini / Groq / Cerebras / OpenRouter you want working locally (the AI features degrade gracefully if some are missing, per the router's fallback chains — but at least one per task type is needed for that feature to work at all)
-- A free [Langfuse](https://cloud.langfuse.com) project (for tracing — optional locally, but without it you're flying blind on what the AI graphs are actually doing)
+- At least one AI provider key per task type you want working locally — Gemini for vision, one of Groq/Cerebras/OpenRouter for chat (the router degrades gracefully if some are missing, per its fallback chains)
+- A free [Langfuse](https://cloud.langfuse.com) project (optional locally, but you're flying blind on what the AI graphs are doing without it)
 
-## First-time setup
+### Installation
 
 ```bash
+git clone https://github.com/hari2309s/homebox-ai.git
+cd homebox-ai
 pnpm install
+```
 
+### Environment setup
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in your keys:
+
+```bash
+# Supabase — from Settings > API, or `supabase status` for local dev
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SECRET_KEY=
+DATABASE_URL=                        # direct Postgres connection, used by Drizzle Kit + packages/db
+
+# AI providers (all free-tier) — only providers with a key set will work
+GOOGLE_API_KEY=                      # Gemini — vision
+GOOGLE_MODEL=gemini-flash-latest     # optional override
+GROQ_API_KEY=                        # Groq — chat tool-calling
+CEREBRAS_API_KEY=                    # Cerebras — reasoning + chat fallback
+CEREBRAS_MODEL=gpt-oss-120b          # optional override
+OPENROUTER_API_KEY=                  # OpenRouter — catch-all fallback for every task
+OPENROUTER_VISION_MODEL=google/gemma-4-31b-it:free   # free-tier lineup changes — keep this configurable
+
+# Langfuse (optional locally, recommended)
+LANGFUSE_SECRET_KEY=
+LANGFUSE_PUBLIC_KEY=
+LANGFUSE_BASE_URL=https://cloud.langfuse.com
+
+# Vercel sends this as `Authorization: Bearer $CRON_SECRET` for the warranty-check cron
+CRON_SECRET=                         # openssl rand -hex 32
+```
+
+### Database setup
+
+```bash
 # Local Supabase stack (Postgres, Auth, Storage, Studio) via Docker
 supabase start
-# Copy the printed API URL / anon key / service_role key / DB URL into .env.local (copy .env.example first)
-
-cp .env.example .env.local
+# Copy the printed API URL / anon key / service_role key / DB URL into .env.local
 
 # Apply the Drizzle schema, then the RLS policies (Drizzle Kit doesn't manage
 # Supabase-specific policies — see packages/db/src/policies/README.md)
@@ -85,36 +204,35 @@ pnpm db:migrate
 for f in packages/db/src/policies/*.sql; do psql "$DATABASE_URL" -f "$f"; done
 ```
 
-Then, in the Supabase Studio (URL printed by `supabase start`, or your cloud project's dashboard), create an `attachments` Storage bucket before applying `storage_attachments.sql` — that policy references the bucket by name and will fail if it doesn't exist yet.
+In Supabase Studio (URL printed by `supabase start`, or your cloud project's dashboard), create an `attachments` Storage bucket **before** applying `storage_attachments.sql` — that policy references the bucket by name and fails if it doesn't exist yet.
 
-## Running the app
+### Run
 
 ```bash
 pnpm dev
 ```
 
-## Deploying
+Open [http://localhost:3000](http://localhost:3000)
 
-- **Supabase**: create a project at supabase.com, run the same migration + policy steps above against its connection string, create the `attachments` bucket.
-- **Vercel**: connect this repo, set the env vars from `.env.example` (using the cloud project's values, not the local ones), deploy `apps/web`.
+---
 
-## Project layout
+## Sharing model
 
-```
-apps/web             Next.js app (UI + API routes)
-  instrumentation.ts / instrumentation-node.ts  OpenTelemetry + Langfuse span processor setup
-packages/db           Drizzle schema, migrations, RLS policies, query functions
-packages/supabase     Server/browser Supabase clients, session middleware, storage helpers
-packages/ai           LangGraph orchestration: provider factories, task router, one graph per AI feature
-  tracing.ts          Langfuse callback handler factory — pass to a graph's invoke() config
-packages/ui           Shared components (Framer Motion primitives)
-packages/config       Shared tsconfig
-supabase/             Supabase CLI project config (local dev emulation)
-```
+Homebox AI shares by *invite*, not by a separate "group" concept: every table keeps its original `owner_id` as the real ownership/RLS boundary. When someone accepts an invite, they're recorded in `shared_access` as a member of the *inviter's* owner scope — from then on, every query they make resolves through `resolveEffectiveOwnerId()` to act on the shared owner's data, not their own. A single Postgres `has_shared_access()` function (SECURITY DEFINER) backs the RLS policy on every table, so a missing or wrong policy on a new table is caught the same way as everywhere else — not a special case for sharing.
+
+Chat history is the one thing that stays personal per member even inside a shared household — everyone searches the same inventory but keeps their own conversation.
+
+---
+
+## Notifiers (proactive AI)
+
+`apps/web/app/api/notifiers/warranty-check` runs daily via Vercel Cron (`vercel.json`), gated by a `Bearer $CRON_SECRET` header compared with `timingSafeEqual` (not `===`, to avoid leaking the secret's length/prefix via response-time differences). It finds items with a warranty expiring soon that haven't already been flagged, and writes a proactive chat message per owner — deterministically keyed (`warranty:{ownerId}:{date}`) via a partial unique index on `chat_messages`, so re-running the check (retry, overlapping invocation) is a safe no-op rather than a duplicate nudge.
+
+---
 
 ## Tracing (Langfuse)
 
-Every AI graph invocation should be traced. The pattern (see `apps/web/app/api/chat/route.ts` for a full example):
+Every AI graph invocation is traced. The pattern (see `apps/web/app/api/chat/route.ts` for a full example):
 
 ```ts
 import { createLangfuseHandler } from "@homebox-ai/ai";
@@ -132,3 +250,10 @@ after(async () => {
 ```
 
 `runName` matters — without it, traces show up unnamed in the Langfuse UI (the trace-level `name`/`input`/`output` fields are deprecated in Langfuse v4+; what you actually see and search on is the **root observation's** name/input/output, which the `CallbackHandler` sets automatically from the graph's input/output as long as `runName` is set).
+
+---
+
+## Deploying
+
+- **Supabase**: create a project at supabase.com, run the same migration + policy steps above against its connection string, create the `attachments` bucket.
+- **Vercel**: connect this repo, set every env var from `.env.example` in the project's dashboard (Settings → Environment Variables) using the cloud project's values — nothing in `.env.local` ships with the code, so a key that's only set locally will silently make that feature unavailable in production. Deploy `apps/web`.
