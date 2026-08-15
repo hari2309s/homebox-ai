@@ -32,7 +32,8 @@ export async function POST(request: Request) {
       entry.role === "user" ? new HumanMessage(entry.content) : new AIMessage(entry.content),
     );
 
-    const graph = createChatSearchGraph(user.id);
+    const displayName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : undefined;
+    const graph = createChatSearchGraph(user.id, { displayName });
     const result = await graph.invoke(
       { messages: [...historyMessages, new HumanMessage(message)] },
       { callbacks: [langfuseHandler], runName: "chat-search" },
