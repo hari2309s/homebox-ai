@@ -39,6 +39,14 @@ function HistoryIcon(props: ComponentProps<"svg">) {
   );
 }
 
+function NewChatIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
 function TypingDots() {
   return (
     <div className="flex items-center gap-1">
@@ -137,14 +145,24 @@ export default function ChatPage() {
     <div className="flex h-full flex-col bg-white">
       {headerActionsEl &&
         createPortal(
-          <button
-            type="button"
-            onClick={() => setHistoryOpen(true)}
-            aria-label="Conversation history"
-            className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent"
-          >
-            <HistoryIcon className="h-5 w-5 md:h-6 md:w-6" />
-          </button>,
+          <>
+            <button
+              type="button"
+              onClick={startNewChat}
+              aria-label="New chat"
+              className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent"
+            >
+              <NewChatIcon className="h-5 w-5 md:h-6 md:w-6" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setHistoryOpen(true)}
+              aria-label="Conversation history"
+              className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent"
+            >
+              <HistoryIcon className="h-5 w-5 md:h-6 md:w-6" />
+            </button>
+          </>,
           headerActionsEl,
         )}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
