@@ -38,3 +38,31 @@ export function createMaintenanceEntry(userId: string, data: CreateMaintenanceEn
       .returning();
   });
 }
+
+export interface UpdateMaintenanceEntryInput {
+  date?: string;
+  name?: string;
+  description?: string | null;
+  cost?: string | null;
+}
+
+export function updateMaintenanceEntry(userId: string, entryId: string, data: UpdateMaintenanceEntryInput) {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    return tx
+      .update(maintenanceEntries)
+      .set(data)
+      .where(and(eq(maintenanceEntries.id, entryId), eq(maintenanceEntries.ownerId, ownerId)))
+      .returning();
+  });
+}
+
+export function deleteMaintenanceEntry(userId: string, entryId: string) {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    return tx
+      .delete(maintenanceEntries)
+      .where(and(eq(maintenanceEntries.id, entryId), eq(maintenanceEntries.ownerId, ownerId)))
+      .returning();
+  });
+}

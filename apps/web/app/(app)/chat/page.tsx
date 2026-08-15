@@ -20,6 +20,7 @@ interface ChatSession {
   sessionId: string;
   title: string;
   lastMessageAt: string;
+  hasUnread: boolean;
 }
 
 const SUGGESTIONS = [

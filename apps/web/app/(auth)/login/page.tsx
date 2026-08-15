@@ -3,8 +3,16 @@
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
 import { AnimatedHomeboxIcon, FadeIn, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
+
+// Query-param controlled, so it must be validated before use — reject
+// anything that isn't a same-origin relative path (blocks the "//evil.com"
+// protocol-relative-URL open-redirect trick).
+function safeRedirect(path: string | null): string {
+  if (!path || !path.startsWith("/") || path.startsWith("//")) return "/items";
+  return path;
+}
 
 const FEATURES = [
   { icon: "🔍", label: "Ask “where's my passport?” in plain English" },
@@ -21,8 +29,10 @@ const COPY = {
 const inputClassName =
   "rounded-md border border-border bg-white px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = safeRedirect(searchParams.get("redirectTo"));
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,7 +68,7 @@ export default function LoginPage() {
       }
       // Left pending — about to navigate away, so resetting it here would just
       // flash the button back to "Sign in" for a moment before the page changes.
-      router.replace("/items");
+      router.replace(redirectTo);
       router.refresh();
       return;
     }
@@ -91,7 +101,7 @@ export default function LoginPage() {
     }
 
     // Left pending for the same reason as the sign-in branch above.
-    router.replace("/items");
+    router.replace(redirectTo);
     router.refresh();
   }
 
@@ -292,5 +302,15 @@ export default function LoginPage() {
         </StaggerList>
       </div>
     </main>
+  );
+}
+
+// useSearchParams() requires a Suspense boundary — otherwise Next.js can't
+// statically prerender the rest of this page's markup around it.
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

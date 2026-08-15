@@ -1,9 +1,25 @@
+import { timingSafeEqual } from "node:crypto";
+
 import { chatQueries, notifierQueries } from "@homebox-ai/db";
 import { createLangfuseHandler, getModelForTask } from "@homebox-ai/ai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { NextResponse, after } from "next/server";
 
 import { langfuseSpanProcessor } from "../../../../instrumentation-node";
+
+// Constant-time comparison so a wrong guess can't be distinguished by how
+// long the check took — a plain `===` short-circuits on the first mismatched
+// byte, which in principle leaks the secret's prefix to a timing attacker.
+function isAuthorized(request: Request): boolean {
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = request.headers.get("authorization");
+  if (!cronSecret || !authHeader) return false;
+
+  const expected = Buffer.from(`Bearer ${cronSecret}`);
+  const actual = Buffer.from(authHeader);
+  if (expected.length !== actual.length) return false;
+  return timingSafeEqual(expected, actual);
+}
 
 type ExpiringWarrantyItem = Awaited<ReturnType<typeof notifierQueries.listItemsWithExpiringWarranty>>[number];
 
@@ -34,9 +50,7 @@ async function generateWarrantyReminderMessage(ownerItems: ExpiringWarrantyItem[
  * configured cron routes, which this checks for instead of a user session.
  */
 export async function POST(request: Request) {
-  const cronSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get("authorization");
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -54,14 +68,26 @@ export async function POST(request: Request) {
     itemsByOwner.set(item.ownerId, list);
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+
   for (const [ownerId, ownerItems] of itemsByOwner) {
     try {
       const message = await generateWarrantyReminderMessage(ownerItems);
       const recipients = await notifierQueries.listRecipientsForOwner(ownerId);
       const sessionId = crypto.randomUUID();
+      // One key per household per day — a second run for the same owner on
+      // the same day (concurrent execution, a manual retry) inserts nothing
+      // instead of a duplicate reminder, backed by the DB's unique index.
+      const nudgeKey = `warranty:${ownerId}:${today}`;
 
       for (const userId of recipients) {
-        await chatQueries.createChatMessage(userId, { sessionId, role: "assistant", content: message });
+        await chatQueries.createChatMessage(userId, {
+          sessionId,
+          role: "assistant",
+          content: message,
+          isProactive: true,
+          nudgeKey,
+        });
       }
 
       await notifierQueries.markWarrantyNotified(ownerItems.map((item) => item.id));

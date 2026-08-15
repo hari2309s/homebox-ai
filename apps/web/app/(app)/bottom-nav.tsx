@@ -93,7 +93,7 @@ const LINKS = [
   { href: "/maintenance", label: "Maintenance", icon: MaintenanceIcon },
 ];
 
-export function BottomNav() {
+export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number }) {
   const pathname = usePathname();
 
   return (
@@ -116,7 +116,12 @@ export function BottomNav() {
                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
               />
             )}
-            <LinkIcon className={`relative h-5 w-5 md:h-6 md:w-6 ${active ? "text-ink" : "text-muted"}`} />
+            <span className="relative">
+              <LinkIcon className={`h-5 w-5 md:h-6 md:w-6 ${active ? "text-ink" : "text-muted"}`} />
+              {href === "/chat" && unreadChatCount > 0 && (
+                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent" />
+              )}
+            </span>
             <span
               className={`relative text-[10px] font-semibold transition-colors duration-150 md:text-xs ${active ? "text-ink" : "text-muted"}`}
             >

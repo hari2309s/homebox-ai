@@ -9,6 +9,7 @@ import { getAttachmentSignedUrl } from "@homebox-ai/supabase/storage";
 import { AttachmentsSection } from "./attachments-section";
 import { DeleteItemButton } from "./delete-item-button";
 import { ItemEditForm } from "./item-edit-form";
+import { MaintenanceSection } from "./maintenance-section";
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -101,22 +102,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
       </Section>
 
       <Section title="Maintenance history">
-        {maintenanceEntries.length === 0 ? (
-          <p className="text-sm text-muted">No maintenance logged yet.</p>
-        ) : (
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {maintenanceEntries.map((entry) => (
-              <li key={entry.id} className="flex flex-col gap-0.5 rounded-md border border-border bg-white px-3 py-2.5">
-                <span className="font-medium text-ink">{entry.name}</span>
-                <span className="text-xs text-muted">
-                  {entry.date}
-                  {entry.cost ? ` · $${entry.cost}` : ""}
-                </span>
-                {entry.description && <span className="text-sm text-body">{entry.description}</span>}
-              </li>
-            ))}
-          </ul>
-        )}
+        <MaintenanceSection itemId={item.id} entries={maintenanceEntries} />
       </Section>
     </div>
   );

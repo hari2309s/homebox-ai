@@ -1,6 +1,6 @@
 "use server";
 
-import { attachmentQueries, itemLabelQueries, itemQueries, resolveEffectiveOwnerId } from "@homebox-ai/db";
+import { attachmentQueries, itemLabelQueries, itemQueries, maintenanceQueries, resolveEffectiveOwnerId } from "@homebox-ai/db";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -138,5 +138,57 @@ export async function setPrimaryAttachmentAction(formData: FormData) {
   if (!itemId || !attachmentId) throw new Error("Missing attachment id");
 
   await attachmentQueries.setPrimaryAttachment(user.id, itemId, attachmentId);
+  revalidatePath(`/items/${itemId}`);
+}
+
+export async function addMaintenanceEntryAction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const date = String(formData.get("date") ?? "").trim();
+  if (!itemId || !name || !date) throw new Error("Name and date are required");
+
+  await maintenanceQueries.createMaintenanceEntry(user.id, {
+    itemId,
+    name,
+    date,
+    description: String(formData.get("description") ?? "").trim() || undefined,
+    cost: String(formData.get("cost") ?? "").trim() || undefined,
+  });
+
+  revalidatePath(`/items/${itemId}`);
+}
+
+export async function updateMaintenanceEntryAction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  const entryId = String(formData.get("entryId") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const date = String(formData.get("date") ?? "").trim();
+  if (!itemId || !entryId || !name || !date) throw new Error("Name and date are required");
+
+  await maintenanceQueries.updateMaintenanceEntry(user.id, entryId, {
+    name,
+    date,
+    description: String(formData.get("description") ?? "").trim() || null,
+    cost: String(formData.get("cost") ?? "").trim() || null,
+  });
+
+  revalidatePath(`/items/${itemId}`);
+}
+
+export async function deleteMaintenanceEntryAction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const itemId = String(formData.get("itemId") ?? "").trim();
+  const entryId = String(formData.get("entryId") ?? "").trim();
+  if (!itemId || !entryId) throw new Error("Missing entry id");
+
+  await maintenanceQueries.deleteMaintenanceEntry(user.id, entryId);
   revalidatePath(`/items/${itemId}`);
 }

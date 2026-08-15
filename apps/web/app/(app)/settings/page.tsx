@@ -7,6 +7,7 @@ import { DeleteAccountForm } from "./delete-account-form";
 import { DisplayNameForm } from "./display-name-form";
 import { HouseholdSection } from "./household-section";
 import { PasswordForm } from "./password-form";
+import { ZipImportForm } from "./zip-import-form";
 
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -60,6 +61,17 @@ export default async function SettingsPage() {
             Export items as CSV
           </a>
           <CsvImportForm />
+        </div>
+
+        <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
+          <p className="text-sm text-body">
+            Full backup as a ZIP, including photos and other attachment files. Importing adds to your inventory —
+            it never replaces or deletes what&apos;s already there.
+          </p>
+          <a href="/api/export/zip" download className="self-start text-sm font-semibold text-ink underline underline-offset-4">
+            Export full backup (ZIP)
+          </a>
+          <ZipImportForm />
         </div>
       </SettingsSection>
 

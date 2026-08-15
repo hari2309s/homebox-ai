@@ -29,6 +29,13 @@
       "when": 1786721188394,
       "tag": "0003_shared_access_and_item_nesting",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786809955077,
+      "tag": "0004_notifier_dedup_and_unread",
+      "breakpoints": true
     }
   ]
 }

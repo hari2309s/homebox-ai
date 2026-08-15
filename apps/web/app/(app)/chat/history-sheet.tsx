@@ -6,6 +6,7 @@ interface ChatSession {
   sessionId: string;
   title: string;
   lastMessageAt: string;
+  hasUnread: boolean;
 }
 
 interface HistorySheetProps {
@@ -81,7 +82,10 @@ export function HistorySheet({ open, sessions, activeSessionId, onClose, onSelec
                           session.sessionId === activeSessionId ? "bg-surface-soft" : "bg-transparent hover:bg-surface-soft"
                         }`}
                       >
-                        <span className="text-sm text-ink">{session.title}</span>
+                        <span className="flex items-center gap-1.5 text-sm text-ink">
+                          {session.hasUnread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />}
+                          {session.title}
+                        </span>
                         <span className="text-xs text-muted">{timeAgo(session.lastMessageAt)}</span>
                       </button>
                     </li>

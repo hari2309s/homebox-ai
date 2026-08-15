@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
   boolean,
@@ -10,6 +11,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -141,16 +143,29 @@ export const attachments = pgTable("attachments", {
 
 // Chat stays personal — each member has their own conversation history —
 // even though the inventory data it searches over is shared.
-export const chatMessages = pgTable("chat_messages", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
-  sessionId: uuid("session_id").notNull(),
-  role: chatMessageRole("role").notNull(),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    sessionId: uuid("session_id").notNull(),
+    role: chatMessageRole("role").notNull(),
+    content: text("content").notNull(),
+    // True for messages an AI notifier sent unprompted (e.g. a warranty
+    // reminder), as opposed to a reply to something the user asked.
+    isProactive: boolean("is_proactive").notNull().default(false),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    // Deterministic per-notification-event key (e.g. "warranty:{ownerId}:{date}")
+    // set only on proactive messages — the partial unique index below (see
+    // migrations/0004_*.sql) makes re-running a notifier check a no-op
+    // instead of a duplicate message, even under concurrent execution.
+    nudgeKey: text("nudge_key"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("chat_messages_nudge_key_unique").on(table.ownerId, table.nudgeKey).where(sql`${table.nudgeKey} is not null`)],
+);
 
 export const maintenanceEntries = pgTable("maintenance_entries", {
   id: uuid("id").primaryKey().defaultRandom(),

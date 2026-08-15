@@ -1,3 +1,4 @@
+import { chatQueries } from "@homebox-ai/db";
 import { AnimatedHomeboxIcon, FadeIn } from "@homebox-ai/ui";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -12,6 +13,8 @@ import { SettingsIcon } from "./settings-icon";
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+
+  const unreadChatCount = await chatQueries.countUnreadProactiveMessages(user.id);
 
   return (
     <div id="app-shell" className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-white md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
@@ -37,7 +40,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </FadeIn>
       <div className="app-content flex-1 overflow-y-auto">{children}</div>
-      <BottomNav />
+      <BottomNav unreadChatCount={unreadChatCount} />
     </div>
   );
 }

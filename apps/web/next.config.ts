@@ -18,6 +18,11 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  experimental: {
+    // Default (1MB) is too small for the full ZIP import (data.json plus
+    // every attachment file) — the CSV/JSON imports stay well under this.
+    serverActions: { bodySizeLimit: "25mb" },
+  },
   // OpenTelemetry's Node SDK (for Langfuse tracing) uses require-in-the-middle's
   // dynamic require() to patch Node's module loader for auto-instrumentation.
   // Externalizing only that leaf package isn't enough — the require() call
