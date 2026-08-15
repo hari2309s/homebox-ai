@@ -1,6 +1,6 @@
 "use server";
 
-import { attachmentQueries, itemLabelQueries, itemQueries } from "@homebox-ai/db";
+import { attachmentQueries, itemLabelQueries, itemQueries, resolveEffectiveOwnerId } from "@homebox-ai/db";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -45,6 +45,8 @@ export async function updateItemAction(formData: FormData) {
 
   const quantityRaw = nullableField(formData, "quantity");
   const labelIds = formData.getAll("labelIds").map(String).filter(Boolean);
+  const parentItemId = nullableField(formData, "parentItemId");
+  if (parentItemId === itemId) throw new Error("An item can't be part of itself");
 
   await itemQueries.updateItem(user.id, itemId, {
     name,
@@ -65,6 +67,7 @@ export async function updateItemAction(formData: FormData) {
     soldNotes: nullableField(formData, "soldNotes"),
     warrantyExpires: nullableField(formData, "warrantyExpires"),
     locationId: nullableField(formData, "locationId"),
+    parentItemId,
     notes: nullableField(formData, "notes"),
   });
   await itemLabelQueries.setItemLabels(user.id, itemId, labelIds);
@@ -100,8 +103,9 @@ export async function uploadItemAttachmentAction(formData: FormData) {
   const typeRaw = String(formData.get("type") ?? "manual");
   const type = ATTACHMENT_TYPES.has(typeRaw) ? (typeRaw as "photo" | "receipt" | "manual" | "warranty") : "manual";
 
+  const ownerId = await resolveEffectiveOwnerId(user.id);
   const supabase = await createSupabaseServerClient();
-  const path = await uploadAttachment(supabase, user.id, itemId, file, file.name || "attachment");
+  const path = await uploadAttachment(supabase, ownerId, itemId, file, file.name || "attachment");
   await attachmentQueries.createAttachment(user.id, { itemId, type, storagePath: path });
 
   revalidatePath(`/items/${itemId}`);

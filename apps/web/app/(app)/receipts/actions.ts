@@ -1,7 +1,7 @@
 "use server";
 
 import { createLangfuseHandler, itemDraftSchema, runReceiptImportGraph, type ReceiptDraft } from "@homebox-ai/ai";
-import { attachmentQueries, itemLabelQueries, itemQueries } from "@homebox-ai/db";
+import { attachmentQueries, itemLabelQueries, itemQueries, resolveEffectiveOwnerId } from "@homebox-ai/db";
 import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
 import { uploadAttachment } from "@homebox-ai/supabase/storage";
 import { after } from "next/server";
@@ -45,12 +45,14 @@ export async function importReceiptItemsAction(formData: FormData) {
   const photo = formData.get("photo");
   let photoPath: string | null = null;
   if (photo instanceof File && photo.size > 0) {
+    const ownerId = await resolveEffectiveOwnerId(user.id);
     const supabase = await createSupabaseServerClient();
     // One shared upload for the whole receipt — the path's second segment
     // just needs to be a unique folder, not a real item id (storage RLS only
-    // checks the leading `{auth.uid()}` segment; each created item below gets
-    // its own `attachments` row pointing at this same object).
-    photoPath = await uploadAttachment(supabase, user.id, crypto.randomUUID(), photo, photo.name || "receipt.jpg");
+    // checks the leading owner-id segment via has_shared_access(); each
+    // created item below gets its own `attachments` row pointing at this
+    // same object).
+    photoPath = await uploadAttachment(supabase, ownerId, crypto.randomUUID(), photo, photo.name || "receipt.jpg");
   }
 
   for (const draft of items) {

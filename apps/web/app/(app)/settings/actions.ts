@@ -1,6 +1,6 @@
 "use server";
 
-import { itemLabelQueries, itemQueries, labelQueries, locationQueries } from "@homebox-ai/db";
+import { itemLabelQueries, itemQueries, labelQueries, locationQueries, sharingQueries } from "@homebox-ai/db";
 import { createSupabaseAdminClient } from "@homebox-ai/supabase/admin";
 import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
 import { deleteAllUserAttachments } from "@homebox-ai/supabase/storage";
@@ -130,4 +130,52 @@ export async function importItemsCsvAction(formData: FormData): Promise<{ import
 
   revalidatePath("/items");
   return { imported };
+}
+
+export async function getShareStatusAction() {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+  return sharingQueries.getShareStatus(user.id);
+}
+
+export async function listPendingInvitesAction() {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+  return sharingQueries.listPendingInvites(user.id);
+}
+
+export async function createInviteAction() {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+  return sharingQueries.createInvite(user.id);
+}
+
+export async function revokeInviteAction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const inviteId = String(formData.get("inviteId") ?? "").trim();
+  if (!inviteId) throw new Error("Missing invite id");
+
+  await sharingQueries.revokeInvite(user.id, inviteId);
+  revalidatePath("/settings");
+}
+
+export async function removeMemberAction(formData: FormData) {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const memberUserId = String(formData.get("memberUserId") ?? "").trim();
+  if (!memberUserId) throw new Error("Missing member id");
+
+  await sharingQueries.removeMember(user.id, memberUserId);
+  revalidatePath("/settings");
+}
+
+export async function leaveHouseholdAction() {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+
+  await sharingQueries.leaveSharedHousehold(user.id);
+  revalidatePath("/settings");
 }

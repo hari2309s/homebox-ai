@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/notifiers/warranty-check",
+      "schedule": "0 13 * * *"
+    }
+  ]
+}

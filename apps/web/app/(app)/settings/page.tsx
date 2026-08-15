@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { CsvImportForm } from "./csv-import-form";
 import { DeleteAccountForm } from "./delete-account-form";
 import { DisplayNameForm } from "./display-name-form";
+import { HouseholdSection } from "./household-section";
 import { PasswordForm } from "./password-form";
 
 function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
@@ -37,6 +38,10 @@ export default async function SettingsPage() {
 
       <SettingsSection title="Password">
         <PasswordForm />
+      </SettingsSection>
+
+      <SettingsSection title="Household">
+        <HouseholdSection />
       </SettingsSection>
 
       <SettingsSection title="Your data">

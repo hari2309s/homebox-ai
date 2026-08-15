@@ -23,6 +23,36 @@ export const attachmentType = pgEnum("attachment_type", ["photo", "receipt", "ma
 
 export const chatMessageRole = pgEnum("chat_message_role", ["user", "assistant"]);
 
+// Sharing without a separate "group" concept: one person (owner_id, the
+// value every table below already used before sharing existed) stays the
+// anchor identity. Other users get added here as members with full access
+// to that owner's data. memberUserId is the primary key — a user can be a
+// member of at most one other owner's data at a time (mirrors "one
+// household" without needing a synthetic group id) — but can still own
+// their own data independently. See packages/db/src/access.ts for how
+// query functions resolve "the owner_id I should read/write as."
+export const sharedAccess = pgTable("shared_access", {
+  memberUserId: uuid("member_user_id")
+    .primaryKey()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const sharedAccessInvites = pgTable("shared_access_invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  acceptedByUserId: uuid("accepted_by_user_id").references(() => authUsers.id, { onDelete: "set null" }),
+});
+
 export const locations = pgTable("locations", {
   id: uuid("id").primaryKey().defaultRandom(),
   ownerId: uuid("owner_id")
@@ -69,7 +99,11 @@ export const items = pgTable("items", {
   soldTo: text("sold_to"),
   soldNotes: text("sold_notes"),
   warrantyExpires: date("warranty_expires"),
+  // Set once an AI notifier message has been sent for this item's expiring
+  // warranty, so the check doesn't re-notify every time it runs.
+  warrantyNotifiedAt: timestamp("warranty_notified_at", { withTimezone: true }),
   locationId: uuid("location_id").references(() => locations.id, { onDelete: "set null" }),
+  parentItemId: uuid("parent_item_id").references((): AnyPgColumn => items.id, { onDelete: "set null" }),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -97,12 +131,16 @@ export const attachments = pgTable("attachments", {
     .notNull()
     .references(() => items.id, { onDelete: "cascade" }),
   type: attachmentType("type").notNull(),
-  // Path within the Supabase Storage "attachments" bucket, not a local filesystem path.
+  // Path within the Supabase Storage "attachments" bucket: "{ownerId}/{itemId}/{filename}"
+  // (owner-scoped, not the uploading member's own id, so every shared member can see it)
+  // — not a local filesystem path.
   storagePath: text("storage_path").notNull(),
   isPrimary: boolean("is_primary").notNull().default(false),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Chat stays personal — each member has their own conversation history —
+// even though the inventory data it searches over is shared.
 export const chatMessages = pgTable("chat_messages", {
   id: uuid("id").primaryKey().defaultRandom(),
   ownerId: uuid("owner_id")

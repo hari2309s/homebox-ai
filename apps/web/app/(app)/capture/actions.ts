@@ -1,7 +1,7 @@
 "use server";
 
 import { createLangfuseHandler, runPhotoToItemGraph, type ItemDraft } from "@homebox-ai/ai";
-import { attachmentQueries, itemLabelQueries, itemQueries } from "@homebox-ai/db";
+import { attachmentQueries, itemLabelQueries, itemQueries, resolveEffectiveOwnerId } from "@homebox-ai/db";
 import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
 import { uploadAttachment } from "@homebox-ai/supabase/storage";
 import { after } from "next/server";
@@ -59,8 +59,9 @@ export async function createItemFromCaptureAction(formData: FormData) {
 
   const photo = formData.get("photo");
   if (photo instanceof File && photo.size > 0) {
+    const ownerId = await resolveEffectiveOwnerId(user.id);
     const supabase = await createSupabaseServerClient();
-    const path = await uploadAttachment(supabase, user.id, item.id, photo, photo.name || "photo.jpg");
+    const path = await uploadAttachment(supabase, ownerId, item.id, photo, photo.name || "photo.jpg");
     await attachmentQueries.createAttachment(user.id, { itemId: item.id, type: "photo", storagePath: path });
   }
 

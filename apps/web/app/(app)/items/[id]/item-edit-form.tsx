@@ -26,14 +26,16 @@ interface ItemEditFormProps {
     soldNotes: string | null;
     warrantyExpires: string | null;
     locationId: string | null;
+    parentItemId: string | null;
     notes: string | null;
   };
   locations: { id: string; name: string }[];
   labels: { id: string; name: string; color: string | null }[];
+  otherItems: { id: string; name: string }[];
   selectedLabelIds: string[];
 }
 
-export function ItemEditForm({ item, locations, labels, selectedLabelIds }: ItemEditFormProps) {
+export function ItemEditForm({ item, locations, labels, otherItems, selectedLabelIds }: ItemEditFormProps) {
   const selected = new Set(selectedLabelIds);
 
   return (
@@ -73,6 +75,20 @@ export function ItemEditForm({ item, locations, labels, selectedLabelIds }: Item
           </Select>
         </label>
       </div>
+
+      {otherItems.length > 0 && (
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
+          Part of item
+          <Select name="parentItemId" defaultValue={item.parentItemId ?? ""}>
+            <option value="">Not part of another item</option>
+            {otherItems.map((candidate) => (
+              <option key={candidate.id} value={candidate.id}>
+                {candidate.name}
+              </option>
+            ))}
+          </Select>
+        </label>
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">

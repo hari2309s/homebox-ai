@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 
+import { getEffectiveOwnerId } from "../access";
 import { itemLabels, items } from "../schema";
 import { withRLS } from "../rls";
 
@@ -23,11 +24,12 @@ export function listLabelsForItem(userId: string, itemId: string) {
 }
 
 export function listAllItemLabelsForUser(userId: string) {
-  return withRLS(userId, (tx) =>
-    tx
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    return tx
       .select({ itemId: itemLabels.itemId, labelId: itemLabels.labelId })
       .from(itemLabels)
       .innerJoin(items, eq(itemLabels.itemId, items.id))
-      .where(eq(items.ownerId, userId)),
-  );
+      .where(eq(items.ownerId, ownerId));
+  });
 }

@@ -24,16 +24,21 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
   const user = await getSessionUser();
   if (!user) notFound();
 
-  const [item, locations, labels, itemLabelRows, attachments, maintenanceEntries] = await Promise.all([
-    itemQueries.getItem(user.id, id),
-    locationQueries.listLocations(user.id),
-    labelQueries.listLabels(user.id),
-    itemLabelQueries.listLabelsForItem(user.id, id),
-    attachmentQueries.listAttachmentsForItem(user.id, id),
-    maintenanceQueries.listMaintenanceForItem(user.id, id),
-  ]);
+  const [item, locations, labels, itemLabelRows, attachments, maintenanceEntries, allItems, childItems] =
+    await Promise.all([
+      itemQueries.getItem(user.id, id),
+      locationQueries.listLocations(user.id),
+      labelQueries.listLabels(user.id),
+      itemLabelQueries.listLabelsForItem(user.id, id),
+      attachmentQueries.listAttachmentsForItem(user.id, id),
+      maintenanceQueries.listMaintenanceForItem(user.id, id),
+      itemQueries.searchItems(user.id, { includeArchived: true }),
+      itemQueries.listChildItems(user.id, id),
+    ]);
 
   if (!item) notFound();
+
+  const otherItems = allItems.filter((candidate) => candidate.id !== id);
 
   const supabase = await createSupabaseServerClient();
   const attachmentsWithUrls = await Promise.all(
@@ -66,7 +71,30 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
         </Link>
       </div>
 
-      <ItemEditForm item={item} locations={locations} labels={labels} selectedLabelIds={selectedLabelIds} />
+      <ItemEditForm
+        item={item}
+        locations={locations}
+        labels={labels}
+        otherItems={otherItems}
+        selectedLabelIds={selectedLabelIds}
+      />
+
+      {childItems.length > 0 && (
+        <Section title="Contains">
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {childItems.map((child) => (
+              <li key={child.id}>
+                <Link
+                  href={`/items/${child.id}`}
+                  className="block rounded-md border border-border bg-white px-3 py-2.5 text-sm font-medium text-ink transition-colors duration-150 hover:border-accent"
+                >
+                  {child.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       <Section title="Attachments">
         <AttachmentsSection itemId={item.id} attachments={attachmentsWithUrls} />
