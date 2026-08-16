@@ -1,7 +1,7 @@
 "use client";
 
 import type { ItemDraft } from "@homebox-ai/ai";
-import { CapturePhotoPicker, Input, Select, SubmitButton } from "@homebox-ai/ui";
+import { CapturePhotoPicker, Input, Select, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
@@ -211,13 +211,13 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
           <SubmitButton disabled={includedCount === 0}>
             Import {includedCount} item{includedCount === 1 ? "" : "s"}
           </SubmitButton>
-          <button
+          <TapButton
             type="button"
             onClick={reset}
             className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
           >
             Start over
-          </button>
+          </TapButton>
         </div>
       </div>
     </form>

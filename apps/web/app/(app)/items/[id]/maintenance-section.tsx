@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, SubmitButton } from "@homebox-ai/ui";
+import { Input, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { addMaintenanceEntryAction, deleteMaintenanceEntryAction, updateMaintenanceEntryAction } from "../actions";
@@ -19,11 +19,11 @@ export function MaintenanceSection({ itemId, entries }: { itemId: string; entrie
       {entries.length === 0 ? (
         <p className="text-sm text-muted">No maintenance logged yet.</p>
       ) : (
-        <ul className="m-0 flex list-none flex-col gap-2 p-0">
+        <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
           {entries.map((entry) => (
             <MaintenanceRow key={entry.id} itemId={itemId} entry={entry} />
           ))}
-        </ul>
+        </StaggerList>
       )}
 
       <form
@@ -48,7 +48,7 @@ function MaintenanceRow({ itemId, entry }: { itemId: string; entry: MaintenanceE
 
   if (editing) {
     return (
-      <li>
+      <StaggerItem>
         <form
           action={async (formData) => {
             await updateMaintenanceEntryAction(formData);
@@ -66,21 +66,24 @@ function MaintenanceRow({ itemId, entry }: { itemId: string; entry: MaintenanceE
           <Input name="description" defaultValue={entry.description ?? ""} placeholder="Notes (optional)" />
           <div className="flex gap-3">
             <SubmitButton>Save</SubmitButton>
-            <button
+            <TapButton
               type="button"
               onClick={() => setEditing(false)}
               className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
             >
               Cancel
-            </button>
+            </TapButton>
           </div>
         </form>
-      </li>
+      </StaggerItem>
     );
   }
 
   return (
-    <li className="flex items-start justify-between gap-2 rounded-md border border-border bg-white px-3 py-2.5">
+    <StaggerItem
+      hover
+      className="flex items-start justify-between gap-2 rounded-md border border-border bg-white px-3 py-2.5"
+    >
       <div className="flex flex-col gap-0.5">
         <span className="font-medium text-ink">{entry.name}</span>
         <span className="text-xs text-muted">
@@ -90,13 +93,13 @@ function MaintenanceRow({ itemId, entry }: { itemId: string; entry: MaintenanceE
         {entry.description && <span className="text-sm text-body">{entry.description}</span>}
       </div>
       <div className="flex shrink-0 items-center gap-2 text-sm">
-        <button
+        <TapButton
           type="button"
           onClick={() => setEditing(true)}
           className="cursor-pointer border-none bg-transparent font-semibold text-ink"
         >
           Edit
-        </button>
+        </TapButton>
         <form
           action={async (formData) => {
             if (!confirm(`Delete "${entry.name}"?`)) return;
@@ -105,11 +108,14 @@ function MaintenanceRow({ itemId, entry }: { itemId: string; entry: MaintenanceE
         >
           <input type="hidden" name="itemId" value={itemId} />
           <input type="hidden" name="entryId" value={entry.id} />
-          <button type="submit" className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover">
+          <TapButton
+            type="submit"
+            className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
+          >
             Delete
-          </button>
+          </TapButton>
         </form>
       </div>
-    </li>
+    </StaggerItem>
   );
 }

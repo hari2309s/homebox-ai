@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { AnimatedHomeboxIcon, FadeIn, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { AnimatedHomeboxIcon, FadeIn, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -181,15 +181,16 @@ function LoginForm() {
             </motion.div>
           </AnimatePresence>
 
-          <button
+          <TapButton
             type="button"
             onClick={handleGoogleSignIn}
             disabled={pending}
+            whileHover={pending ? undefined : { scale: 1.015 }}
             className="flex cursor-pointer items-center justify-center gap-2.5 rounded-md border border-border bg-white px-3 py-2.5 font-semibold text-ink transition-colors duration-150 hover:bg-surface-soft disabled:cursor-default disabled:opacity-60"
           >
             <GoogleIcon />
             Continue with Google
-          </button>
+          </TapButton>
 
           <div className="flex items-center gap-3 text-xs font-semibold uppercase text-muted">
             <span className="h-px flex-1 bg-border" />
@@ -319,9 +320,10 @@ function LoginForm() {
             </AnimatePresence>
           </motion.button>
 
-          <button
+          <TapButton
             type="button"
             onClick={switchMode}
+            whileHover={{ scale: 1.03 }}
             className="cursor-pointer self-center border-none bg-transparent text-sm font-semibold text-ink"
           >
             <AnimatePresence mode="wait" initial={false}>
@@ -336,7 +338,7 @@ function LoginForm() {
                 {mode === "sign-in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
               </motion.span>
             </AnimatePresence>
-          </button>
+          </TapButton>
         </motion.form>
 
         <StaggerList className="grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">

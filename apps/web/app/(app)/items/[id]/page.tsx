@@ -6,6 +6,7 @@ import {
   locationQueries,
   maintenanceQueries,
 } from "@homebox-ai/db";
+import { StaggerItem, StaggerList } from "@homebox-ai/ui";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -92,18 +93,18 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
 
       {childItems.length > 0 && (
         <Section title="Contains">
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+          <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
             {childItems.map((child) => (
-              <li key={child.id}>
+              <StaggerItem key={child.id} hover>
                 <Link
                   href={`/items/${child.id}`}
                   className="block rounded-md border border-border bg-white px-3 py-2.5 text-sm font-medium text-ink transition-colors duration-150 hover:border-accent"
                 >
                   {child.name}
                 </Link>
-              </li>
+              </StaggerItem>
             ))}
-          </ul>
+          </StaggerList>
         </Section>
       )}
 

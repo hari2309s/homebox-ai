@@ -6,3 +6,4 @@ export { StaggerList, StaggerItem } from "./motion/stagger-list";
 export { AnimatedHomeboxIcon } from "./motion/animated-homebox-icon";
 export { Input, Select, Button, SubmitButton } from "./form";
 export { Spinner, PageLoader } from "./spinner";
+export { TapButton } from "./tap-button";

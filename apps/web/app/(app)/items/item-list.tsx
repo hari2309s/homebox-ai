@@ -16,7 +16,7 @@ export function ItemList({ items, locationNameById }: ItemListProps) {
   return (
     <StaggerList className="flex list-none flex-col gap-2 p-0 m-0">
       {items.map((item) => (
-        <StaggerItem key={item.id}>
+        <StaggerItem key={item.id} hover>
           <Link
             href={`/items/${item.id}`}
             className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3 transition-colors duration-150 hover:border-accent"

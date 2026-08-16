@@ -38,8 +38,32 @@ export function StaggerList({
   );
 }
 
-export function StaggerItem({ custom, ...props }: ComponentProps<typeof motion.li> & { custom?: number }) {
+const hoverProps = {
+  whileHover: { scale: 1.015, y: -1 },
+  whileTap: { scale: 0.985 },
+  transition: { type: "spring", stiffness: 400, damping: 22 },
+} as const;
+
+/**
+ * `hover` opts into a lift/press animation for rows a user browses through
+ * (item/location/label rows, list entries) — off by default since this is
+ * also used for things that shouldn't feel clickable, like chat bubbles.
+ */
+export function StaggerItem({
+  custom,
+  hover = false,
+  ...props
+}: ComponentProps<typeof motion.li> & { custom?: number; hover?: boolean }) {
   return (
-    <motion.li layout variants={itemVariants} custom={custom} initial="hidden" animate="show" exit="exit" {...props} />
+    <motion.li
+      layout
+      variants={itemVariants}
+      custom={custom}
+      initial="hidden"
+      animate="show"
+      exit="exit"
+      {...(hover ? hoverProps : undefined)}
+      {...props}
+    />
   );
 }

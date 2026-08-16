@@ -1,5 +1,6 @@
 "use client";
 
+import { TapButton } from "@homebox-ai/ui";
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
 import { useRouter } from "next/navigation";
 import type { ComponentProps } from "react";
@@ -36,7 +37,7 @@ export function LogoutButton() {
   }
 
   return (
-    <button
+    <TapButton
       type="button"
       onClick={handleLogout}
       disabled={pending}
@@ -44,6 +45,6 @@ export function LogoutButton() {
       className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent disabled:opacity-50"
     >
       <LogoutIcon className="h-5 w-5 md:h-6 md:w-6" />
-    </button>
+    </TapButton>
   );
 }

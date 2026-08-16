@@ -1,6 +1,6 @@
 "use client";
 
-import { Spinner } from "@homebox-ai/ui";
+import { Spinner, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import type { PendingAction } from "@homebox-ai/ai";
@@ -39,22 +39,24 @@ export function ActionCard({ action, onConfirm, onCancel }: ActionCardProps) {
       </span>
       <p className="m-0 text-body">{action.summary}</p>
       <div className="flex gap-2">
-        <button
+        <TapButton
           type="button"
           onClick={handleConfirm}
           disabled={pending}
+          whileHover={pending ? undefined : { scale: 1.02 }}
           className="flex flex-1 cursor-pointer items-center justify-center rounded-md bg-accent px-3 py-2 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
         >
           {pending ? <Spinner size={16} /> : "Confirm"}
-        </button>
-        <button
+        </TapButton>
+        <TapButton
           type="button"
           onClick={onCancel}
           disabled={pending}
+          whileHover={pending ? undefined : { scale: 1.02 }}
           className="cursor-pointer rounded-md border border-border bg-white px-3 py-2 font-semibold text-body transition-colors duration-150 hover:border-accent disabled:cursor-default disabled:opacity-60"
         >
           Cancel
-        </button>
+        </TapButton>
       </div>
     </div>
   );

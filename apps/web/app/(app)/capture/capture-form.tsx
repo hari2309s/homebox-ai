@@ -1,7 +1,7 @@
 "use client";
 
 import type { ItemDraft } from "@homebox-ai/ai";
-import { CapturePhotoPicker, Input, Select, SubmitButton } from "@homebox-ai/ui";
+import { CapturePhotoPicker, Input, Select, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
@@ -156,13 +156,13 @@ export function CaptureForm({ locations, labels }: CaptureFormProps) {
       <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
         <div className="flex items-center justify-center gap-3 md:mx-auto md:w-full md:max-w-2xl">
           <SubmitButton>Save item</SubmitButton>
-          <button
+          <TapButton
             type="button"
             onClick={reset}
             className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
           >
             Start over
-          </button>
+          </TapButton>
         </div>
       </div>
     </form>

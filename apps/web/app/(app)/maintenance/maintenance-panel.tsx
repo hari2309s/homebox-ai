@@ -1,7 +1,7 @@
 "use client";
 
 import type { MaintenanceSuggestion } from "@homebox-ai/ai";
-import { Button, EmptyState, Select, Spinner } from "@homebox-ai/ui";
+import { Button, EmptyState, Select, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { acceptMaintenanceSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
@@ -65,12 +65,13 @@ export function MaintenancePanel({ items }: MaintenancePanelProps) {
             {suggestions.suggestions.length === 0 ? (
               <p className="text-sm text-muted">No maintenance suggested right now.</p>
             ) : (
-              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
                 {suggestions.suggestions.map((suggestion, index) => {
                   const accepted = acceptedNames.has(suggestion.name);
                   return (
-                    <li
+                    <StaggerItem
                       key={`${suggestion.name}-${index}`}
+                      hover
                       className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3"
                     >
                       <div className="flex flex-col gap-0.5">
@@ -86,10 +87,10 @@ export function MaintenancePanel({ items }: MaintenancePanelProps) {
                       >
                         {accepted ? "Added" : "Add to log"}
                       </Button>
-                    </li>
+                    </StaggerItem>
                   );
                 })}
-              </ul>
+              </StaggerList>
             )}
           </div>
         ) : (

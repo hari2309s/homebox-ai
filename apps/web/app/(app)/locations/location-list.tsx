@@ -1,6 +1,6 @@
 "use client";
 
-import { EmptyState, Input, Select, StaggerItem, StaggerList, SubmitButton } from "@homebox-ai/ui";
+import { EmptyState, Input, Select, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { deleteLocationAction, updateLocationAction } from "./actions";
@@ -75,13 +75,13 @@ function LocationRow({
             </Select>
             <div className="flex gap-3">
               <SubmitButton>Save</SubmitButton>
-              <button
+              <TapButton
                 type="button"
                 onClick={() => setEditing(false)}
                 className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
               >
                 Cancel
-              </button>
+              </TapButton>
             </div>
           </div>
           {error && (
@@ -96,18 +96,19 @@ function LocationRow({
 
   return (
     <StaggerItem
+      hover
       className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3"
       data-testid={`location-row-${location.name}`}
     >
       <span className="font-medium text-ink">{pathById.get(location.id) ?? location.name}</span>
       <div className="flex shrink-0 items-center gap-3">
-        <button
+        <TapButton
           type="button"
           onClick={() => setEditing(true)}
           className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
         >
           Edit
-        </button>
+        </TapButton>
         <form
           action={async (formData) => {
             if (!confirm(`Delete "${location.name}"? Items inside will become unassigned.`)) return;
@@ -115,12 +116,12 @@ function LocationRow({
           }}
         >
           <input type="hidden" name="id" value={location.id} />
-          <button
+          <TapButton
             type="submit"
             className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent-hover"
           >
             Delete
-          </button>
+          </TapButton>
         </form>
       </div>
     </StaggerItem>

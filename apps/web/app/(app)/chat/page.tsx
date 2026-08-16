@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, FadeIn, Input, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { Button, FadeIn, Input, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import type { ComponentProps, FormEvent } from "react";
@@ -232,22 +232,22 @@ export default function ChatPage() {
       {headerActionsEl &&
         createPortal(
           <>
-            <button
+            <TapButton
               type="button"
               onClick={startNewChat}
               aria-label="New chat"
               className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent"
             >
               <NewChatIcon className="h-5 w-5 md:h-6 md:w-6" />
-            </button>
-            <button
+            </TapButton>
+            <TapButton
               type="button"
               onClick={() => setHistoryOpen(true)}
               aria-label="Conversation history"
               className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent"
             >
               <HistoryIcon className="h-5 w-5 md:h-6 md:w-6" />
-            </button>
+            </TapButton>
           </>,
           headerActionsEl,
         )}
@@ -258,14 +258,15 @@ export default function ChatPage() {
               <p className="text-sm text-muted">Ask about your inventory in plain English.</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {SUGGESTIONS.map((suggestion) => (
-                  <button
+                  <TapButton
                     key={suggestion}
                     type="button"
                     onClick={() => sendMessage(suggestion)}
+                    whileHover={{ scale: 1.04 }}
                     className="cursor-pointer rounded-full border border-border bg-surface-soft px-3 py-1.5 text-sm text-body transition-colors duration-150 hover:border-accent"
                   >
                     {suggestion}
-                  </button>
+                  </TapButton>
                 ))}
               </div>
             </FadeIn>

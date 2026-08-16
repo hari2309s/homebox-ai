@@ -1,6 +1,6 @@
 "use client";
 
-import { EmptyState, Input, StaggerItem, StaggerList, SubmitButton } from "@homebox-ai/ui";
+import { EmptyState, Input, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { deleteLabelAction, updateLabelAction } from "./actions";
@@ -60,13 +60,13 @@ function LabelChip({ label }: { label: LabelRecord }) {
             className="h-7 w-8 shrink-0 cursor-pointer rounded border border-border bg-white p-0.5"
           />
           <SubmitButton className="h-7 px-2.5 py-1 text-xs">Save</SubmitButton>
-          <button
+          <TapButton
             type="button"
             onClick={() => setEditing(false)}
             className="cursor-pointer border-none bg-transparent text-xs font-semibold text-ink"
           >
             Cancel
-          </button>
+          </TapButton>
         </form>
       </StaggerItem>
     );
@@ -74,17 +74,18 @@ function LabelChip({ label }: { label: LabelRecord }) {
 
   return (
     <StaggerItem
+      hover
       className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium ${label.color ? "" : "bg-surface text-ink"}`}
       style={label.color ? { backgroundColor: label.color, color: textColor } : undefined}
     >
-      <button
+      <TapButton
         type="button"
         onClick={() => setEditing(true)}
         className="cursor-pointer border-none bg-transparent p-0 text-sm font-medium"
         style={label.color ? { color: textColor } : undefined}
       >
         {label.name}
-      </button>
+      </TapButton>
       <form
         action={async (formData) => {
           if (!confirm(`Delete label "${label.name}"?`)) return;
@@ -92,14 +93,14 @@ function LabelChip({ label }: { label: LabelRecord }) {
         }}
       >
         <input type="hidden" name="id" value={label.id} />
-        <button
+        <TapButton
           type="submit"
           aria-label={`Delete ${label.name}`}
           className="cursor-pointer border-none bg-transparent text-xs opacity-70 hover:opacity-100"
           style={{ color: textColor }}
         >
           ✕
-        </button>
+        </TapButton>
       </form>
     </StaggerItem>
   );

@@ -116,12 +116,17 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
                 transition={{ type: "spring", stiffness: 380, damping: 30 }}
               />
             )}
-            <span className="relative">
+            <motion.span
+              className="relative"
+              whileHover={{ scale: 1.12 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
               <LinkIcon className={`h-5 w-5 md:h-6 md:w-6 ${active ? "text-ink" : "text-muted"}`} />
               {href === "/chat" && unreadChatCount > 0 && (
                 <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent" />
               )}
-            </span>
+            </motion.span>
             <span
               className={`relative text-[10px] font-semibold transition-colors duration-150 md:text-xs ${active ? "text-ink" : "text-muted"}`}
             >

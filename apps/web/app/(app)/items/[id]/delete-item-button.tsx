@@ -1,5 +1,7 @@
 "use client";
 
+import { TapButton } from "@homebox-ai/ui";
+
 import { deleteItemAction } from "../actions";
 
 export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemName: string }) {
@@ -11,12 +13,12 @@ export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemNam
       }}
     >
       <input type="hidden" name="itemId" value={itemId} />
-      <button
+      <TapButton
         type="submit"
         className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent-hover"
       >
         Delete
-      </button>
+      </TapButton>
     </form>
   );
 }

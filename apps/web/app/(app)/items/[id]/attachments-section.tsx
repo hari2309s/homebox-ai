@@ -1,6 +1,7 @@
 "use client";
 
-import { Select, SubmitButton } from "@homebox-ai/ui";
+import { Select, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { motion } from "framer-motion";
 
 import { deleteAttachmentAction, setPrimaryAttachmentAction, uploadItemAttachmentAction } from "../actions";
 
@@ -17,7 +18,12 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
       {attachments.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {attachments.map((attachment) => (
-            <div key={attachment.id} className="flex flex-col gap-1">
+            <motion.div
+              key={attachment.id}
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 400, damping: 22 }}
+              className="flex flex-col gap-1"
+            >
               <div className="relative">
                 {attachment.url ? (
                   <a href={attachment.url} target="_blank" rel="noreferrer" className="block">
@@ -48,12 +54,12 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
                     <form action={setPrimaryAttachmentAction}>
                       <input type="hidden" name="itemId" value={itemId} />
                       <input type="hidden" name="attachmentId" value={attachment.id} />
-                      <button
+                      <TapButton
                         type="submit"
                         className="cursor-pointer border-none bg-transparent font-semibold text-ink"
                       >
                         Set cover
-                      </button>
+                      </TapButton>
                     </form>
                   )}
                   <form
@@ -64,16 +70,16 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
                   >
                     <input type="hidden" name="itemId" value={itemId} />
                     <input type="hidden" name="attachmentId" value={attachment.id} />
-                    <button
+                    <TapButton
                       type="submit"
                       className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
                     >
                       Delete
-                    </button>
+                    </TapButton>
                   </form>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
