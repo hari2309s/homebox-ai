@@ -44,7 +44,7 @@ function LocationRow({
 
   if (editing) {
     return (
-      <StaggerItem className="rounded-md border border-border p-3">
+      <StaggerItem className="rounded-md border border-border p-3" data-testid={`location-row-${location.name}`}>
         <form
           action={async (formData) => {
             setError(null);
@@ -95,7 +95,10 @@ function LocationRow({
   }
 
   return (
-    <StaggerItem className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3">
+    <StaggerItem
+      className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3"
+      data-testid={`location-row-${location.name}`}
+    >
       <span className="font-medium text-ink">{pathById.get(location.id) ?? location.name}</span>
       <div className="flex shrink-0 items-center gap-3">
         <button

@@ -30,6 +30,7 @@ An AI-native home inventory PWA — search your stuff in plain English, snap a p
 ![pnpm](https://img.shields.io/badge/pnpm-workspaces-F69220?logo=pnpm&logoColor=white)
 ![Turborepo](https://img.shields.io/badge/Turborepo-monorepo-EF4444?logo=turborepo&logoColor=white)
 ![Vitest](https://img.shields.io/badge/Vitest-unit_tests-6E9F18?logo=vitest&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-e2e_tests-2EAD33?logo=playwright&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-deployment-000000?logo=vercel&logoColor=white)
 
 </div>
@@ -220,7 +221,9 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Testing
 
-Unit tests only, no DB/network calls — scoped to pure, dependency-free logic (security-sensitive checks, config resolution, format round-trips):
+### Unit tests (Vitest)
+
+Pure, dependency-free logic — no DB/network calls:
 
 ```bash
 pnpm test
@@ -232,7 +235,22 @@ pnpm test
 | `packages/ai` | `router.ts`'s task → provider chain resolution (ordering, missing-key skipping, OpenRouter's per-task model config) |
 | `apps/web` | `lib/csv` (round-trip parse/serialize), `lib/safe-redirect` (open-redirect prevention on the post-login redirect) |
 
-Everything else in the app — RLS-scoped queries, Server Actions, AI graphs — touches a real Postgres connection or a live model provider, so it's verified manually against the real Supabase project rather than mocked in a unit test; see the git history for the verification passes each feature went through.
+### E2E tests (Playwright)
+
+Runs against the real Supabase project in `.env.local` — no mocked backend. Authenticated specs use a dedicated, persistent test account (see [`apps/web/e2e/README.md`](apps/web/e2e/README.md) for how it's set up and how to recreate it).
+
+```bash
+pnpm test:e2e          # from the repo root, or `apps/web` directly
+pnpm --filter web test:e2e:ui   # interactive Playwright UI
+```
+
+| Spec | Auth | Covers |
+|---|---|---|
+| `auth.unauth.spec.ts` | none | Login page rendering, mode switching, and the middleware's redirect-guard (including `/join/[token]` invite links) |
+| `items.spec.ts` | e2e account | Create → view → edit → delete an item |
+| `locations.spec.ts` | e2e account | Regression coverage for the location-nesting cycle check — a circular re-parent is rejected inline instead of crashing the page, and a legitimate re-parent still succeeds |
+
+Everything not covered by either suite — most RLS-scoped queries, AI graphs, exports/imports — is verified manually against the real Supabase project rather than automated; see the git history for the verification passes each feature went through.
 
 ---
 

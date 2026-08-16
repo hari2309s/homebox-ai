@@ -12,7 +12,8 @@
     "typecheck": "turbo run typecheck",
     "db:generate": "pnpm --filter @homebox-ai/db generate",
     "db:migrate": "pnpm --filter @homebox-ai/db migrate",
-    "test": "vitest run"
+    "test": "vitest run --exclude 'apps/web/e2e/**'",
+    "test:e2e": "pnpm --filter web test:e2e"
   },
   "devDependencies": {
     "turbo": "^2.3.0",

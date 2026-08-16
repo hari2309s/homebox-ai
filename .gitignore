@@ -14,3 +14,8 @@ supabase/.temp
 apps/web/public/sw.js
 apps/web/public/sw.js.map
 apps/web/public/swe-worker*.js
+
+# Playwright — auth storage state and run artifacts, all regenerated locally/in CI
+apps/web/e2e/.auth
+apps/web/playwright-report
+apps/web/test-results
