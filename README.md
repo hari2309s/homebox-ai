@@ -29,6 +29,7 @@ An AI-native home inventory PWA — search your stuff in plain English, snap a p
 
 ![pnpm](https://img.shields.io/badge/pnpm-workspaces-F69220?logo=pnpm&logoColor=white)
 ![Turborepo](https://img.shields.io/badge/Turborepo-monorepo-EF4444?logo=turborepo&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-unit_tests-6E9F18?logo=vitest&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-deployment-000000?logo=vercel&logoColor=white)
 
 </div>
@@ -214,6 +215,24 @@ pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Testing
+
+Unit tests only, no DB/network calls — scoped to pure, dependency-free logic (security-sensitive checks, config resolution, format round-trips):
+
+```bash
+pnpm test
+```
+
+| Package | Covered |
+|---|---|
+| `packages/db` | `wouldFormCycle` — the parent/location-chain cycle check shared by `updateLocation`/`updateItem` |
+| `packages/ai` | `router.ts`'s task → provider chain resolution (ordering, missing-key skipping, OpenRouter's per-task model config) |
+| `apps/web` | `lib/csv` (round-trip parse/serialize), `lib/safe-redirect` (open-redirect prevention on the post-login redirect) |
+
+Everything else in the app — RLS-scoped queries, Server Actions, AI graphs — touches a real Postgres connection or a live model provider, so it's verified manually against the real Supabase project rather than mocked in a unit test; see the git history for the verification passes each feature went through.
 
 ---
 

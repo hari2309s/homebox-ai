@@ -6,13 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
-// Query-param controlled, so it must be validated before use — reject
-// anything that isn't a same-origin relative path (blocks the "//evil.com"
-// protocol-relative-URL open-redirect trick).
-function safeRedirect(path: string | null): string {
-  if (!path || !path.startsWith("/") || path.startsWith("//")) return "/items";
-  return path;
-}
+import { safeRedirect } from "../../../lib/safe-redirect";
 
 const FEATURES = [
   { icon: "🔍", label: "Ask “where's my passport?” in plain English" },

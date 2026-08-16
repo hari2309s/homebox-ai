@@ -1,6 +1,7 @@
 import { and, eq, ilike, sql } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
+import { wouldFormCycle } from "../cycle";
 import { items } from "../schema";
 import { withRLS, type Tx } from "../rls";
 
@@ -115,31 +116,23 @@ export interface UpdateItemInput {
   notes?: string | null;
 }
 
-// Same reasoning as locations' wouldCreateCycle: without this, an item can be
-// re-parented under its own descendant, making the containment chain
-// circular (item A contains B contains A). Nothing currently recurses over
-// this chain the way /locations does, but it's a nonsensical, unrecoverable
-// state to allow regardless — better to reject it at the write.
-async function wouldCreateCycle(tx: Tx, ownerId: string, itemId: string, proposedParentId: string): Promise<boolean> {
-  let currentId: string | null = proposedParentId;
-  const visited = new Set<string>();
-  while (currentId) {
-    if (currentId === itemId) return true;
-    if (visited.has(currentId)) return false;
-    visited.add(currentId);
-    const [row] = await tx
-      .select({ parentItemId: items.parentItemId })
-      .from(items)
-      .where(and(eq(items.id, currentId), eq(items.ownerId, ownerId)));
-    currentId = row?.parentItemId ?? null;
-  }
-  return false;
+// Same reasoning as locations.ts: without this, an item can be re-parented
+// under its own descendant, making the containment chain circular (item A
+// contains B contains A). Nothing currently recurses over this chain the way
+// /locations does, but it's a nonsensical, unrecoverable state to allow
+// regardless — better to reject it at the write. See ../cycle.ts.
+async function getParentItemId(tx: Tx, ownerId: string, itemId: string): Promise<string | null> {
+  const [row] = await tx
+    .select({ parentItemId: items.parentItemId })
+    .from(items)
+    .where(and(eq(items.id, itemId), eq(items.ownerId, ownerId)));
+  return row?.parentItemId ?? null;
 }
 
 export function updateItem(userId: string, itemId: string, data: UpdateItemInput) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
-    if (data.parentItemId && (await wouldCreateCycle(tx, ownerId, itemId, data.parentItemId))) {
+    if (data.parentItemId && (await wouldFormCycle(itemId, data.parentItemId, (id) => getParentItemId(tx, ownerId, id)))) {
       throw new Error("Can't move an item inside itself or one of its own sub-items.");
     }
     const [existing] = await tx

@@ -11,10 +11,12 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "db:generate": "pnpm --filter @homebox-ai/db generate",
-    "db:migrate": "pnpm --filter @homebox-ai/db migrate"
+    "db:migrate": "pnpm --filter @homebox-ai/db migrate",
+    "test": "vitest run"
   },
   "devDependencies": {
     "turbo": "^2.3.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.0"
   }
 }
