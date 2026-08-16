@@ -6,7 +6,10 @@ import type { ComponentProps, FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { listChatSessionsAction, loadChatSessionAction } from "./actions";
+import type { PendingAction } from "@homebox-ai/ai";
+
+import { confirmChatActionAction, listChatSessionsAction, loadChatSessionAction } from "./actions";
+import { ActionCard } from "./action-card";
 import { HistorySheet } from "./history-sheet";
 import { MessageContent } from "./message-content";
 
@@ -14,6 +17,7 @@ interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
+  pendingAction?: PendingAction;
 }
 
 interface ChatSession {
@@ -83,6 +87,11 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [headerActionsEl, setHeaderActionsEl] = useState<HTMLElement | null>(null);
+  // Which pending-action cards have already been acted on, keyed by the
+  // assistant message id that carried them — a card only ever renders once
+  // per message, so this is enough to hide it after confirm/cancel without
+  // needing to mutate the message list itself.
+  const [resolvedActions, setResolvedActions] = useState<Record<string, "confirmed" | "cancelled">>({});
   const bottomRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef(sessionId);
 
@@ -101,6 +110,7 @@ export default function ChatPage() {
     setSessionId(crypto.randomUUID());
     setMessages([]);
     setError(null);
+    setResolvedActions({});
     setHistoryOpen(false);
   }
 
@@ -109,6 +119,7 @@ export default function ChatPage() {
     if (id === sessionId) return;
     setError(null);
     setMessages([]);
+    setResolvedActions({});
     setSessionId(id);
     try {
       const history = await loadChatSessionAction(id);
@@ -142,7 +153,7 @@ export default function ChatPage() {
 
       // A crashed/timed-out function can return an empty or non-JSON body —
       // parse defensively instead of letting `.json()` throw a raw parse error.
-      let data: { reply?: string; error?: string } = {};
+      let data: { reply?: string; error?: string; pendingAction?: PendingAction } = {};
       try {
         data = await response.json();
       } catch {
@@ -152,7 +163,10 @@ export default function ChatPage() {
       if (!response.ok) throw new Error(data.error ?? "Something went wrong");
       if (!data.reply) throw new Error("Something went wrong");
       if (sessionIdRef.current === requestSessionId) {
-        setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.reply! }]);
+        setMessages((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), role: "assistant", content: data.reply!, pendingAction: data.pendingAction },
+        ]);
       }
       listChatSessionsAction()
         .then(setSessions)
@@ -165,6 +179,25 @@ export default function ChatPage() {
       setPending(false);
       requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }));
     }
+  }
+
+  async function handleConfirmAction(messageId: string, action: PendingAction) {
+    const requestSessionId = sessionIdRef.current;
+    try {
+      const result = await confirmChatActionAction(requestSessionId, action);
+      if (sessionIdRef.current !== requestSessionId) return;
+      setResolvedActions((prev) => ({ ...prev, [messageId]: "confirmed" }));
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: result.message }]);
+      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }));
+    } catch (err) {
+      if (sessionIdRef.current === requestSessionId) {
+        setError(err instanceof Error ? err.message : "Couldn't complete that action");
+      }
+    }
+  }
+
+  function handleCancelAction(messageId: string) {
+    setResolvedActions((prev) => ({ ...prev, [messageId]: "cancelled" }));
   }
 
   function handleSubmit(event: FormEvent) {
@@ -216,18 +249,44 @@ export default function ChatPage() {
             </FadeIn>
           ) : (
             <StaggerList className="m-0 flex list-none flex-col gap-3 p-0">
-              {messages.map((message) => (
-                <StaggerItem
-                  key={message.id}
-                  className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
-                    message.role === "user"
-                      ? "self-end whitespace-pre-wrap rounded-br-sm bg-accent text-white"
-                      : "self-start rounded-bl-sm border border-border bg-surface-soft text-body"
-                  }`}
-                >
-                  {message.role === "assistant" ? <MessageContent content={message.content} /> : message.content}
-                </StaggerItem>
-              ))}
+              {messages.map((message) => {
+                const resolution = resolvedActions[message.id];
+                return (
+                  <StaggerItem
+                    key={message.id}
+                    className={
+                      message.pendingAction
+                        ? "max-w-[85%] self-start"
+                        : `max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
+                            message.role === "user"
+                              ? "self-end whitespace-pre-wrap rounded-br-sm bg-accent text-white"
+                              : "self-start rounded-bl-sm border border-border bg-surface-soft text-body"
+                          }`
+                    }
+                  >
+                    {message.pendingAction ? (
+                      <div className="flex flex-col gap-2">
+                        <div className="rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-2.5 text-sm text-body">
+                          <MessageContent content={message.content} />
+                        </div>
+                        {resolution === "cancelled" ? (
+                          <p className="m-0 text-xs text-muted">Cancelled — no changes made.</p>
+                        ) : resolution === "confirmed" ? null : (
+                          <ActionCard
+                            action={message.pendingAction}
+                            onConfirm={() => handleConfirmAction(message.id, message.pendingAction!)}
+                            onCancel={() => handleCancelAction(message.id)}
+                          />
+                        )}
+                      </div>
+                    ) : message.role === "assistant" ? (
+                      <MessageContent content={message.content} />
+                    ) : (
+                      message.content
+                    )}
+                  </StaggerItem>
+                );
+              })}
             </StaggerList>
           )}
 

@@ -38,3 +38,22 @@ export function deleteLabel(userId: string, labelId: string) {
     return tx.delete(labels).where(and(eq(labels.id, labelId), eq(labels.ownerId, ownerId)));
   });
 }
+
+/** Resolves each name to an existing label's id, creating any that don't exist yet — dedupes case-insensitively by name. */
+export async function resolveOrCreateLabelIds(userId: string, labelNames: string[]): Promise<string[]> {
+  const existing = await listLabels(userId);
+  const byName = new Map(existing.map((label) => [label.name.toLowerCase(), label.id]));
+  const ids: string[] = [];
+  for (const name of labelNames) {
+    const key = name.toLowerCase();
+    let id = byName.get(key);
+    if (!id) {
+      const [created] = await createLabel(userId, { name });
+      if (!created) continue;
+      id = created.id;
+      byName.set(key, id);
+    }
+    ids.push(id);
+  }
+  return ids;
+}

@@ -8,3 +8,4 @@ export { runMaintenanceAssistantGraph } from "./graphs/maintenance-assistant";
 
 export * from "./schemas/item-draft";
 export * from "./schemas/maintenance-suggestion";
+export * from "./schemas/pending-action";
