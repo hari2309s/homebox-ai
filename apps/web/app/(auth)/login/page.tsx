@@ -100,7 +100,7 @@ function LoginForm() {
   }
 
   return (
-    <main className="mx-auto flex h-dvh w-full max-w-lg flex-col items-center overflow-y-auto px-6 py-12">
+    <main className="no-scrollbar mx-auto flex h-dvh w-full max-w-lg flex-col items-center overflow-y-auto px-6 py-12">
       <div className="m-auto flex w-full flex-col items-center gap-10">
         <FadeIn className="flex flex-col items-center gap-2 text-center">
           <div className="flex flex-col items-center gap-2">
@@ -113,7 +113,7 @@ function LoginForm() {
             </motion.div>
             <h1 className="text-2xl font-bold tracking-tight text-ink">Homebox AI</h1>
           </div>
-          <p className="max-w-md text-base text-muted">Your home inventory, remembered and organized by AI.</p>
+          <p className="max-w-md text-base text-muted">Know what you own, and where it is.</p>
         </FadeIn>
 
         <motion.form
