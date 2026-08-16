@@ -3,9 +3,12 @@
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
 import { AnimatedHomeboxIcon, FadeIn, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
+import { isPasswordValid, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_MESSAGE } from "../../../lib/password-policy";
+import { PasswordRequirementsList } from "../../../lib/password-requirements-list";
 import { safeRedirect } from "../../../lib/safe-redirect";
 
 const FEATURES = [
@@ -87,6 +90,10 @@ function LoginForm() {
       return;
     }
 
+    if (!isPasswordValid(password)) {
+      setError(PASSWORD_REQUIREMENTS_MESSAGE);
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Passwords don't match.");
       return;
@@ -237,13 +244,37 @@ function LoginForm() {
             <input
               type="password"
               required
-              minLength={8}
+              minLength={mode === "sign-up" ? PASSWORD_MIN_LENGTH : undefined}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
               className={inputClassName}
             />
           </label>
+
+          {mode === "sign-in" && (
+            <Link
+              href="/forgot-password"
+              className="self-end text-xs font-semibold text-ink underline underline-offset-4"
+            >
+              Forgot password?
+            </Link>
+          )}
+
+          <AnimatePresence initial={false}>
+            {mode === "sign-up" && (
+              <motion.div
+                key="password-requirements"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <PasswordRequirementsList password={password} />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <AnimatePresence initial={false}>
             {mode === "sign-up" && (
@@ -259,7 +290,7 @@ function LoginForm() {
                 <input
                   type="password"
                   required
-                  minLength={8}
+                  minLength={PASSWORD_MIN_LENGTH}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   autoComplete="new-password"
