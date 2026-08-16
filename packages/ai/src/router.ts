@@ -10,6 +10,16 @@ import { createOpenRouterModel } from "./providers/openrouter";
 
 export type TaskType = "vision" | "chat_tools" | "reasoning";
 
+// OPENROUTER_VISION_MODEL must be vision-capable — it's OpenRouter's fallback
+// for the vision task specifically. OPENROUTER_MODEL is the fallback for the
+// two text-only tasks (chat_tools, reasoning); it's separate because a
+// vision-tuned free model isn't necessarily good at (or even compatible
+// with) tool-calling or plain reasoning. Falls back to the vision model's
+// default only when OPENROUTER_MODEL isn't set, to keep prior behavior for
+// anyone who already had just the one env var configured.
+const OPENROUTER_VISION_MODEL = process.env.OPENROUTER_VISION_MODEL ?? "google/gemma-4-31b-it:free";
+const OPENROUTER_TEXT_MODEL = process.env.OPENROUTER_MODEL ?? OPENROUTER_VISION_MODEL;
+
 /**
  * Task -> ordered provider factories. Not hardcoded fallback logic: this is a
  * plain config object precisely so the order is easy to change without
@@ -17,9 +27,9 @@ export type TaskType = "vision" | "chat_tools" | "reasoning";
  * Orchestration section for why each order was chosen.
  */
 const TASK_PROVIDER_CHAINS: Record<TaskType, Array<() => BaseChatModel>> = {
-  vision: [createGeminiModel, createOpenRouterModel],
-  chat_tools: [createGroqModel, createCerebrasModel, createOpenRouterModel],
-  reasoning: [createCerebrasModel, createGroqModel, createOpenRouterModel],
+  vision: [createGeminiModel, () => createOpenRouterModel(OPENROUTER_VISION_MODEL)],
+  chat_tools: [createGroqModel, createCerebrasModel, () => createOpenRouterModel(OPENROUTER_TEXT_MODEL)],
+  reasoning: [createCerebrasModel, createGroqModel, () => createOpenRouterModel(OPENROUTER_TEXT_MODEL)],
 };
 
 /**

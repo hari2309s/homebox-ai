@@ -12,10 +12,15 @@ export default async function LocationsPage() {
   const locations = user ? await locationQueries.listLocations(user.id) : [];
   const byId = new Map(locations.map((location) => [location.id, location]));
 
-  function pathFor(locationId: string): string {
+  // `seen` guards against a circular parentId chain — shouldn't exist given
+  // locationQueries.updateLocation's cycle check, but recursing on bad data
+  // (e.g. from before that check existed) would otherwise stack-overflow and
+  // crash this page on every load rather than just rendering a truncated path.
+  function pathFor(locationId: string, seen = new Set<string>()): string {
     const location = byId.get(locationId);
-    if (!location) return "";
-    return location.parentId ? `${pathFor(location.parentId)} / ${location.name}` : location.name;
+    if (!location || seen.has(locationId)) return location?.name ?? "";
+    seen.add(locationId);
+    return location.parentId ? `${pathFor(location.parentId, seen)} / ${location.name}` : location.name;
   }
 
   const pathById = new Map(locations.map((location) => [location.id, pathFor(location.id)]));

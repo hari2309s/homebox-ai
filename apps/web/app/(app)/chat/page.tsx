@@ -72,11 +72,16 @@ export default function ChatPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [headerActionsEl, setHeaderActionsEl] = useState<HTMLElement | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const sessionIdRef = useRef(sessionId);
 
   useEffect(() => {
     listChatSessionsAction().then(setSessions).catch(() => {});
     setHeaderActionsEl(document.getElementById("header-actions"));
   }, []);
+
+  useEffect(() => {
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
 
   function startNewChat() {
     setSessionId(crypto.randomUUID());
@@ -103,6 +108,12 @@ export default function ChatPage() {
     const trimmed = text.trim();
     if (!trimmed || pending) return;
 
+    // Capture which session this request belongs to. The user can start a new
+    // chat or switch conversations while this request is still in flight (the
+    // header's "New chat" / history controls are always reachable), so the
+    // response must only be applied if that session is still the active one.
+    const requestSessionId = sessionId;
+
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed }]);
     setInput("");
     setPending(true);
@@ -112,7 +123,7 @@ export default function ChatPage() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed, sessionId }),
+        body: JSON.stringify({ message: trimmed, sessionId: requestSessionId }),
       });
 
       // A crashed/timed-out function can return an empty or non-JSON body —
@@ -126,10 +137,14 @@ export default function ChatPage() {
 
       if (!response.ok) throw new Error(data.error ?? "Something went wrong");
       if (!data.reply) throw new Error("Something went wrong");
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.reply! }]);
+      if (sessionIdRef.current === requestSessionId) {
+        setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.reply! }]);
+      }
       listChatSessionsAction().then(setSessions).catch(() => {});
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      if (sessionIdRef.current === requestSessionId) {
+        setError(err instanceof Error ? err.message : "Something went wrong");
+      }
     } finally {
       setPending(false);
       requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }));

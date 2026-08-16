@@ -40,39 +40,55 @@ function LocationRow({
   pathById: Map<string, string>;
 }) {
   const [editing, setEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (editing) {
     return (
       <StaggerItem className="rounded-md border border-border p-3">
         <form
           action={async (formData) => {
-            await updateLocationAction(formData);
-            setEditing(false);
+            setError(null);
+            try {
+              await updateLocationAction(formData);
+              setEditing(false);
+            } catch (err) {
+              // e.g. re-parenting a location under its own sub-location — a
+              // plain user mistake, not a crash: show it inline instead of
+              // letting the throw reach Next's uncaught-error page.
+              setError(err instanceof Error ? err.message : "Couldn't save that change");
+            }
           }}
-          className="flex flex-col gap-2 sm:flex-row sm:items-center"
+          className="flex flex-col gap-2"
         >
-          <input type="hidden" name="id" value={location.id} />
-          <Input name="name" defaultValue={location.name} required className="sm:flex-1" />
-          <Select name="parentId" defaultValue={location.parentId ?? ""}>
-            <option value="">No parent (top-level)</option>
-            {locations
-              .filter((candidate) => candidate.id !== location.id)
-              .map((candidate) => (
-                <option key={candidate.id} value={candidate.id}>
-                  {pathById.get(candidate.id) ?? candidate.name}
-                </option>
-              ))}
-          </Select>
-          <div className="flex gap-3">
-            <SubmitButton>Save</SubmitButton>
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
-            >
-              Cancel
-            </button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input type="hidden" name="id" value={location.id} />
+            <Input name="name" defaultValue={location.name} required className="sm:flex-1" />
+            <Select name="parentId" defaultValue={location.parentId ?? ""}>
+              <option value="">No parent (top-level)</option>
+              {locations
+                .filter((candidate) => candidate.id !== location.id)
+                .map((candidate) => (
+                  <option key={candidate.id} value={candidate.id}>
+                    {pathById.get(candidate.id) ?? candidate.name}
+                  </option>
+                ))}
+            </Select>
+            <div className="flex gap-3">
+              <SubmitButton>Save</SubmitButton>
+              <button
+                type="button"
+                onClick={() => setEditing(false)}
+                className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
+          {error && (
+            <p role="alert" className="text-sm text-accent-hover">
+              {error}
+            </p>
+          )}
         </form>
       </StaggerItem>
     );

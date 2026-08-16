@@ -47,8 +47,13 @@ export function listChildItems(userId: string, parentItemId: string) {
 }
 
 // Per-owner sequential numbering (not a global sequence), so each user's asset
-// IDs start at 1 regardless of how many items other owners have.
+// IDs start at 1 regardless of how many items other owners have. The
+// transaction-scoped advisory lock (auto-released at commit/rollback) closes
+// the read-then-insert race between two concurrent createItem calls for the
+// same owner — without it, both could read the same max() and insert the
+// same assetId.
 async function nextAssetId(tx: Tx, ownerId: string): Promise<number> {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${ownerId})::bigint)`);
   const [row] = await tx
     .select({ next: sql<number>`coalesce(max(${items.assetId}), 0) + 1` })
     .from(items)
@@ -110,9 +115,33 @@ export interface UpdateItemInput {
   notes?: string | null;
 }
 
+// Same reasoning as locations' wouldCreateCycle: without this, an item can be
+// re-parented under its own descendant, making the containment chain
+// circular (item A contains B contains A). Nothing currently recurses over
+// this chain the way /locations does, but it's a nonsensical, unrecoverable
+// state to allow regardless — better to reject it at the write.
+async function wouldCreateCycle(tx: Tx, ownerId: string, itemId: string, proposedParentId: string): Promise<boolean> {
+  let currentId: string | null = proposedParentId;
+  const visited = new Set<string>();
+  while (currentId) {
+    if (currentId === itemId) return true;
+    if (visited.has(currentId)) return false;
+    visited.add(currentId);
+    const [row] = await tx
+      .select({ parentItemId: items.parentItemId })
+      .from(items)
+      .where(and(eq(items.id, currentId), eq(items.ownerId, ownerId)));
+    currentId = row?.parentItemId ?? null;
+  }
+  return false;
+}
+
 export function updateItem(userId: string, itemId: string, data: UpdateItemInput) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
+    if (data.parentItemId && (await wouldCreateCycle(tx, ownerId, itemId, data.parentItemId))) {
+      throw new Error("Can't move an item inside itself or one of its own sub-items.");
+    }
     const [existing] = await tx
       .select({ assetId: items.assetId })
       .from(items)

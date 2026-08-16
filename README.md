@@ -179,7 +179,8 @@ GROQ_API_KEY=                        # Groq — chat tool-calling
 CEREBRAS_API_KEY=                    # Cerebras — reasoning + chat fallback
 CEREBRAS_MODEL=gpt-oss-120b          # optional override
 OPENROUTER_API_KEY=                  # OpenRouter — catch-all fallback for every task
-OPENROUTER_VISION_MODEL=google/gemma-4-31b-it:free   # free-tier lineup changes — keep this configurable
+OPENROUTER_VISION_MODEL=google/gemma-4-31b-it:free   # fallback for the vision task specifically
+OPENROUTER_MODEL=                    # fallback for text tasks (chat, reasoning); falls back to the vision model if unset
 
 # Langfuse (optional locally, recommended)
 LANGFUSE_SECRET_KEY=

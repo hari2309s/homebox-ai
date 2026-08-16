@@ -1,6 +1,7 @@
 "use client";
 
 import { Input, Select, SubmitButton } from "@homebox-ai/ui";
+import { useState } from "react";
 
 import { updateItemAction } from "../actions";
 
@@ -37,9 +38,22 @@ interface ItemEditFormProps {
 
 export function ItemEditForm({ item, locations, labels, otherItems, selectedLabelIds }: ItemEditFormProps) {
   const selected = new Set(selectedLabelIds);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(formData: FormData) {
+    setError(null);
+    try {
+      await updateItemAction(formData);
+    } catch (err) {
+      // e.g. setting "Part of item" to one of this item's own sub-items — a
+      // plain user mistake, not a crash: show it inline instead of letting
+      // the throw reach Next's uncaught-error page.
+      setError(err instanceof Error ? err.message : "Couldn't save that change");
+    }
+  }
 
   return (
-    <form action={updateItemAction} className="flex flex-col gap-4 rounded-md border border-border bg-surface-soft p-4">
+    <form action={handleSubmit} className="flex flex-col gap-4 rounded-md border border-border bg-surface-soft p-4">
       <input type="hidden" name="itemId" value={item.id} />
 
       {item.assetId != null && (
@@ -188,6 +202,12 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
             </label>
           ))}
         </fieldset>
+      )}
+
+      {error && (
+        <p role="alert" className="text-sm text-accent-hover">
+          {error}
+        </p>
       )}
 
       <SubmitButton className="self-start">Save changes</SubmitButton>
