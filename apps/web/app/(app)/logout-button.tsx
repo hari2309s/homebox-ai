@@ -29,6 +29,8 @@ export function LogoutButton() {
   const [pending, setPending] = useState(false);
 
   async function handleLogout() {
+    if (!confirm("Log out?")) return;
+
     setPending(true);
     const supabase = createSupabaseBrowserClient();
     await supabase.auth.signOut();
