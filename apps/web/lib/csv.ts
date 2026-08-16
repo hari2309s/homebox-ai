@@ -1,10 +1,28 @@
+// Spreadsheet apps (Excel, Google Sheets, LibreOffice) treat a cell starting
+// with one of these as a formula, not literal text — so a value like
+// `=HYPERLINK(...)` in a user-controlled field (item name, notes, a shared
+// household member's input, ...) would execute for whoever opens the
+// exported file. Prefixing with a single quote is the standard mitigation:
+// every one of those apps renders a leading `'` as "force text" and drops it
+// from what's displayed, without it becoming part of the cell's real value.
+const FORMULA_TRIGGER_CHARS = new Set(["=", "+", "-", "@", "\t", "\r"]);
+
+export function escapeCsvFormula(value: string): string {
+  return FORMULA_TRIGGER_CHARS.has(value.charAt(0)) ? `'${value}` : value;
+}
+
+/** Reverses escapeCsvFormula — strips a safety prefix this app added, not a genuine user-typed leading apostrophe. */
+export function unescapeCsvFormula(value: string): string {
+  return value.charAt(0) === "'" && FORMULA_TRIGGER_CHARS.has(value.charAt(1)) ? value.slice(1) : value;
+}
+
 function csvEscape(value: string): string {
   if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
   return value;
 }
 
 export function toCsv(headers: string[], rows: string[][]): string {
-  return [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\r\n");
+  return [headers, ...rows].map((row) => row.map(escapeCsvFormula).map(csvEscape).join(",")).join("\r\n");
 }
 
 // Minimal RFC4180 parser: handles quoted fields with embedded commas,

@@ -8,7 +8,6 @@ interface AttachmentRecord {
   id: string;
   type: string;
   isPrimary: boolean;
-  storagePath: string;
   url: string | null;
 }
 
@@ -65,7 +64,6 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
                   >
                     <input type="hidden" name="itemId" value={itemId} />
                     <input type="hidden" name="attachmentId" value={attachment.id} />
-                    <input type="hidden" name="storagePath" value={attachment.storagePath} />
                     <button
                       type="submit"
                       className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"

@@ -11,7 +11,7 @@ import {
 } from "@homebox-ai/db";
 import { revalidatePath } from "next/cache";
 
-import { getSessionUser } from "@homebox-ai/supabase/server";
+import { requireSessionUser } from "@homebox-ai/supabase/server";
 
 /**
  * The only place that actually performs a chat-proposed mutation. `rawAction`
@@ -31,8 +31,7 @@ export interface ConfirmChatActionResult {
 }
 
 export async function confirmChatActionAction(sessionId: string, rawAction: unknown): Promise<ConfirmChatActionResult> {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const parsed = pendingActionSchema.safeParse(rawAction);
   if (!parsed.success) throw new Error("That action looks malformed — please try asking again.");
@@ -124,8 +123,7 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
 }
 
 export async function listChatSessionsAction() {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const sessions = await chatQueries.listChatSessions(user.id);
   return sessions.map((session) => ({
@@ -137,8 +135,7 @@ export async function listChatSessionsAction() {
 }
 
 export async function loadChatSessionAction(sessionId: string) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const messages = await chatQueries.listChatMessages(user.id, sessionId);
   await chatQueries.markSessionMessagesRead(user.id, sessionId);

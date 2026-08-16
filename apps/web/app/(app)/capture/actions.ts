@@ -1,17 +1,15 @@
 "use server";
 
-import { createLangfuseHandler, runPhotoToItemGraph, type ItemDraft } from "@homebox-ai/ai";
+import { runPhotoToItemGraph, type ItemDraft } from "@homebox-ai/ai";
 import { attachmentQueries, itemLabelQueries, itemQueries, resolveEffectiveOwnerId } from "@homebox-ai/db";
-import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
+import { createSupabaseServerClient, requireSessionUser } from "@homebox-ai/supabase/server";
 import { uploadAttachment } from "@homebox-ai/supabase/storage";
-import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 
-import { langfuseSpanProcessor } from "../../../instrumentation-node";
+import { runTracedGraph } from "../../../lib/traced-graph";
 
 export async function analyzePhotoAction(formData: FormData): Promise<ItemDraft> {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const file = formData.get("photo");
   if (!(file instanceof File) || file.size === 0) throw new Error("A photo is required");
@@ -19,19 +17,13 @@ export async function analyzePhotoAction(formData: FormData): Promise<ItemDraft>
   const buffer = Buffer.from(await file.arrayBuffer());
   const dataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
 
-  const langfuseHandler = createLangfuseHandler({ userId: user.id, tags: ["photo-to-item"] });
-  const draft = await runPhotoToItemGraph(dataUrl, { callbacks: [langfuseHandler], runName: "photo-to-item" });
-
-  after(async () => {
-    await langfuseSpanProcessor.forceFlush();
-  });
-
-  return draft;
+  return runTracedGraph({ userId: user.id, tags: ["photo-to-item"], runName: "photo-to-item" }, (options) =>
+    runPhotoToItemGraph(dataUrl, options),
+  );
 }
 
 export async function createItemFromCaptureAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) throw new Error("Name is required");

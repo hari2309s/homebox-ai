@@ -1,17 +1,18 @@
 "use server";
 
-import { createLangfuseHandler, itemDraftSchema, runReceiptImportGraph, type ReceiptDraft } from "@homebox-ai/ai";
+import { itemDraftSchema, runReceiptImportGraph, type ReceiptDraft } from "@homebox-ai/ai";
 import { attachmentQueries, itemLabelQueries, itemQueries, resolveEffectiveOwnerId } from "@homebox-ai/db";
-import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
+import { createSupabaseServerClient, requireSessionUser } from "@homebox-ai/supabase/server";
 import { uploadAttachment } from "@homebox-ai/supabase/storage";
-import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 
-import { langfuseSpanProcessor } from "../../../instrumentation-node";
+import { mapWithConcurrency } from "../../../lib/concurrency";
+import { runTracedGraph } from "../../../lib/traced-graph";
+
+const IMPORT_CONCURRENCY = 5;
 
 export async function analyzeReceiptAction(formData: FormData): Promise<ReceiptDraft> {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const file = formData.get("photo");
   if (!(file instanceof File) || file.size === 0) throw new Error("A receipt photo is required");
@@ -19,19 +20,13 @@ export async function analyzeReceiptAction(formData: FormData): Promise<ReceiptD
   const buffer = Buffer.from(await file.arrayBuffer());
   const dataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
 
-  const langfuseHandler = createLangfuseHandler({ userId: user.id, tags: ["receipt-import"] });
-  const draft = await runReceiptImportGraph(dataUrl, { callbacks: [langfuseHandler], runName: "receipt-import" });
-
-  after(async () => {
-    await langfuseSpanProcessor.forceFlush();
-  });
-
-  return draft;
+  return runTracedGraph({ userId: user.id, tags: ["receipt-import"], runName: "receipt-import" }, (options) =>
+    runReceiptImportGraph(dataUrl, options),
+  );
 }
 
 export async function importReceiptItemsAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const items = itemDraftSchema
     .array()
@@ -55,7 +50,10 @@ export async function importReceiptItemsAction(formData: FormData) {
     photoPath = await uploadAttachment(supabase, ownerId, crypto.randomUUID(), photo, photo.name || "receipt.jpg");
   }
 
-  for (const draft of items) {
+  // Each draft's item/labels/attachment are independent of every other
+  // draft's, so these can run several at a time instead of one full DB
+  // round-trip per line item.
+  await mapWithConcurrency(items, IMPORT_CONCURRENCY, async (draft) => {
     const [item] = await itemQueries.createItem(user.id, {
       name: draft.name,
       description: draft.description,
@@ -64,15 +62,15 @@ export async function importReceiptItemsAction(formData: FormData) {
       purchaseDate: draft.purchaseDate ?? purchaseDate,
       locationId,
     });
-    if (!item) continue;
+    if (!item) return;
 
-    if (labelIds.length > 0) {
-      await itemLabelQueries.setItemLabels(user.id, item.id, labelIds);
-    }
-    if (photoPath) {
-      await attachmentQueries.createAttachment(user.id, { itemId: item.id, type: "receipt", storagePath: photoPath });
-    }
-  }
+    await Promise.all([
+      labelIds.length > 0 ? itemLabelQueries.setItemLabels(user.id, item.id, labelIds) : undefined,
+      photoPath
+        ? attachmentQueries.createAttachment(user.id, { itemId: item.id, type: "receipt", storagePath: photoPath })
+        : undefined,
+    ]);
+  });
 
   revalidatePath("/items");
 }

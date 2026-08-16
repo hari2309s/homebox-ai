@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseCsv, toCsv } from "./csv";
+import { escapeCsvFormula, parseCsv, toCsv, unescapeCsvFormula } from "./csv";
 
 describe("toCsv", () => {
   it("joins headers and rows with commas and CRLF", () => {
@@ -15,6 +15,35 @@ describe("toCsv", () => {
 
   it("leaves plain fields unquoted", () => {
     expect(toCsv(["name"], [["Fridge"]])).toBe("name\r\nFridge");
+  });
+
+  it("neutralizes a formula-injection attempt in a cell", () => {
+    // Without the leading quote, Excel/Sheets would execute this as a formula
+    // (e.g. exfiltrating data via a web request) as soon as the file is opened.
+    expect(toCsv(["name"], [["=cmd|calc!A1"]])).toBe("name\r\n'=cmd|calc!A1");
+    expect(toCsv(["name"], [["+1"]])).toBe("name\r\n'+1");
+    expect(toCsv(["name"], [["-1"]])).toBe("name\r\n'-1");
+    expect(toCsv(["name"], [["@SUM(1+1)"]])).toBe("name\r\n'@SUM(1+1)");
+  });
+});
+
+describe("escapeCsvFormula / unescapeCsvFormula", () => {
+  it("prefixes only values starting with a formula-trigger character", () => {
+    expect(escapeCsvFormula("=1+1")).toBe("'=1+1");
+    expect(escapeCsvFormula("Fridge")).toBe("Fridge");
+    expect(escapeCsvFormula("")).toBe("");
+  });
+
+  it("round-trips a formula-triggering value losslessly", () => {
+    const original = "=1+1";
+    expect(unescapeCsvFormula(escapeCsvFormula(original))).toBe(original);
+  });
+
+  it("leaves a genuine user-typed leading apostrophe alone", () => {
+    // Only strips the prefix when it was our own safety marker (apostrophe
+    // immediately followed by a formula-trigger character) — a real name
+    // like "'Twas the Night" must survive re-import unchanged.
+    expect(unescapeCsvFormula("'Twas the Night")).toBe("'Twas the Night");
   });
 });
 

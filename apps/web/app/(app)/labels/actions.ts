@@ -3,11 +3,10 @@
 import { labelQueries } from "@homebox-ai/db";
 import { revalidatePath } from "next/cache";
 
-import { getSessionUser } from "@homebox-ai/supabase/server";
+import { requireSessionUser } from "@homebox-ai/supabase/server";
 
 export async function createLabelAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) throw new Error("Name is required");
@@ -18,8 +17,7 @@ export async function createLabelAction(formData: FormData) {
 }
 
 export async function updateLabelAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const id = String(formData.get("id") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
@@ -31,8 +29,7 @@ export async function updateLabelAction(formData: FormData) {
 }
 
 export async function deleteLabelAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const id = String(formData.get("id") ?? "").trim();
   if (!id) throw new Error("Missing label id");

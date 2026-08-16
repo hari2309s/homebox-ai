@@ -39,3 +39,17 @@ export async function getSessionUser() {
   } = await supabase.auth.getUser();
   return user;
 }
+
+/**
+ * `getSessionUser()` + a "not authenticated" guard, which every Server
+ * Action in this app repeats identically — this is that guard, centralized.
+ * Pages (which want a redirect/notFound instead of a thrown error) and
+ * Route Handlers (which want a 401 Response) still call getSessionUser()
+ * directly; this is specifically for Server Actions, where throwing is the
+ * idiomatic way to fail.
+ */
+export async function requireSessionUser() {
+  const user = await getSessionUser();
+  if (!user) throw new Error("Not authenticated");
+  return user;
+}

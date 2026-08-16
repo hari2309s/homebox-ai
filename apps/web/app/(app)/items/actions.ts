@@ -10,12 +10,11 @@ import {
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
+import { createSupabaseServerClient, requireSessionUser } from "@homebox-ai/supabase/server";
 import { uploadAttachment } from "@homebox-ai/supabase/storage";
 
 export async function createItemAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const name = String(formData.get("name") ?? "").trim();
   if (!name) throw new Error("Name is required");
@@ -40,8 +39,7 @@ function nullableField(formData: FormData, key: string): string | null {
 }
 
 export async function updateItemAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const itemId = String(formData.get("itemId") ?? "").trim();
   if (!itemId) throw new Error("Missing item id");
@@ -83,8 +81,7 @@ export async function updateItemAction(formData: FormData) {
 }
 
 export async function deleteItemAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const itemId = String(formData.get("itemId") ?? "").trim();
   if (!itemId) throw new Error("Missing item id");
@@ -97,8 +94,7 @@ export async function deleteItemAction(formData: FormData) {
 const ATTACHMENT_TYPES = new Set(["photo", "receipt", "manual", "warranty"]);
 
 export async function uploadItemAttachmentAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const itemId = String(formData.get("itemId") ?? "").trim();
   if (!itemId) throw new Error("Missing item id");
@@ -118,26 +114,28 @@ export async function uploadItemAttachmentAction(formData: FormData) {
 }
 
 export async function deleteAttachmentAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const itemId = String(formData.get("itemId") ?? "").trim();
   const attachmentId = String(formData.get("attachmentId") ?? "").trim();
-  const storagePath = String(formData.get("storagePath") ?? "").trim();
   if (!itemId || !attachmentId) throw new Error("Missing attachment id");
 
-  await attachmentQueries.deleteAttachment(user.id, attachmentId);
-  if (storagePath) {
+  // Use the storagePath the DB actually had for this attachment, not a
+  // client-supplied one — a hidden form field can be edited before submit,
+  // and removing whatever path it names (rather than the row that was just
+  // deleted) would let one authorized delete request take out an unrelated
+  // Storage object within the same owner scope.
+  const [deleted] = await attachmentQueries.deleteAttachment(user.id, attachmentId);
+  if (deleted?.storagePath) {
     const supabase = await createSupabaseServerClient();
-    await supabase.storage.from("attachments").remove([storagePath]);
+    await supabase.storage.from("attachments").remove([deleted.storagePath]);
   }
 
   revalidatePath(`/items/${itemId}`);
 }
 
 export async function setPrimaryAttachmentAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const itemId = String(formData.get("itemId") ?? "").trim();
   const attachmentId = String(formData.get("attachmentId") ?? "").trim();
@@ -148,8 +146,7 @@ export async function setPrimaryAttachmentAction(formData: FormData) {
 }
 
 export async function addMaintenanceEntryAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const itemId = String(formData.get("itemId") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
@@ -168,8 +165,7 @@ export async function addMaintenanceEntryAction(formData: FormData) {
 }
 
 export async function updateMaintenanceEntryAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const itemId = String(formData.get("itemId") ?? "").trim();
   const entryId = String(formData.get("entryId") ?? "").trim();
@@ -188,8 +184,7 @@ export async function updateMaintenanceEntryAction(formData: FormData) {
 }
 
 export async function deleteMaintenanceEntryAction(formData: FormData) {
-  const user = await getSessionUser();
-  if (!user) throw new Error("Not authenticated");
+  const user = await requireSessionUser();
 
   const itemId = String(formData.get("itemId") ?? "").trim();
   const entryId = String(formData.get("entryId") ?? "").trim();

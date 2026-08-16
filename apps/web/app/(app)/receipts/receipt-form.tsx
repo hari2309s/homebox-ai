@@ -1,7 +1,7 @@
 "use client";
 
 import type { ItemDraft } from "@homebox-ai/ai";
-import { Input, Select, Spinner, SubmitButton } from "@homebox-ai/ui";
+import { CapturePhotoPicker, Input, Select, SubmitButton } from "@homebox-ai/ui";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
@@ -107,46 +107,19 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
 
   const includedCount = rows?.filter((row) => row.included).length ?? 0;
 
-  const photoPicker = (
-    <label className="cursor-pointer rounded-md bg-accent px-4 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-accent-hover">
-      {previewUrl ? "Retake photo" : "Take or upload a receipt photo"}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-    </label>
-  );
-
   if (!rows || rows.length === 0) {
     return (
-      <div className="flex h-full flex-col">
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-4 text-center sm:p-6">
-          {previewUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- locally-selected blob URL, not a network image
-            <img src={previewUrl} alt="" className="max-h-64 w-auto rounded-md object-contain" />
-          ) : (
-            <p className="text-sm text-muted">Take or upload a receipt photo to get started.</p>
-          )}
-          {analyzing && (
-            <div className="flex items-center gap-2 text-muted">
-              <Spinner size={16} />
-              <span className="text-sm">Reading your receipt…</span>
-            </div>
-          )}
-          {error && (
-            <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
-              {error}
-            </p>
-          )}
-        </div>
-        <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
-          <div className="flex justify-center md:mx-auto md:w-full md:max-w-2xl">{photoPicker}</div>
-        </div>
-      </div>
+      <CapturePhotoPicker
+        previewUrl={previewUrl}
+        analyzing={analyzing}
+        analyzingLabel="Reading your receipt…"
+        error={error}
+        placeholder="Take or upload a receipt photo to get started."
+        pickerLabel="Take or upload a receipt photo"
+        retakeLabel="Retake photo"
+        fileInputRef={fileInputRef}
+        onFileChange={handleFileChange}
+      />
     );
   }
 
