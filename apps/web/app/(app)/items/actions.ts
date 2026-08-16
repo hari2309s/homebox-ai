@@ -1,6 +1,12 @@
 "use server";
 
-import { attachmentQueries, itemLabelQueries, itemQueries, maintenanceQueries, resolveEffectiveOwnerId } from "@homebox-ai/db";
+import {
+  attachmentQueries,
+  itemLabelQueries,
+  itemQueries,
+  maintenanceQueries,
+  resolveEffectiveOwnerId,
+} from "@homebox-ai/db";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 

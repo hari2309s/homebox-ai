@@ -17,7 +17,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const unreadChatCount = await chatQueries.countUnreadProactiveMessages(user.id);
 
   return (
-    <div id="app-shell" className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-white md:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
+    <div
+      id="app-shell"
+      className="mx-auto flex h-dvh w-full max-w-lg flex-col bg-white md:max-w-2xl lg:max-w-4xl xl:max-w-6xl"
+    >
       <FadeIn
         as="header"
         id="app-header"

@@ -38,10 +38,7 @@ export function StaggerList({
   );
 }
 
-export function StaggerItem({
-  custom,
-  ...props
-}: ComponentProps<typeof motion.li> & { custom?: number }) {
+export function StaggerItem({ custom, ...props }: ComponentProps<typeof motion.li> & { custom?: number }) {
   return (
     <motion.li layout variants={itemVariants} custom={custom} initial="hidden" animate="show" exit="exit" {...props} />
   );

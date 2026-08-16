@@ -1,4 +1,11 @@
-import { attachmentQueries, itemLabelQueries, itemQueries, labelQueries, locationQueries, maintenanceQueries } from "@homebox-ai/db";
+import {
+  attachmentQueries,
+  itemLabelQueries,
+  itemQueries,
+  labelQueries,
+  locationQueries,
+  maintenanceQueries,
+} from "@homebox-ai/db";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -67,7 +74,10 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
             <span className="rounded-full bg-muted/20 px-2.5 py-1 text-xs font-semibold text-muted">Archived</span>
           )}
         </div>
-        <Link href={`/items/${item.id}/label`} className="shrink-0 text-sm font-semibold text-ink underline underline-offset-4">
+        <Link
+          href={`/items/${item.id}/label`}
+          className="shrink-0 text-sm font-semibold text-ink underline underline-offset-4"
+        >
           Print label
         </Link>
       </div>

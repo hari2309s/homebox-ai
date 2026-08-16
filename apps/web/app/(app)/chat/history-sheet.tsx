@@ -32,7 +32,8 @@ const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", { numeric: "auto
 function timeAgo(iso: string) {
   const diffSeconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
   for (const [unit, secondsInUnit] of RELATIVE_UNITS) {
-    if (Math.abs(diffSeconds) >= secondsInUnit) return relativeTimeFormatter.format(-Math.round(diffSeconds / secondsInUnit), unit);
+    if (Math.abs(diffSeconds) >= secondsInUnit)
+      return relativeTimeFormatter.format(-Math.round(diffSeconds / secondsInUnit), unit);
   }
   return relativeTimeFormatter.format(-diffSeconds, "second");
 }
@@ -79,7 +80,9 @@ export function HistorySheet({ open, sessions, activeSessionId, onClose, onSelec
                         type="button"
                         onClick={() => onSelect(session.sessionId)}
                         className={`flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-md border-none px-3 py-2.5 text-left transition-colors duration-150 ${
-                          session.sessionId === activeSessionId ? "bg-surface-soft" : "bg-transparent hover:bg-surface-soft"
+                          session.sessionId === activeSessionId
+                            ? "bg-surface-soft"
+                            : "bg-transparent hover:bg-surface-soft"
                         }`}
                       >
                         <span className="flex items-center gap-1.5 text-sm text-ink">

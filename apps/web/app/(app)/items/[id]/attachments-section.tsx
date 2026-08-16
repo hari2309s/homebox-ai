@@ -49,7 +49,10 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
                     <form action={setPrimaryAttachmentAction}>
                       <input type="hidden" name="itemId" value={itemId} />
                       <input type="hidden" name="attachmentId" value={attachment.id} />
-                      <button type="submit" className="cursor-pointer border-none bg-transparent font-semibold text-ink">
+                      <button
+                        type="submit"
+                        className="cursor-pointer border-none bg-transparent font-semibold text-ink"
+                      >
                         Set cover
                       </button>
                     </form>
@@ -63,7 +66,10 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
                     <input type="hidden" name="itemId" value={itemId} />
                     <input type="hidden" name="attachmentId" value={attachment.id} />
                     <input type="hidden" name="storagePath" value={attachment.storagePath} />
-                    <button type="submit" className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover">
+                    <button
+                      type="submit"
+                      className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
+                    >
                       Delete
                     </button>
                   </form>

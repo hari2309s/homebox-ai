@@ -5,48 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Confirm your email</title>
   </head>
-  <body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif;
+    "
+  >
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #ffffff">
       <tr>
-        <td align="center" style="padding: 40px 16px;">
-          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width: 480px; width: 100%; background-color: #f7deae; border-radius: 20px;">
+        <td align="center" style="padding: 40px 16px">
+          <table
+            role="presentation"
+            width="480"
+            cellpadding="0"
+            cellspacing="0"
+            style="max-width: 480px; width: 100%; background-color: #f7deae; border-radius: 20px"
+          >
             <tr>
-              <td align="center" style="padding: 40px 32px 8px 32px;">
+              <td align="center" style="padding: 40px 32px 8px 32px">
                 <img
                   src="https://homebox-ai.vercel.app/icons/icon-192.png"
                   width="64"
                   height="64"
                   alt="Homebox AI"
-                  style="display: block; border-radius: 18%;"
+                  style="display: block; border-radius: 18%"
                 />
               </td>
             </tr>
             <tr>
-              <td align="center" style="padding: 8px 32px 0 32px;">
-                <p style="margin: 0; font-size: 20px; font-weight: 700; color: #4a254b;">Homebox AI</p>
+              <td align="center" style="padding: 8px 32px 0 32px">
+                <p style="margin: 0; font-size: 20px; font-weight: 700; color: #4a254b">Homebox AI</p>
               </td>
             </tr>
             <tr>
-              <td align="center" style="padding: 24px 32px 0 32px;">
-                <p style="margin: 0; font-size: 18px; font-weight: 700; color: #4a254b;">Confirm your email</p>
+              <td align="center" style="padding: 24px 32px 0 32px">
+                <p style="margin: 0; font-size: 18px; font-weight: 700; color: #4a254b">Confirm your email</p>
               </td>
             </tr>
             <tr>
-              <td align="center" style="padding: 12px 32px 0 32px;">
-                <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #4a3b2a;">
-                  Hi{{ if .Data.full_name }} {{ .Data.full_name }}{{ end }}, thanks for signing up for Homebox AI —
-                  your AI-native home inventory. Confirm your email to get started.
+              <td align="center" style="padding: 12px 32px 0 32px">
+                <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #4a3b2a">
+                  Hi{{ if .Data.full_name }} {{ .Data.full_name }}{{ end }}, thanks for signing up for Homebox AI — your
+                  AI-native home inventory. Confirm your email to get started.
                 </p>
               </td>
             </tr>
             <tr>
-              <td align="center" style="padding: 28px 32px 8px 32px;">
+              <td align="center" style="padding: 28px 32px 8px 32px">
                 <table role="presentation" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td align="center" style="border-radius: 12px; background-color: #fb7369;">
+                    <td align="center" style="border-radius: 12px; background-color: #fb7369">
                       <a
                         href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email"
-                        style="display: inline-block; padding: 14px 28px; font-size: 15px; font-weight: 700; color: #ffffff; text-decoration: none;"
+                        style="
+                          display: inline-block;
+                          padding: 14px 28px;
+                          font-size: 15px;
+                          font-weight: 700;
+                          color: #ffffff;
+                          text-decoration: none;
+                        "
                         >Confirm email</a
                       >
                     </td>
@@ -55,18 +75,22 @@
               </td>
             </tr>
             <tr>
-              <td align="center" style="padding: 8px 32px 32px 32px;">
-                <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #8a7860;">
+              <td align="center" style="padding: 8px 32px 32px 32px">
+                <p style="margin: 0; font-size: 12px; line-height: 1.5; color: #8a7860">
                   If the button doesn't work, copy and paste this link into your browser:<br />
-                  <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email" style="color: #8a7860; word-break: break-all;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email</a>
+                  <a
+                    href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email"
+                    style="color: #8a7860; word-break: break-all"
+                    >{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email</a
+                  >
                 </p>
               </td>
             </tr>
           </table>
-          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width: 480px; width: 100%;">
+          <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width: 480px; width: 100%">
             <tr>
-              <td align="center" style="padding: 20px 32px 0 32px;">
-                <p style="margin: 0; font-size: 12px; color: #8a7860;">
+              <td align="center" style="padding: 20px 32px 0 32px">
+                <p style="margin: 0; font-size: 12px; color: #8a7860">
                   If you didn't create a Homebox AI account, you can safely ignore this email.
                 </p>
               </td>

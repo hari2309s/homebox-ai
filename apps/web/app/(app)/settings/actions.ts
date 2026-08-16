@@ -195,7 +195,13 @@ interface ZipManifest {
   labels?: { id: string; name: string; color: string | null }[];
   items?: Record<string, unknown>[];
   itemLabels?: { itemId: string; labelId: string }[];
-  maintenanceEntries?: { itemId: string; date: string; name: string; description: string | null; cost: string | null }[];
+  maintenanceEntries?: {
+    itemId: string;
+    date: string;
+    name: string;
+    description: string | null;
+    cost: string | null;
+  }[];
   attachments?: { id: string; itemId: string; type: string; isPrimary: boolean; zipPath: string | null }[];
 }
 
@@ -260,7 +266,10 @@ export async function importZipAction(formData: FormData): Promise<ZipImportSumm
     const newId = locationIdMap.get(location.id);
     const newParentId = locationIdMap.get(location.parentId);
     if (newId && newParentId && newId !== newParentId) {
-      await locationQueries.updateLocation(user.id, newId, { name: String(location.name ?? ""), parentId: newParentId });
+      await locationQueries.updateLocation(user.id, newId, {
+        name: String(location.name ?? ""),
+        parentId: newParentId,
+      });
     }
   }
 

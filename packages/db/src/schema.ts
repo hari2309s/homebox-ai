@@ -164,7 +164,11 @@ export const chatMessages = pgTable(
     nudgeKey: text("nudge_key"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("chat_messages_nudge_key_unique").on(table.ownerId, table.nudgeKey).where(sql`${table.nudgeKey} is not null`)],
+  (table) => [
+    uniqueIndex("chat_messages_nudge_key_unique")
+      .on(table.ownerId, table.nudgeKey)
+      .where(sql`${table.nudgeKey} is not null`),
+  ],
 );
 
 export const maintenanceEntries = pgTable("maintenance_entries", {

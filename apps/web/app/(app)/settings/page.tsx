@@ -57,7 +57,11 @@ export default async function SettingsPage() {
 
         <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
           <p className="text-sm text-body">Export or import items as a CSV spreadsheet.</p>
-          <a href="/api/export/csv" download className="self-start text-sm font-semibold text-ink underline underline-offset-4">
+          <a
+            href="/api/export/csv"
+            download
+            className="self-start text-sm font-semibold text-ink underline underline-offset-4"
+          >
             Export items as CSV
           </a>
           <CsvImportForm />
@@ -65,10 +69,14 @@ export default async function SettingsPage() {
 
         <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
           <p className="text-sm text-body">
-            Full backup as a ZIP, including photos and other attachment files. Importing adds to your inventory —
-            it never replaces or deletes what&apos;s already there.
+            Full backup as a ZIP, including photos and other attachment files. Importing adds to your inventory — it
+            never replaces or deletes what&apos;s already there.
           </p>
-          <a href="/api/export/zip" download className="self-start text-sm font-semibold text-ink underline underline-offset-4">
+          <a
+            href="/api/export/zip"
+            download
+            className="self-start text-sm font-semibold text-ink underline underline-offset-4"
+          >
             Export full backup (ZIP)
           </a>
           <ZipImportForm />

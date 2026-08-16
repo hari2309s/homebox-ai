@@ -23,15 +23,19 @@ interface ChatSession {
   hasUnread: boolean;
 }
 
-const SUGGESTIONS = [
-  "Where's my passport?",
-  "What's in the garage?",
-  "Anything with a warranty expiring soon?",
-];
+const SUGGESTIONS = ["Where's my passport?", "What's in the garage?", "Anything with a warranty expiring soon?"];
 
 function HistoryIcon(props: ComponentProps<"svg">) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <path d="M3 12a9 9 0 1 0 2.6-6.36" />
       <path d="M3 4v5h5" />
       <path d="M12 8v4l3 2" />
@@ -41,7 +45,15 @@ function HistoryIcon(props: ComponentProps<"svg">) {
 
 function NewChatIcon(props: ComponentProps<"svg">) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
       <path d="M12 5v14M5 12h14" />
     </svg>
   );
@@ -75,7 +87,9 @@ export default function ChatPage() {
   const sessionIdRef = useRef(sessionId);
 
   useEffect(() => {
-    listChatSessionsAction().then(setSessions).catch(() => {});
+    listChatSessionsAction()
+      .then(setSessions)
+      .catch(() => {});
     setHeaderActionsEl(document.getElementById("header-actions"));
   }, []);
 
@@ -140,7 +154,9 @@ export default function ChatPage() {
       if (sessionIdRef.current === requestSessionId) {
         setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.reply! }]);
       }
-      listChatSessionsAction().then(setSessions).catch(() => {});
+      listChatSessionsAction()
+        .then(setSessions)
+        .catch(() => {});
     } catch (err) {
       if (sessionIdRef.current === requestSessionId) {
         setError(err instanceof Error ? err.message : "Something went wrong");
@@ -231,7 +247,10 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex shrink-0 justify-center gap-2 border-t border-border bg-white p-4 sm:p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="flex shrink-0 justify-center gap-2 border-t border-border bg-white p-4 sm:p-6"
+      >
         <div className="mx-auto flex w-full max-w-2xl gap-2">
           <Input
             value={input}

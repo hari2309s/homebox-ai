@@ -11,7 +11,10 @@ export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemNam
       }}
     >
       <input type="hidden" name="itemId" value={itemId} />
-      <button type="submit" className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent-hover">
+      <button
+        type="submit"
+        className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent-hover"
+      >
         Delete
       </button>
     </form>

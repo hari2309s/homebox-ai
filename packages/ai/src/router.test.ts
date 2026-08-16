@@ -117,6 +117,8 @@ describe("getStructuredModelForTask", () => {
   it("throws when no providers are configured for the task", async () => {
     const { getStructuredModelForTask } = await freshRouter();
     const { z } = await import("zod");
-    expect(() => getStructuredModelForTask("vision", z.object({}))).toThrow('No providers configured for task "vision"');
+    expect(() => getStructuredModelForTask("vision", z.object({}))).toThrow(
+      'No providers configured for task "vision"',
+    );
   });
 });

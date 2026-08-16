@@ -1,4 +1,11 @@
-import { attachmentQueries, itemLabelQueries, itemQueries, labelQueries, locationQueries, maintenanceQueries } from "@homebox-ai/db";
+import {
+  attachmentQueries,
+  itemLabelQueries,
+  itemQueries,
+  labelQueries,
+  locationQueries,
+  maintenanceQueries,
+} from "@homebox-ai/db";
 import JSZip from "jszip";
 import { NextResponse } from "next/server";
 
@@ -32,13 +39,25 @@ export async function GET() {
         // attachment's metadata is recorded with zipPath: null so it's
         // visibly excluded rather than looking identical to a successful one.
         console.error(`zip export: couldn't download attachment ${attachment.id} (${attachment.storagePath}):`, error);
-        return { id: attachment.id, itemId: attachment.itemId, type: attachment.type, isPrimary: attachment.isPrimary, zipPath: null };
+        return {
+          id: attachment.id,
+          itemId: attachment.itemId,
+          type: attachment.type,
+          isPrimary: attachment.isPrimary,
+          zipPath: null,
+        };
       }
       const lastDot = attachment.storagePath.lastIndexOf(".");
       const ext = lastDot >= 0 ? attachment.storagePath.slice(lastDot) : "";
       const zipPath = `attachments/${attachment.id}${ext}`;
       zip.file(zipPath, Buffer.from(await data.arrayBuffer()));
-      return { id: attachment.id, itemId: attachment.itemId, type: attachment.type, isPrimary: attachment.isPrimary, zipPath };
+      return {
+        id: attachment.id,
+        itemId: attachment.itemId,
+        type: attachment.type,
+        isPrimary: attachment.isPrimary,
+        zipPath,
+      };
     }),
   );
 

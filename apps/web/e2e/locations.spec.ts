@@ -54,7 +54,9 @@ test("rejects re-parenting a location under its own sub-location, without crashi
   await select.selectOption({ label: childOption });
   await parentRow.getByRole("button", { name: "Save" }).click();
 
-  await expect(parentRow.getByRole("alert")).toHaveText("Can't move a location inside itself or one of its own sub-locations.");
+  await expect(parentRow.getByRole("alert")).toHaveText(
+    "Can't move a location inside itself or one of its own sub-locations.",
+  );
   // The page itself must still be intact — not replaced by Next's uncaught-error page.
   await expect(page.getByPlaceholder("New location name")).toBeVisible();
 

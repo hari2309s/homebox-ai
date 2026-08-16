@@ -8,7 +8,10 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",
     "db:generate": "pnpm --filter @homebox-ai/db generate",
     "db:migrate": "pnpm --filter @homebox-ai/db migrate",
@@ -16,6 +19,13 @@
     "test:e2e": "pnpm --filter web test:e2e"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
+    "@eslint/js": "^10.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.67.0",
+    "@typescript-eslint/parser": "^8.67.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
     "turbo": "^2.3.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.0"

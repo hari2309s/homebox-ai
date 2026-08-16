@@ -195,9 +195,7 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
                 defaultChecked={selected.has(label.id)}
                 className="accent-accent"
               />
-              {label.color && (
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: label.color }} />
-              )}
+              {label.color && <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: label.color }} />}
               {label.name}
             </label>
           ))}

@@ -28,11 +28,7 @@ const nextConfig: NextConfig = {
   // Externalizing only that leaf package isn't enough — the require() call
   // happens inside @opentelemetry/instrumentation's own bundled code, so
   // webpack still traces into it unless the whole chain is externalized.
-  serverExternalPackages: [
-    "require-in-the-middle",
-    "@opentelemetry/instrumentation",
-    "@opentelemetry/sdk-node",
-  ],
+  serverExternalPackages: ["require-in-the-middle", "@opentelemetry/instrumentation", "@opentelemetry/sdk-node"],
 };
 
 export default withSerwist(nextConfig);

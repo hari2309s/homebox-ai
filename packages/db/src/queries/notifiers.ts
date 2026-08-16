@@ -45,6 +45,9 @@ export async function markWarrantyNotified(itemIds: string[]) {
 /** Everyone who should see a notification about this owner's data: the owner plus every shared member. */
 export async function listRecipientsForOwner(ownerId: string): Promise<string[]> {
   const db = getDb();
-  const members = await db.select({ userId: sharedAccess.memberUserId }).from(sharedAccess).where(eq(sharedAccess.ownerId, ownerId));
+  const members = await db
+    .select({ userId: sharedAccess.memberUserId })
+    .from(sharedAccess)
+    .where(eq(sharedAccess.ownerId, ownerId));
   return [ownerId, ...members.map((row) => row.userId)];
 }

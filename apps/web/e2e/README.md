@@ -9,11 +9,11 @@ Run from `apps/web`, or `pnpm test:e2e` from the repo root. Starts its own `next
 
 ## Specs
 
-| File | Auth | Covers |
-|---|---|---|
-| `auth.unauth.spec.ts` | none | Login page rendering, mode switching, client-side validation, and the middleware's redirect-guard (unauthenticated visits to protected routes redirect to `/login?redirectTo=...`, including `/join/[token]` invite links) |
-| `items.spec.ts` | e2e account | Create → view → edit → delete an item |
-| `locations.spec.ts` | e2e account | Regression coverage for the location-nesting cycle check (`packages/db/src/cycle.ts`): a circular re-parent is rejected with an inline error instead of crashing the page, and a legitimate re-parent still succeeds |
+| File                  | Auth        | Covers                                                                                                                                                                                                                     |
+| --------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.unauth.spec.ts` | none        | Login page rendering, mode switching, client-side validation, and the middleware's redirect-guard (unauthenticated visits to protected routes redirect to `/login?redirectTo=...`, including `/join/[token]` invite links) |
+| `items.spec.ts`       | e2e account | Create → view → edit → delete an item                                                                                                                                                                                      |
+| `locations.spec.ts`   | e2e account | Regression coverage for the location-nesting cycle check (`packages/db/src/cycle.ts`): a circular re-parent is rejected with an inline error instead of crashing the page, and a legitimate re-parent still succeeds       |
 
 Every authenticated spec creates data with a `uniqueName()`-style timestamped name and deletes what it created — the shared e2e account should be empty of items/locations/labels between runs. If a run fails partway through (before its own cleanup step), it can leave test data behind on that account; that's expected and safe to delete manually since nothing on it is real.
 

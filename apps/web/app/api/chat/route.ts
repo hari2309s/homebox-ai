@@ -47,6 +47,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ reply, sessionId });
   } catch (error) {
     console.error("chat-search graph failed:", error);
-    return NextResponse.json({ error: "The assistant is temporarily unavailable. Try again shortly." }, { status: 502 });
+    return NextResponse.json(
+      { error: "The assistant is temporarily unavailable. Try again shortly." },
+      { status: 502 },
+    );
   }
 }

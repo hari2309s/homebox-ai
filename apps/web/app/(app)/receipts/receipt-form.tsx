@@ -89,13 +89,11 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
     formData.set(
       "items",
       JSON.stringify(
-        included.map(
-          (row): ItemDraft => ({
-            name: row.name,
-            quantity: row.quantity,
-            purchasePrice: row.purchasePrice || undefined,
-          }),
-        ),
+        included.map((row): ItemDraft => ({
+          name: row.name,
+          quantity: row.quantity,
+          purchasePrice: row.purchasePrice || undefined,
+        })),
       ),
     );
 

@@ -78,25 +78,25 @@ Every provider chain is a plain ordered list in `packages/ai/src/router.ts` — 
 
 ## Tech stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 15 (App Router) + TypeScript, React 19 |
-| Styling | Tailwind CSS v4, hand-authored design tokens (`apps/web/app/globals.css`) |
-| Animation | Framer Motion |
-| PWA | Serwist service worker + web manifest |
-| AI orchestration | LangGraph.js — `createReactAgent` for chat/search, single-shot structured-output calls for vision/reasoning |
-| LLM router | Custom task-based router (`packages/ai/src/router.ts`), one ordered fallback chain per task type |
-| LLM — tool calling (chat) | Groq `llama-3.3-70b-versatile` → Cerebras → OpenRouter |
-| LLM — vision (photo/receipt) | Gemini → OpenRouter free vision model |
-| LLM — reasoning (maintenance) | Cerebras → Groq → OpenRouter |
-| Database | Supabase Postgres, schema/queries via Drizzle ORM |
-| Access control | Postgres Row Level Security on every table — the real security boundary, not just app-layer checks; a single `has_shared_access()` function backs the household-sharing policies |
-| Auth | Supabase Auth (email/password) |
-| File storage | Supabase Storage (`attachments` bucket) |
-| Observability | Langfuse via OpenTelemetry — every AI graph invocation traced with per-user/session/feature attribution |
-| Scheduled jobs | Vercel Cron (`vercel.json`) → `Bearer $CRON_SECRET`-gated route, compared with `timingSafeEqual` |
-| Monorepo | pnpm workspaces + Turborepo |
-| Deployment | Vercel (`apps/web`) + Supabase (Postgres/Auth/Storage) |
+| Layer                         | Technology                                                                                                                                                                       |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework                     | Next.js 15 (App Router) + TypeScript, React 19                                                                                                                                   |
+| Styling                       | Tailwind CSS v4, hand-authored design tokens (`apps/web/app/globals.css`)                                                                                                        |
+| Animation                     | Framer Motion                                                                                                                                                                    |
+| PWA                           | Serwist service worker + web manifest                                                                                                                                            |
+| AI orchestration              | LangGraph.js — `createReactAgent` for chat/search, single-shot structured-output calls for vision/reasoning                                                                      |
+| LLM router                    | Custom task-based router (`packages/ai/src/router.ts`), one ordered fallback chain per task type                                                                                 |
+| LLM — tool calling (chat)     | Groq `llama-3.3-70b-versatile` → Cerebras → OpenRouter                                                                                                                           |
+| LLM — vision (photo/receipt)  | Gemini → OpenRouter free vision model                                                                                                                                            |
+| LLM — reasoning (maintenance) | Cerebras → Groq → OpenRouter                                                                                                                                                     |
+| Database                      | Supabase Postgres, schema/queries via Drizzle ORM                                                                                                                                |
+| Access control                | Postgres Row Level Security on every table — the real security boundary, not just app-layer checks; a single `has_shared_access()` function backs the household-sharing policies |
+| Auth                          | Supabase Auth (email/password)                                                                                                                                                   |
+| File storage                  | Supabase Storage (`attachments` bucket)                                                                                                                                          |
+| Observability                 | Langfuse via OpenTelemetry — every AI graph invocation traced with per-user/session/feature attribution                                                                          |
+| Scheduled jobs                | Vercel Cron (`vercel.json`) → `Bearer $CRON_SECRET`-gated route, compared with `timingSafeEqual`                                                                                 |
+| Monorepo                      | pnpm workspaces + Turborepo                                                                                                                                                      |
+| Deployment                    | Vercel (`apps/web`) + Supabase (Postgres/Auth/Storage)                                                                                                                           |
 
 ---
 
@@ -229,11 +229,11 @@ Pure, dependency-free logic — no DB/network calls:
 pnpm test
 ```
 
-| Package | Covered |
-|---|---|
-| `packages/db` | `wouldFormCycle` — the parent/location-chain cycle check shared by `updateLocation`/`updateItem` |
+| Package       | Covered                                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `packages/db` | `wouldFormCycle` — the parent/location-chain cycle check shared by `updateLocation`/`updateItem`                    |
 | `packages/ai` | `router.ts`'s task → provider chain resolution (ordering, missing-key skipping, OpenRouter's per-task model config) |
-| `apps/web` | `lib/csv` (round-trip parse/serialize), `lib/safe-redirect` (open-redirect prevention on the post-login redirect) |
+| `apps/web`    | `lib/csv` (round-trip parse/serialize), `lib/safe-redirect` (open-redirect prevention on the post-login redirect)   |
 
 ### E2E tests (Playwright)
 
@@ -244,11 +244,11 @@ pnpm test:e2e          # from the repo root, or `apps/web` directly
 pnpm --filter web test:e2e:ui   # interactive Playwright UI
 ```
 
-| Spec | Auth | Covers |
-|---|---|---|
-| `auth.unauth.spec.ts` | none | Login page rendering, mode switching, and the middleware's redirect-guard (including `/join/[token]` invite links) |
-| `items.spec.ts` | e2e account | Create → view → edit → delete an item |
-| `locations.spec.ts` | e2e account | Regression coverage for the location-nesting cycle check — a circular re-parent is rejected inline instead of crashing the page, and a legitimate re-parent still succeeds |
+| Spec                  | Auth        | Covers                                                                                                                                                                     |
+| --------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.unauth.spec.ts` | none        | Login page rendering, mode switching, and the middleware's redirect-guard (including `/join/[token]` invite links)                                                         |
+| `items.spec.ts`       | e2e account | Create → view → edit → delete an item                                                                                                                                      |
+| `locations.spec.ts`   | e2e account | Regression coverage for the location-nesting cycle check — a circular re-parent is rejected inline instead of crashing the page, and a legitimate re-parent still succeeds |
 
 Everything not covered by either suite — most RLS-scoped queries, AI graphs, exports/imports — is verified manually against the real Supabase project rather than automated; see the git history for the verification passes each feature went through.
 
@@ -256,7 +256,7 @@ Everything not covered by either suite — most RLS-scoped queries, AI graphs, e
 
 ## Sharing model
 
-Homebox AI shares by *invite*, not by a separate "group" concept: every table keeps its original `owner_id` as the real ownership/RLS boundary. When someone accepts an invite, they're recorded in `shared_access` as a member of the *inviter's* owner scope — from then on, every query they make resolves through `resolveEffectiveOwnerId()` to act on the shared owner's data, not their own. A single Postgres `has_shared_access()` function (SECURITY DEFINER) backs the RLS policy on every table, so a missing or wrong policy on a new table is caught the same way as everywhere else — not a special case for sharing.
+Homebox AI shares by _invite_, not by a separate "group" concept: every table keeps its original `owner_id` as the real ownership/RLS boundary. When someone accepts an invite, they're recorded in `shared_access` as a member of the _inviter's_ owner scope — from then on, every query they make resolves through `resolveEffectiveOwnerId()` to act on the shared owner's data, not their own. A single Postgres `has_shared_access()` function (SECURITY DEFINER) backs the RLS policy on every table, so a missing or wrong policy on a new table is caught the same way as everywhere else — not a special case for sharing.
 
 Chat history is the one thing that stays personal per member even inside a shared household — everyone searches the same inventory but keeps their own conversation.
 

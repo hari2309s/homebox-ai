@@ -28,10 +28,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
   return (
     <CrudShell
       form={
-        <form
-          action={createItemAction}
-          className="flex flex-col gap-3"
-        >
+        <form action={createItemAction} className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Input name="name" placeholder="New item name" required className="sm:flex-1" />
             <Select name="locationId" defaultValue="">

@@ -24,7 +24,10 @@ export function createAttachment(userId: string, data: CreateAttachmentInput) {
 export function listAttachmentsForItem(userId: string, itemId: string) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
-    return tx.select().from(attachments).where(and(eq(attachments.itemId, itemId), eq(attachments.ownerId, ownerId)));
+    return tx
+      .select()
+      .from(attachments)
+      .where(and(eq(attachments.itemId, itemId), eq(attachments.ownerId, ownerId)));
   });
 }
 

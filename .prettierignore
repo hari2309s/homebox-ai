@@ -1,0 +1,13 @@
+node_modules
+.next
+.turbo
+dist
+coverage
+playwright-report
+test-results
+pnpm-lock.yaml
+apps/web/e2e/.auth
+apps/web/public/sw.js
+apps/web/public/sw.js.map
+apps/web/public/swe-worker*.js
+packages/db/src/migrations/meta

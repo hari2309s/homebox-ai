@@ -39,7 +39,9 @@ export function listPendingInvites(userId: string) {
 
 export function revokeInvite(userId: string, inviteId: string) {
   return withRLS(userId, (tx) =>
-    tx.delete(sharedAccessInvites).where(and(eq(sharedAccessInvites.id, inviteId), eq(sharedAccessInvites.ownerId, userId))),
+    tx
+      .delete(sharedAccessInvites)
+      .where(and(eq(sharedAccessInvites.id, inviteId), eq(sharedAccessInvites.ownerId, userId))),
   );
 }
 
@@ -117,7 +119,11 @@ export async function acceptInvite(token: string, acceptingUserId: string) {
     // double-tap, or the link opened in two tabs) can both read acceptedAt as
     // still null before either commits its UPDATE, letting one invite create
     // two shared_access rows instead of being rejected the second time.
-    const [invite] = await tx.select().from(sharedAccessInvites).where(eq(sharedAccessInvites.token, token)).for("update");
+    const [invite] = await tx
+      .select()
+      .from(sharedAccessInvites)
+      .where(eq(sharedAccessInvites.token, token))
+      .for("update");
     if (!invite) throw new Error("This invite link is invalid.");
     if (invite.acceptedAt) throw new Error("This invite has already been used.");
     if (invite.expiresAt.getTime() < Date.now()) throw new Error("This invite has expired.");

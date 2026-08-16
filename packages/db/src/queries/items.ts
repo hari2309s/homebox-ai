@@ -132,7 +132,10 @@ async function getParentItemId(tx: Tx, ownerId: string, itemId: string): Promise
 export function updateItem(userId: string, itemId: string, data: UpdateItemInput) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
-    if (data.parentItemId && (await wouldFormCycle(itemId, data.parentItemId, (id) => getParentItemId(tx, ownerId, id)))) {
+    if (
+      data.parentItemId &&
+      (await wouldFormCycle(itemId, data.parentItemId, (id) => getParentItemId(tx, ownerId, id)))
+    ) {
       throw new Error("Can't move an item inside itself or one of its own sub-items.");
     }
     const [existing] = await tx

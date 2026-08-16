@@ -26,7 +26,10 @@ export function MaintenanceSection({ itemId, entries }: { itemId: string; entrie
         </ul>
       )}
 
-      <form action={addMaintenanceEntryAction} className="flex flex-col gap-2 rounded-md border border-dashed border-border p-3">
+      <form
+        action={addMaintenanceEntryAction}
+        className="flex flex-col gap-2 rounded-md border border-dashed border-border p-3"
+      >
         <input type="hidden" name="itemId" value={itemId} />
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input name="name" placeholder="What was done" required className="sm:flex-1" />

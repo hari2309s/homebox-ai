@@ -81,7 +81,9 @@ export function HouseholdSection() {
   if (status.role === "member") {
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-body">You&apos;re sharing {status.ownerEmail ?? "another account"}&apos;s inventory.</p>
+        <p className="text-sm text-body">
+          You&apos;re sharing {status.ownerEmail ?? "another account"}&apos;s inventory.
+        </p>
         <form
           action={async () => {
             if (!confirm("Leave this household? You'll go back to seeing only your own inventory.")) return;
@@ -104,7 +106,10 @@ export function HouseholdSection() {
       {status.members.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
           {status.members.map((member) => (
-            <li key={member.userId} className="flex items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-sm">
+            <li
+              key={member.userId}
+              className="flex items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-sm"
+            >
               <span className="text-ink">{member.email ?? member.userId}</span>
               <form
                 action={async (formData) => {
@@ -114,7 +119,10 @@ export function HouseholdSection() {
                 }}
               >
                 <input type="hidden" name="memberUserId" value={member.userId} />
-                <button type="submit" className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover">
+                <button
+                  type="submit"
+                  className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover"
+                >
                   Remove
                 </button>
               </form>
@@ -126,7 +134,10 @@ export function HouseholdSection() {
       {invites.length > 0 && (
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
           {invites.map((invite) => (
-            <li key={invite.id} className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm">
+            <li
+              key={invite.id}
+              className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm"
+            >
               <span className="text-muted">Pending invite</span>
               <div className="flex items-center gap-3">
                 <button
@@ -143,7 +154,10 @@ export function HouseholdSection() {
                   }}
                 >
                   <input type="hidden" name="inviteId" value={invite.id} />
-                  <button type="submit" className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover">
+                  <button
+                    type="submit"
+                    className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover"
+                  >
                     Revoke
                   </button>
                 </form>
