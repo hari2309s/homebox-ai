@@ -23,7 +23,14 @@ import { getSessionUser } from "@homebox-ai/supabase/server";
  * else in the app), so a tampered id just fails to match rather than
  * touching another user's data.
  */
-export async function confirmChatActionAction(sessionId: string, rawAction: unknown): Promise<{ message: string }> {
+export interface ConfirmChatActionResult {
+  message: string;
+  /** Where the confirmed thing now lives, so the UI can offer a "View" link — never shown for a failed confirm, only set once the write actually succeeded. */
+  href?: string;
+  hrefLabel?: string;
+}
+
+export async function confirmChatActionAction(sessionId: string, rawAction: unknown): Promise<ConfirmChatActionResult> {
   const user = await getSessionUser();
   if (!user) throw new Error("Not authenticated");
 
@@ -32,6 +39,8 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
   const action = parsed.data;
 
   let message: string;
+  let href: string;
+  let hrefLabel: string;
   switch (action.type) {
     case "create_location": {
       const [created] = await locationQueries.createLocation(user.id, {
@@ -41,6 +50,8 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
       if (!created) throw new Error("Couldn't create the location.");
       revalidatePath("/locations");
       message = `Added the "${created.name}" location.`;
+      href = "/locations";
+      hrefLabel = "View locations";
       break;
     }
     case "create_label": {
@@ -48,6 +59,8 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
       if (!created) throw new Error("Couldn't create the label.");
       revalidatePath("/labels");
       message = `Added the "${created.name}" label.`;
+      href = "/labels";
+      hrefLabel = "View labels";
       break;
     }
     case "create_item": {
@@ -67,6 +80,8 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
       }
       revalidatePath("/items");
       message = `Added "${created.name}".`;
+      href = `/items/${created.id}`;
+      hrefLabel = "View item";
       break;
     }
     case "update_item": {
@@ -83,6 +98,8 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
       revalidatePath("/items");
       revalidatePath(`/items/${updated.id}`);
       message = `Updated "${updated.name}".`;
+      href = `/items/${updated.id}`;
+      hrefLabel = "View item";
       break;
     }
     case "add_maintenance_entry": {
@@ -96,12 +113,14 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
       if (!created) throw new Error("Couldn't log the entry — the item may no longer exist.");
       revalidatePath(`/items/${action.itemId}`);
       message = `Logged "${created.name}".`;
+      href = `/items/${action.itemId}`;
+      hrefLabel = "View item";
       break;
     }
   }
 
   await chatQueries.createChatMessage(user.id, { sessionId, role: "assistant", content: message });
-  return { message };
+  return { message, href, hrefLabel };
 }
 
 export async function listChatSessionsAction() {

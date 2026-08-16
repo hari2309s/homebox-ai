@@ -2,6 +2,7 @@
 
 import { Button, FadeIn, Input, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import type { ComponentProps, FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -18,6 +19,9 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   pendingAction?: PendingAction;
+  /** Set on the confirmation-result message after a pending action succeeds — where the confirmed thing now lives, so the user can jump straight to it. */
+  viewHref?: string;
+  viewHrefLabel?: string;
 }
 
 interface ChatSession {
@@ -92,8 +96,17 @@ export default function ChatPage() {
   // per message, so this is enough to hide it after confirm/cancel without
   // needing to mutate the message list itself.
   const [resolvedActions, setResolvedActions] = useState<Record<string, "confirmed" | "cancelled">>({});
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef(sessionId);
+
+  // Scrolls the actual scrolling element to its true bottom (so the
+  // container's own bottom padding is part of what ends up visible) —
+  // scrollIntoView() on a small anchor element instead would align just that
+  // element's own edge into view, which left barely any breathing room
+  // above the input bar.
+  function scrollToBottom() {
+    scrollContainerRef.current?.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: "smooth" });
+  }
 
   useEffect(() => {
     listChatSessionsAction()
@@ -177,7 +190,7 @@ export default function ChatPage() {
       }
     } finally {
       setPending(false);
-      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }));
+      requestAnimationFrame(scrollToBottom);
     }
   }
 
@@ -187,8 +200,17 @@ export default function ChatPage() {
       const result = await confirmChatActionAction(requestSessionId, action);
       if (sessionIdRef.current !== requestSessionId) return;
       setResolvedActions((prev) => ({ ...prev, [messageId]: "confirmed" }));
-      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: result.message }]);
-      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }));
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: result.message,
+          viewHref: result.href,
+          viewHrefLabel: result.hrefLabel,
+        },
+      ]);
+      requestAnimationFrame(scrollToBottom);
     } catch (err) {
       if (sessionIdRef.current === requestSessionId) {
         setError(err instanceof Error ? err.message : "Couldn't complete that action");
@@ -229,10 +251,10 @@ export default function ChatPage() {
           </>,
           headerActionsEl,
         )}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="mx-auto flex h-full w-full max-w-2xl flex-col">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col">
           {messages.length === 0 ? (
-            <FadeIn className="flex h-full flex-col items-center justify-center gap-3 text-center">
+            <FadeIn className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
               <p className="text-sm text-muted">Ask about your inventory in plain English.</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {SUGGESTIONS.map((suggestion) => (
@@ -280,7 +302,17 @@ export default function ChatPage() {
                         )}
                       </div>
                     ) : message.role === "assistant" ? (
-                      <MessageContent content={message.content} />
+                      <div className="flex flex-col gap-1.5">
+                        <MessageContent content={message.content} />
+                        {message.viewHref && (
+                          <Link
+                            href={message.viewHref}
+                            className="self-start text-xs font-semibold text-accent-hover underline underline-offset-4"
+                          >
+                            {message.viewHrefLabel ?? "View"} →
+                          </Link>
+                        )}
+                      </div>
                     ) : (
                       message.content
                     )}
@@ -301,8 +333,6 @@ export default function ChatPage() {
               {error}
             </p>
           )}
-
-          <div ref={bottomRef} />
         </div>
       </div>
 
