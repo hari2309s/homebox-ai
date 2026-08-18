@@ -25,8 +25,8 @@ async function createLocation(page: import("@playwright/test").Page, name: strin
 
 async function deleteLocation(page: import("@playwright/test").Page, name: string) {
   const row = page.getByTestId(`location-row-${name}`);
-  page.once("dialog", (dialog) => dialog.accept());
   await row.getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
   await expect(page.getByTestId(`location-row-${name}`)).toHaveCount(0);
 }
 

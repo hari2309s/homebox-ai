@@ -1,11 +1,11 @@
 import { timingSafeEqual } from "node:crypto";
 
 import { chatQueries, notifierQueries } from "@homebox-ai/db";
-import { createLangfuseHandler, getModelForTask } from "@homebox-ai/ai";
+import { getModelForTask } from "@homebox-ai/ai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 
-import { langfuseSpanProcessor } from "../../../../instrumentation-node";
+import { runTracedGraph } from "../../../../lib/traced-graph";
 
 // Constant-time comparison so a wrong guess can't be distinguished by how
 // long the check took — a plain `===` short-circuits on the first mismatched
@@ -26,19 +26,20 @@ type ExpiringWarrantyItem = Awaited<ReturnType<typeof notifierQueries.listItemsW
 async function generateWarrantyReminderMessage(ownerItems: ExpiringWarrantyItem[]): Promise<string> {
   const model = getModelForTask("reasoning");
   const itemList = ownerItems.map((item) => `- ${item.name} (warranty expires ${item.warrantyExpires})`).join("\n");
-  const langfuseHandler = createLangfuseHandler({ tags: ["notifier", "warranty"] });
 
-  const response = await model.invoke(
-    [
-      new SystemMessage(
-        "You are Homebox AI's proactive assistant, writing directly to the user in their chat — this message " +
-          "appears unprompted, not as a reply to a question. Write a short, warm, conversational reminder (2-4 " +
-          "sentences, no markdown headers or bullet lists) about the items listed, whose warranties are expiring " +
-          "soon. Mention the item names and dates naturally in prose.",
-      ),
-      new HumanMessage(`These items have warranties expiring within 30 days:\n${itemList}`),
-    ],
-    { callbacks: [langfuseHandler], runName: "warranty-notifier" },
+  const response = await runTracedGraph({ tags: ["notifier", "warranty"], runName: "warranty-notifier" }, (options) =>
+    model.invoke(
+      [
+        new SystemMessage(
+          "You are Homebox AI's proactive assistant, writing directly to the user in their chat — this message " +
+            "appears unprompted, not as a reply to a question. Write a short, warm, conversational reminder (2-4 " +
+            "sentences, no markdown headers or bullet lists) about the items listed, whose warranties are " +
+            "expiring soon. Mention the item names and dates naturally in prose.",
+        ),
+        new HumanMessage(`These items have warranties expiring within 30 days:\n${itemList}`),
+      ],
+      options,
+    ),
   );
 
   return typeof response.content === "string" ? response.content : String(response.content);
@@ -53,10 +54,6 @@ export async function POST(request: Request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  after(async () => {
-    await langfuseSpanProcessor.forceFlush();
-  });
 
   const expiring = await notifierQueries.listItemsWithExpiringWarranty(30);
   if (expiring.length === 0) return NextResponse.json({ households: 0, itemsNotified: 0 });

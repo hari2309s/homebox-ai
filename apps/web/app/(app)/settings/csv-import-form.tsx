@@ -1,6 +1,6 @@
 "use client";
 
-import { importItemsCsvAction } from "./actions";
+import { importItemsCsvAction } from "./actions/csv-import";
 import { ImportForm } from "./import-form";
 
 export function CsvImportForm() {

@@ -1,7 +1,8 @@
 "use client";
 
-import { Select, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { ConfirmDialog, Select, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 import { deleteAttachmentAction, setPrimaryAttachmentAction, uploadItemAttachmentAction } from "../actions";
 
@@ -13,6 +14,17 @@ interface AttachmentRecord {
 }
 
 export function AttachmentsSection({ itemId, attachments }: { itemId: string; attachments: AttachmentRecord[] }) {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  async function handleDelete() {
+    if (!pendingDeleteId) return;
+    const formData = new FormData();
+    formData.set("itemId", itemId);
+    formData.set("attachmentId", pendingDeleteId);
+    setPendingDeleteId(null);
+    await deleteAttachmentAction(formData);
+  }
+
   return (
     <div className="flex flex-col gap-3">
       {attachments.length > 0 && (
@@ -62,21 +74,13 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
                       </TapButton>
                     </form>
                   )}
-                  <form
-                    action={async (formData) => {
-                      if (!confirm("Delete this attachment?")) return;
-                      await deleteAttachmentAction(formData);
-                    }}
+                  <TapButton
+                    type="button"
+                    onClick={() => setPendingDeleteId(attachment.id)}
+                    className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
                   >
-                    <input type="hidden" name="itemId" value={itemId} />
-                    <input type="hidden" name="attachmentId" value={attachment.id} />
-                    <TapButton
-                      type="submit"
-                      className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
-                    >
-                      Delete
-                    </TapButton>
-                  </form>
+                    Delete
+                  </TapButton>
                 </div>
               </div>
             </motion.div>
@@ -100,6 +104,14 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
         </Select>
         <SubmitButton>Upload</SubmitButton>
       </form>
+
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        title="Delete this attachment?"
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </div>
   );
 }

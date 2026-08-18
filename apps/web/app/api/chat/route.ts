@@ -1,11 +1,11 @@
-import { createChatSearchGraph, createLangfuseHandler, pendingActionSchema, type PendingAction } from "@homebox-ai/ai";
+import { createChatSearchGraph, pendingActionSchema, type PendingAction } from "@homebox-ai/ai";
 import { chatQueries } from "@homebox-ai/db";
 import { AIMessage, HumanMessage, ToolMessage, type BaseMessage } from "@langchain/core/messages";
-import { NextResponse, after } from "next/server";
+import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
-import { langfuseSpanProcessor } from "../../../instrumentation-node";
+import { runTracedGraph } from "../../../lib/traced-graph";
 
 /**
  * The mutating chat tools (create_location, create_item, etc.) never write
@@ -39,16 +39,6 @@ export async function POST(request: Request) {
 
   const sessionId = rawSessionId ?? crypto.randomUUID();
 
-  const langfuseHandler = createLangfuseHandler({
-    userId: user.id,
-    sessionId,
-    tags: ["chat"],
-  });
-
-  after(async () => {
-    await langfuseSpanProcessor.forceFlush();
-  });
-
   try {
     const history = await chatQueries.listChatMessages(user.id, sessionId);
     const historyMessages = history.map((entry) =>
@@ -57,9 +47,9 @@ export async function POST(request: Request) {
 
     const displayName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : undefined;
     const graph = createChatSearchGraph(user.id, { displayName });
-    const result = await graph.invoke(
-      { messages: [...historyMessages, new HumanMessage(message)] },
-      { callbacks: [langfuseHandler], runName: "chat-search" },
+    const result = await runTracedGraph(
+      { userId: user.id, sessionId, tags: ["chat"], runName: "chat-search" },
+      (options) => graph.invoke({ messages: [...historyMessages, new HumanMessage(message)] }, options),
     );
     const lastMessage = result.messages.at(-1);
     const reply = typeof lastMessage?.content === "string" ? lastMessage.content : "";

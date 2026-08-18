@@ -1,6 +1,15 @@
 "use client";
 
-import { EmptyState, Input, Select, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
+import {
+  ConfirmDialog,
+  EmptyState,
+  Input,
+  Select,
+  StaggerItem,
+  StaggerList,
+  SubmitButton,
+  TapButton,
+} from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { deleteLocationAction, updateLocationAction } from "./actions";
@@ -41,6 +50,14 @@ function LocationRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  async function handleDelete() {
+    setConfirmOpen(false);
+    const formData = new FormData();
+    formData.set("id", location.id);
+    await deleteLocationAction(formData);
+  }
 
   if (editing) {
     return (
@@ -109,21 +126,22 @@ function LocationRow({
         >
           Edit
         </TapButton>
-        <form
-          action={async (formData) => {
-            if (!confirm(`Delete "${location.name}"? Items inside will become unassigned.`)) return;
-            await deleteLocationAction(formData);
-          }}
+        <TapButton
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent-hover"
         >
-          <input type="hidden" name="id" value={location.id} />
-          <TapButton
-            type="submit"
-            className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent-hover"
-          >
-            Delete
-          </TapButton>
-        </form>
+          Delete
+        </TapButton>
       </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={`Delete "${location.name}"?`}
+        description="Items inside will become unassigned."
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </StaggerItem>
   );
 }

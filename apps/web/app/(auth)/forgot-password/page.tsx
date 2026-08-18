@@ -1,14 +1,11 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { Button, Spinner } from "@homebox-ai/ui";
+import { Button, FormField, Input, Spinner } from "@homebox-ai/ui";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 import { AuthShell } from "../auth-shell";
-
-const inputClassName =
-  "rounded-md border border-border bg-white px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -49,17 +46,15 @@ export default function ForgotPasswordPage() {
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-            Email
-            <input
+          <FormField label="Email">
+            <Input
               type="email"
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
-              className={inputClassName}
             />
-          </label>
+          </FormField>
           {error && (
             <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
               {error}

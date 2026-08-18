@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { Button, Input, Spinner } from "@homebox-ai/ui";
+import { Button, FormField, Input, Spinner } from "@homebox-ai/ui";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -30,8 +30,7 @@ export function DisplayNameForm({ initialName }: { initialName: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row sm:items-end">
-      <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-        Display name
+      <FormField label="Display name" flex>
         <Input
           value={name}
           onChange={(event) => {
@@ -40,7 +39,7 @@ export function DisplayNameForm({ initialName }: { initialName: string }) {
           }}
           placeholder="Your name"
         />
-      </label>
+      </FormField>
       <Button type="submit" disabled={pending || !name.trim()}>
         {pending ? <Spinner size={16} /> : "Save"}
       </Button>

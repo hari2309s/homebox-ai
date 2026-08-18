@@ -1,7 +1,7 @@
 "use client";
 
 import type { ItemDraft } from "@homebox-ai/ai";
-import { CapturePhotoPicker, Input, Select, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { CapturePhotoPicker, FormField, Input, Select, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
@@ -166,17 +166,15 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
         </ul>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-            Purchase date
+          <FormField label="Purchase date" flex>
             <Input
               name="purchaseDate"
               type="date"
               value={purchaseDate}
               onChange={(event) => setPurchaseDate(event.target.value)}
             />
-          </label>
-          <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-            Location
+          </FormField>
+          <FormField label="Location" flex>
             <Select name="locationId" defaultValue="">
               <option value="">No location</option>
               {locations.map((location) => (
@@ -185,7 +183,7 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
                 </option>
               ))}
             </Select>
-          </label>
+          </FormField>
         </div>
 
         {labels.length > 0 && (

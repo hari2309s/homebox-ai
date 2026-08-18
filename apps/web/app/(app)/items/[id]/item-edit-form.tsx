@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, Select, SubmitButton } from "@homebox-ai/ui";
+import { FormField, Input, Select, SubmitButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { updateItemAction } from "../actions";
@@ -62,23 +62,19 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
         </span>
       )}
 
-      <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-        Name
+      <FormField label="Name">
         <Input name="name" defaultValue={item.name} required />
-      </label>
+      </FormField>
 
-      <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-        Description
+      <FormField label="Description">
         <Input name="description" defaultValue={item.description ?? ""} />
-      </label>
+      </FormField>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Quantity
+        <FormField label="Quantity" flex>
           <Input name="quantity" type="number" min={1} defaultValue={item.quantity} />
-        </label>
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Location
+        </FormField>
+        <FormField label="Location" flex>
           <Select name="locationId" defaultValue={item.locationId ?? ""}>
             <option value="">No location</option>
             {locations.map((location) => (
@@ -87,12 +83,11 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
               </option>
             ))}
           </Select>
-        </label>
+        </FormField>
       </div>
 
       {otherItems.length > 0 && (
-        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-          Part of item
+        <FormField label="Part of item">
           <Select name="parentItemId" defaultValue={item.parentItemId ?? ""}>
             <option value="">Not part of another item</option>
             {otherItems.map((candidate) => (
@@ -101,68 +96,56 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
               </option>
             ))}
           </Select>
-        </label>
+        </FormField>
       )}
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Manufacturer
+        <FormField label="Manufacturer" flex>
           <Input name="manufacturer" defaultValue={item.manufacturer ?? ""} />
-        </label>
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Model number
+        </FormField>
+        <FormField label="Model number" flex>
           <Input name="modelNumber" defaultValue={item.modelNumber ?? ""} />
-        </label>
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Serial number
+        </FormField>
+        <FormField label="Serial number" flex>
           <Input name="serialNumber" defaultValue={item.serialNumber ?? ""} />
-        </label>
+        </FormField>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Purchase price
+        <FormField label="Purchase price" flex>
           <Input name="purchasePrice" defaultValue={item.purchasePrice ?? ""} placeholder="0.00" />
-        </label>
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Purchase date
+        </FormField>
+        <FormField label="Purchase date" flex>
           <Input name="purchaseDate" type="date" defaultValue={item.purchaseDate ?? ""} />
-        </label>
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Purchased from
+        </FormField>
+        <FormField label="Purchased from" flex>
           <Input name="purchaseFrom" defaultValue={item.purchaseFrom ?? ""} />
-        </label>
+        </FormField>
       </div>
 
-      <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-        Warranty expires
+      <FormField label="Warranty expires">
         <Input name="warrantyExpires" type="date" defaultValue={item.warrantyExpires ?? ""} />
-      </label>
+      </FormField>
 
       <div className="flex flex-col gap-3 sm:flex-row">
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Sale price
+        <FormField label="Sale price" flex>
           <Input name="salePrice" defaultValue={item.salePrice ?? ""} placeholder="0.00" />
-        </label>
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Sale date
+        </FormField>
+        <FormField label="Sale date" flex>
           <Input name="saleDate" type="date" defaultValue={item.saleDate ?? ""} />
-        </label>
-        <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-          Sold to
+        </FormField>
+        <FormField label="Sold to" flex>
           <Input name="soldTo" defaultValue={item.soldTo ?? ""} />
-        </label>
+        </FormField>
       </div>
 
-      <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-        Sale notes
+      <FormField label="Sale notes">
         <Input name="soldNotes" defaultValue={item.soldNotes ?? ""} />
-      </label>
+      </FormField>
 
-      <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-        Notes
+      <FormField label="Notes">
         <Input name="notes" defaultValue={item.notes ?? ""} />
-      </label>
+      </FormField>
 
       <fieldset className="flex flex-wrap gap-4 border-none p-0">
         <label className="flex items-center gap-1.5 text-sm text-body">

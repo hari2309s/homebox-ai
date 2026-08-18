@@ -1,6 +1,6 @@
 "use client";
 
-import { EmptyState, Input, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { ConfirmDialog, EmptyState, Input, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { deleteLabelAction, updateLabelAction } from "./actions";
@@ -38,7 +38,15 @@ export function LabelList({ labels }: { labels: LabelRecord[] }) {
 
 function LabelChip({ label }: { label: LabelRecord }) {
   const [editing, setEditing] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const textColor = textColorFor(label.color);
+
+  async function handleDelete() {
+    setConfirmOpen(false);
+    const formData = new FormData();
+    formData.set("id", label.id);
+    await deleteLabelAction(formData);
+  }
 
   if (editing) {
     return (
@@ -86,22 +94,22 @@ function LabelChip({ label }: { label: LabelRecord }) {
       >
         {label.name}
       </TapButton>
-      <form
-        action={async (formData) => {
-          if (!confirm(`Delete label "${label.name}"?`)) return;
-          await deleteLabelAction(formData);
-        }}
+      <TapButton
+        type="button"
+        onClick={() => setConfirmOpen(true)}
+        aria-label={`Delete ${label.name}`}
+        className="cursor-pointer border-none bg-transparent text-xs opacity-70 hover:opacity-100"
+        style={{ color: textColor }}
       >
-        <input type="hidden" name="id" value={label.id} />
-        <TapButton
-          type="submit"
-          aria-label={`Delete ${label.name}`}
-          className="cursor-pointer border-none bg-transparent text-xs opacity-70 hover:opacity-100"
-          style={{ color: textColor }}
-        >
-          ✕
-        </TapButton>
-      </form>
+        ✕
+      </TapButton>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={`Delete label "${label.name}"?`}
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </StaggerItem>
   );
 }

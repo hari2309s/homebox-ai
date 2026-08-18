@@ -1,7 +1,7 @@
 "use client";
 
 import type { ItemDraft } from "@homebox-ai/ai";
-import { CapturePhotoPicker, Input, Select, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { CapturePhotoPicker, FormField, Input, Select, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
@@ -95,30 +95,24 @@ export function CaptureForm({ locations, labels }: CaptureFormProps) {
         )}
 
         <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-            Name
+          <FormField label="Name">
             <Input name="name" defaultValue={draft.name} required />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-            Description
+          </FormField>
+          <FormField label="Description">
             <Input name="description" defaultValue={draft.description ?? ""} />
-          </label>
+          </FormField>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-              Quantity
+            <FormField label="Quantity" flex>
               <Input name="quantity" type="number" min={1} defaultValue={draft.quantity} />
-            </label>
-            <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-              Purchase price
+            </FormField>
+            <FormField label="Purchase price" flex>
               <Input name="purchasePrice" defaultValue={draft.purchasePrice ?? ""} placeholder="0.00" />
-            </label>
-            <label className="flex flex-1 flex-col gap-1.5 text-sm font-semibold text-ink">
-              Purchase date
+            </FormField>
+            <FormField label="Purchase date" flex>
               <Input name="purchaseDate" type="date" defaultValue={draft.purchaseDate ?? ""} />
-            </label>
+            </FormField>
           </div>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-            Location
+          <FormField label="Location">
             <Select name="locationId" defaultValue={matchedLocationId ?? ""}>
               <option value="">No location</option>
               {locations.map((location) => (
@@ -127,7 +121,7 @@ export function CaptureForm({ locations, labels }: CaptureFormProps) {
                 </option>
               ))}
             </Select>
-          </label>
+          </FormField>
           {labels.length > 0 && (
             <fieldset className="flex flex-wrap gap-3 border-none p-0">
               {labels.map((label) => (

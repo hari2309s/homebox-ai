@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
+import { Button, ConfirmDialog, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
 import { useEffect, useState } from "react";
 
 import {
@@ -10,7 +10,7 @@ import {
   listPendingInvitesAction,
   removeMemberAction,
   revokeInviteAction,
-} from "./actions";
+} from "./actions/sharing";
 
 interface ShareStatus {
   role: "owner" | "member";
@@ -18,12 +18,7 @@ interface ShareStatus {
   members: { userId: string; email: string | null }[];
 }
 
-interface PendingInvite {
-  id: string;
-  token: string;
-  createdAt: string;
-  expiresAt: string;
-}
+type PendingInvite = Awaited<ReturnType<typeof listPendingInvitesAction>>[number];
 
 export function HouseholdSection() {
   const [status, setStatus] = useState<ShareStatus | null>(null);
@@ -32,11 +27,13 @@ export function HouseholdSection() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const [pendingRemoveMemberId, setPendingRemoveMemberId] = useState<string | null>(null);
 
   async function refresh() {
     const [nextStatus, nextInvites] = await Promise.all([getShareStatusAction(), listPendingInvitesAction()]);
     setStatus(nextStatus);
-    setInvites(nextInvites as unknown as PendingInvite[]);
+    setInvites(nextInvites);
   }
 
   useEffect(() => {
@@ -50,10 +47,11 @@ export function HouseholdSection() {
     setError(null);
     try {
       const invite = await createInviteAction();
+      if (!invite) throw new Error("Couldn't create an invite");
       await refresh();
-      const link = `${window.location.origin}/join/${(invite as { token: string }).token}`;
+      const link = inviteLink(invite.token);
       await navigator.clipboard.writeText(link).catch(() => {});
-      setCopiedToken((invite as { token: string }).token);
+      setCopiedToken(invite.token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't create an invite");
     } finally {
@@ -70,6 +68,21 @@ export function HouseholdSection() {
     setCopiedToken(token);
   }
 
+  async function handleLeave() {
+    setLeaveConfirmOpen(false);
+    await leaveHouseholdAction();
+    await refresh();
+  }
+
+  async function handleRemoveMember() {
+    if (!pendingRemoveMemberId) return;
+    const formData = new FormData();
+    formData.set("memberUserId", pendingRemoveMemberId);
+    setPendingRemoveMemberId(null);
+    await removeMemberAction(formData);
+    await refresh();
+  }
+
   if (loading) {
     return <Spinner size={16} />;
   }
@@ -84,17 +97,17 @@ export function HouseholdSection() {
         <p className="text-sm text-body">
           You&apos;re sharing {status.ownerEmail ?? "another account"}&apos;s inventory.
         </p>
-        <form
-          action={async () => {
-            if (!confirm("Leave this household? You'll go back to seeing only your own inventory.")) return;
-            await leaveHouseholdAction();
-            await refresh();
-          }}
-        >
-          <Button type="submit" className="self-start">
-            Leave household
-          </Button>
-        </form>
+        <Button type="button" onClick={() => setLeaveConfirmOpen(true)} className="self-start">
+          Leave household
+        </Button>
+        <ConfirmDialog
+          open={leaveConfirmOpen}
+          title="Leave this household?"
+          description="You'll go back to seeing only your own inventory."
+          confirmLabel="Leave"
+          onConfirm={handleLeave}
+          onCancel={() => setLeaveConfirmOpen(false)}
+        />
       </div>
     );
   }
@@ -112,21 +125,13 @@ export function HouseholdSection() {
               className="flex items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-sm"
             >
               <span className="text-ink">{member.email ?? member.userId}</span>
-              <form
-                action={async (formData) => {
-                  if (!confirm("Remove this person's access?")) return;
-                  await removeMemberAction(formData);
-                  await refresh();
-                }}
+              <TapButton
+                type="button"
+                onClick={() => setPendingRemoveMemberId(member.userId)}
+                className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover"
               >
-                <input type="hidden" name="memberUserId" value={member.userId} />
-                <TapButton
-                  type="submit"
-                  className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover"
-                >
-                  Remove
-                </TapButton>
-              </form>
+                Remove
+              </TapButton>
             </StaggerItem>
           ))}
         </StaggerList>
@@ -178,6 +183,14 @@ export function HouseholdSection() {
           {error}
         </p>
       )}
+
+      <ConfirmDialog
+        open={pendingRemoveMemberId !== null}
+        title="Remove this person's access?"
+        confirmLabel="Remove"
+        onConfirm={handleRemoveMember}
+        onCancel={() => setPendingRemoveMemberId(null)}
+      />
     </div>
   );
 }

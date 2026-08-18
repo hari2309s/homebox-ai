@@ -1,6 +1,6 @@
 "use client";
 
-import { Input, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { ConfirmDialog, Input, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { addMaintenanceEntryAction, deleteMaintenanceEntryAction, updateMaintenanceEntryAction } from "../actions";
@@ -45,6 +45,15 @@ export function MaintenanceSection({ itemId, entries }: { itemId: string; entrie
 
 function MaintenanceRow({ itemId, entry }: { itemId: string; entry: MaintenanceEntry }) {
   const [editing, setEditing] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  async function handleDelete() {
+    setConfirmOpen(false);
+    const formData = new FormData();
+    formData.set("itemId", itemId);
+    formData.set("entryId", entry.id);
+    await deleteMaintenanceEntryAction(formData);
+  }
 
   if (editing) {
     return (
@@ -100,22 +109,21 @@ function MaintenanceRow({ itemId, entry }: { itemId: string; entry: MaintenanceE
         >
           Edit
         </TapButton>
-        <form
-          action={async (formData) => {
-            if (!confirm(`Delete "${entry.name}"?`)) return;
-            await deleteMaintenanceEntryAction(formData);
-          }}
+        <TapButton
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
         >
-          <input type="hidden" name="itemId" value={itemId} />
-          <input type="hidden" name="entryId" value={entry.id} />
-          <TapButton
-            type="submit"
-            className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
-          >
-            Delete
-          </TapButton>
-        </form>
+          Delete
+        </TapButton>
       </div>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={`Delete "${entry.name}"?`}
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </StaggerItem>
   );
 }

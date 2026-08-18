@@ -1,6 +1,6 @@
 "use client";
 
-import { importZipAction } from "./actions";
+import { importZipAction } from "./actions/zip-import";
 import { ImportForm } from "./import-form";
 
 export function ZipImportForm() {

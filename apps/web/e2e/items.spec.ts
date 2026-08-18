@@ -19,8 +19,8 @@ test("create an item, see it in the list, open it, then delete it", async ({ pag
   await row.click();
   await expect(page.getByRole("heading", { name })).toBeVisible();
 
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
 
   await expect(page).toHaveURL("/items");
   await expect(page.getByRole("link", { name: new RegExp(name) })).toHaveCount(0);
@@ -45,7 +45,7 @@ test("editing an item's fields persists after reload", async ({ page }) => {
   await expect(page.getByLabel("Manufacturer")).toHaveValue("Acme Corp");
 
   // Clean up so this test's data doesn't accumulate on the shared account.
-  page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Delete" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Delete" }).click();
   await expect(page).toHaveURL("/items");
 });

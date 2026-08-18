@@ -1,7 +1,16 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { AnimatedHomeboxIcon, FadeIn, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
+import {
+  AnimatedHomeboxIcon,
+  FadeIn,
+  FormField,
+  Input,
+  Spinner,
+  StaggerItem,
+  StaggerList,
+  TapButton,
+} from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -22,9 +31,6 @@ const COPY = {
   "sign-in": { heading: "Welcome back", subtitle: "Sign in to your inventory" },
   "sign-up": { heading: "Create your account", subtitle: "Start organizing with AI" },
 };
-
-const inputClassName =
-  "rounded-md border border-border bg-white px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20";
 
 function GoogleIcon() {
   return (
@@ -216,41 +222,36 @@ function LoginForm() {
                 className="flex flex-col gap-1.5 overflow-hidden text-sm font-semibold text-ink"
               >
                 Name
-                <input
+                <Input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="name"
-                  className={inputClassName}
                 />
               </motion.label>
             )}
           </AnimatePresence>
 
-          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-            Email
-            <input
+          <FormField label="Email">
+            <Input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
-              className={inputClassName}
             />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-            Password
-            <input
+          </FormField>
+          <FormField label="Password">
+            <Input
               type="password"
               required
               minLength={mode === "sign-up" ? PASSWORD_MIN_LENGTH : undefined}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-              className={inputClassName}
             />
-          </label>
+          </FormField>
 
           {mode === "sign-in" && (
             <Link
@@ -287,14 +288,13 @@ function LoginForm() {
                 className="flex flex-col gap-1.5 overflow-hidden text-sm font-semibold text-ink"
               >
                 Confirm password
-                <input
+                <Input
                   type="password"
                   required
                   minLength={PASSWORD_MIN_LENGTH}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   autoComplete="new-password"
-                  className={inputClassName}
                 />
               </motion.label>
             )}

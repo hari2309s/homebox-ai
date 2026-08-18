@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { Button, Input, Spinner } from "@homebox-ai/ui";
+import { Button, FormField, Input, Spinner } from "@homebox-ai/ui";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
@@ -58,8 +58,7 @@ export default function ResetPasswordPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-          New password
+        <FormField label="New password">
           <Input
             type="password"
             required
@@ -68,10 +67,9 @@ export default function ResetPasswordPage() {
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="new-password"
           />
-        </label>
+        </FormField>
         <PasswordRequirementsList password={password} />
-        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink">
-          Confirm password
+        <FormField label="Confirm password">
           <Input
             type="password"
             required
@@ -80,7 +78,7 @@ export default function ResetPasswordPage() {
             onChange={(event) => setConfirmPassword(event.target.value)}
             autoComplete="new-password"
           />
-        </label>
+        </FormField>
         {error && (
           <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
             {error}

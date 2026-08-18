@@ -15,11 +15,13 @@ export async function runTracedGraph<T>(
   run: (options: { callbacks: [ReturnType<typeof createLangfuseHandler>]; runName: string }) => Promise<T>,
 ): Promise<T> {
   const langfuseHandler = createLangfuseHandler(context);
-  const result = await run({ callbacks: [langfuseHandler], runName: context.runName });
 
+  // Registered before the call, not after — a rejected `run()` would
+  // otherwise skip this entirely, losing the trace for every failed call
+  // (the exact case most worth having a trace for).
   after(async () => {
     await langfuseSpanProcessor.forceFlush();
   });
 
-  return result;
+  return run({ callbacks: [langfuseHandler], runName: context.runName });
 }
