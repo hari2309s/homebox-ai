@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { Button, FormField, Input, Spinner } from "@homebox-ai/ui";
+import { Button, FormField, PasswordInput, Spinner } from "@homebox-ai/ui";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -52,8 +52,7 @@ export function PasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
       <FormField label="Current password">
-        <Input
-          type="password"
+        <PasswordInput
           required
           value={currentPassword}
           onChange={(event) => {
@@ -65,8 +64,7 @@ export function PasswordForm() {
       </FormField>
       <div className="flex flex-col gap-3 sm:flex-row">
         <FormField label="New password" flex>
-          <Input
-            type="password"
+          <PasswordInput
             minLength={PASSWORD_MIN_LENGTH}
             required
             value={password}
@@ -78,8 +76,7 @@ export function PasswordForm() {
           />
         </FormField>
         <FormField label="Confirm password" flex>
-          <Input
-            type="password"
+          <PasswordInput
             minLength={PASSWORD_MIN_LENGTH}
             required
             value={confirmPassword}

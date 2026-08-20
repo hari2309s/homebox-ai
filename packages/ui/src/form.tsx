@@ -6,13 +6,16 @@ import { useFormStatus } from "react-dom";
 
 import { Spinner } from "./spinner";
 
-const fieldClassName =
+// Exported for password-input.tsx, which needs this same field chrome but
+// can't just render `<Input>` — it has to inject a show/hide button inside
+// the field's own padding, not just append a sibling.
+export const fieldClassName =
   "rounded-md border border-border bg-card px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20";
 
 const selectFieldClassName =
   "w-full appearance-none rounded-md border border-border bg-card py-2.5 pl-3.5 pr-9 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20";
 
-function cx(...classes: Array<string | undefined>) {
+export function cx(...classes: Array<string | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 

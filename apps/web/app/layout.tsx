@@ -9,19 +9,21 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 };
 
+// Single static default (light) — the inline script below corrects this
+// synchronously, before paint, for dark/system-dark, so there's exactly one
+// theme-color meta tag in the document rather than the two OS-media-query
+// ones Next's array form would render (which can't represent "the user
+// explicitly picked dark while their OS is in light mode" at all).
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7deae" },
-    { media: "(prefers-color-scheme: dark)", color: "#2c2117" },
-  ],
+  themeColor: "#fbf1de",
 };
 
-// Sets `data-theme` before React hydrates, straight from localStorage —
-// otherwise an explicit dark/light choice would flash the wrong theme for a
-// frame on every load. "system" needs no entry here at all: globals.css's
-// `prefers-color-scheme` media query handles it with zero JS. Duplicates
-// THEME_STORAGE_KEY from lib/theme.ts (kept in sync by hand) since this runs
-// before any app bundle — including that module — is loaded.
+// Sets `data-theme` and the theme-color meta tag before React hydrates,
+// straight from localStorage — otherwise an explicit dark/light choice (or a
+// system choice against a dark OS) would flash the wrong theme for a frame
+// on every load. Duplicates THEME_STORAGE_KEY and the --color-surface-soft
+// values from lib/theme.ts / globals.css (kept in sync by hand) since this
+// runs before any app bundle — including that module — is loaded.
 const themeInitScript = `
 (function () {
   try {
@@ -29,6 +31,9 @@ const themeInitScript = `
     if (theme === "light" || theme === "dark") {
       document.documentElement.setAttribute("data-theme", theme);
     }
+    var isDark = theme === "dark" || (theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", isDark ? "#261c13" : "#fbf1de");
   } catch (e) {}
 })();
 `;

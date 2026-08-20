@@ -64,6 +64,18 @@ export function ThemeToggle() {
   useEffect(() => {
     setTheme(getStoredTheme());
     setMounted(true);
+
+    // Keeps the theme-color meta tag correct if the OS preference changes
+    // live (e.g. auto night mode kicking in) while "system" is selected —
+    // the page's own colors already update for free via CSS's media query,
+    // but the meta tag needs JS since a manual choice has to be able to
+    // override it, so it can't use that same media-query trick.
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    function handleSystemChange() {
+      if (getStoredTheme() === "system") applyTheme("system");
+    }
+    media.addEventListener("change", handleSystemChange);
+    return () => media.removeEventListener("change", handleSystemChange);
   }, []);
 
   function handleClick() {

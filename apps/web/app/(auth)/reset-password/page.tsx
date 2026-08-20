@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { Button, FormField, Input, Spinner } from "@homebox-ai/ui";
+import { Button, FormField, PasswordInput, Spinner } from "@homebox-ai/ui";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
@@ -59,8 +59,7 @@ export default function ResetPasswordPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <FormField label="New password">
-          <Input
-            type="password"
+          <PasswordInput
             required
             minLength={PASSWORD_MIN_LENGTH}
             value={password}
@@ -70,8 +69,7 @@ export default function ResetPasswordPage() {
         </FormField>
         <PasswordRequirementsList password={password} />
         <FormField label="Confirm password">
-          <Input
-            type="password"
+          <PasswordInput
             required
             minLength={PASSWORD_MIN_LENGTH}
             value={confirmPassword}

@@ -7,5 +7,6 @@ export { FadeIn } from "./motion/fade-in";
 export { StaggerList, StaggerItem } from "./motion/stagger-list";
 export { AnimatedHomeboxIcon } from "./motion/animated-homebox-icon";
 export { Input, Select, Button, SubmitButton } from "./form";
+export { PasswordInput } from "./password-input";
 export { Spinner, PageLoader } from "./spinner";
 export { TapButton } from "./tap-button";

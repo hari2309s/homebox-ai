@@ -6,6 +6,7 @@ import {
   FadeIn,
   FormField,
   Input,
+  PasswordInput,
   Spinner,
   StaggerItem,
   StaggerList,
@@ -243,8 +244,7 @@ function LoginForm() {
             />
           </FormField>
           <FormField label="Password">
-            <Input
-              type="password"
+            <PasswordInput
               required
               minLength={mode === "sign-up" ? PASSWORD_MIN_LENGTH : undefined}
               value={password}
@@ -288,8 +288,7 @@ function LoginForm() {
                 className="flex flex-col gap-1.5 overflow-hidden text-sm font-semibold text-ink"
               >
                 Confirm password
-                <Input
-                  type="password"
+                <PasswordInput
                   required
                   minLength={PASSWORD_MIN_LENGTH}
                   value={confirmPassword}

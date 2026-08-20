@@ -45,29 +45,38 @@
  *   explicitly picked "light" (which sets `[data-theme="light"]` and must
  *   keep the app light even if the OS is in dark mode).
  */
+/*
+ * card < surface-soft < surface is a deliberate, visibly-stepped ramp
+ * (page/content darkest, header/bottom-nav a clear step lighter, dialogs
+ * lighter still) — mirroring light mode's own card(white) > surface-soft
+ * (light beige) > surface(deeper beige) hierarchy, just inverted. The
+ * previous values here were only ~3 points apart per channel, which made
+ * the header/bottom-nav (surface-soft) visually indistinguishable from the
+ * page background (card) — this fixes that.
+ */
 :root[data-theme="dark"] {
-  --color-card: #211a13;
-  --color-surface: #2c2117;
-  --color-surface-soft: #241b12;
+  --color-card: #1a130d;
+  --color-surface: #33261a;
+  --color-surface-soft: #261c13;
   --color-accent: #fb7369;
   --color-accent-hover: #ff9088;
   --color-ink: #f5e6c8;
   --color-body: #e3d5ba;
   --color-muted: #9c8b70;
-  --color-border: #3d3020;
+  --color-border: #4a3a27;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
-    --color-card: #211a13;
-    --color-surface: #2c2117;
-    --color-surface-soft: #241b12;
+    --color-card: #1a130d;
+    --color-surface: #33261a;
+    --color-surface-soft: #261c13;
     --color-accent: #fb7369;
     --color-accent-hover: #ff9088;
     --color-ink: #f5e6c8;
     --color-body: #e3d5ba;
     --color-muted: #9c8b70;
-    --color-border: #3d3020;
+    --color-border: #4a3a27;
   }
 }
 
