@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
 
+import { currencyLabel, normalizeCurrency, SUPPORTED_CURRENCIES } from "../../../lib/currency";
 import { analyzePhotoAction, createItemFromCaptureAction } from "./actions";
 
 interface CaptureFormProps {
@@ -104,6 +105,15 @@ export function CaptureForm({ locations, labels }: CaptureFormProps) {
           <div className="flex flex-col gap-3 sm:flex-row">
             <FormField label="Quantity" flex>
               <Input name="quantity" type="number" min={1} defaultValue={draft.quantity} />
+            </FormField>
+            <FormField label="Currency" flex>
+              <Select name="currency" defaultValue={normalizeCurrency(draft.currency)}>
+                {SUPPORTED_CURRENCIES.map((code) => (
+                  <option key={code} value={code}>
+                    {currencyLabel(code)}
+                  </option>
+                ))}
+              </Select>
             </FormField>
             <FormField label="Purchase price" flex>
               <Input name="purchasePrice" defaultValue={draft.purchasePrice ?? ""} placeholder="0.00" />

@@ -3,6 +3,7 @@
 import { FormField, Input, Select, SubmitButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
+import { currencyLabel, SUPPORTED_CURRENCIES } from "../../../../lib/currency";
 import { updateItemAction } from "../actions";
 
 interface ItemEditFormProps {
@@ -18,6 +19,7 @@ interface ItemEditFormProps {
     insured: boolean;
     archived: boolean;
     lifetimeWarranty: boolean;
+    currency: string;
     purchasePrice: string | null;
     purchaseDate: string | null;
     purchaseFrom: string | null;
@@ -112,16 +114,26 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
+        <FormField label="Currency" flex>
+          <Select name="currency" defaultValue={item.currency}>
+            {SUPPORTED_CURRENCIES.map((code) => (
+              <option key={code} value={code}>
+                {currencyLabel(code)}
+              </option>
+            ))}
+          </Select>
+        </FormField>
         <FormField label="Purchase price" flex>
           <Input name="purchasePrice" defaultValue={item.purchasePrice ?? ""} placeholder="0.00" />
         </FormField>
         <FormField label="Purchase date" flex>
           <Input name="purchaseDate" type="date" defaultValue={item.purchaseDate ?? ""} />
         </FormField>
-        <FormField label="Purchased from" flex>
-          <Input name="purchaseFrom" defaultValue={item.purchaseFrom ?? ""} />
-        </FormField>
       </div>
+
+      <FormField label="Purchased from">
+        <Input name="purchaseFrom" defaultValue={item.purchaseFrom ?? ""} />
+      </FormField>
 
       <FormField label="Warranty expires">
         <Input name="warrantyExpires" type="date" defaultValue={item.warrantyExpires ?? ""} />

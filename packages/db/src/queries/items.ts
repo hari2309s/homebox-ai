@@ -1,4 +1,4 @@
-import { and, eq, ilike, sql } from "drizzle-orm";
+import { and, eq, ilike, lte, sql } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { wouldFormCycle } from "../cycle";
@@ -71,6 +71,7 @@ export interface CreateItemInput {
   manufacturer?: string;
   insured?: boolean;
   lifetimeWarranty?: boolean;
+  currency?: string;
   purchasePrice?: string;
   purchaseDate?: string;
   purchaseFrom?: string;
@@ -103,6 +104,7 @@ export interface UpdateItemInput {
   insured?: boolean;
   archived?: boolean;
   lifetimeWarranty?: boolean;
+  currency?: string;
   purchasePrice?: string | null;
   purchaseDate?: string | null;
   purchaseFrom?: string | null;
@@ -159,5 +161,51 @@ export function deleteItem(userId: string, itemId: string) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
     return tx.delete(items).where(and(eq(items.id, itemId), eq(items.ownerId, ownerId)));
+  });
+}
+
+export interface CurrencyTotal {
+  currency: string;
+  total: string;
+}
+
+/** Sum of purchasePrice per currency, across active (non-archived) items — the dashboard's "what you own is worth" tiles, one per currency actually in use. */
+export function getInventoryValueByCurrency(userId: string): Promise<CurrencyTotal[]> {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    return tx
+      .select({ currency: items.currency, total: sql<string>`sum(${items.purchasePrice})` })
+      .from(items)
+      .where(and(eq(items.ownerId, ownerId), eq(items.archived, false), sql`${items.purchasePrice} is not null`))
+      .groupBy(items.currency);
+  });
+}
+
+export interface UpcomingWarrantyExpiration {
+  id: string;
+  name: string;
+  warrantyExpires: string | null;
+}
+
+/** User-scoped counterpart to notifierQueries.listItemsWithExpiringWarranty (that one is a system-wide cron scan) — for the dashboard's "expiring soon" list. */
+export function listUpcomingWarrantyExpirations(userId: string, daysAhead = 60): Promise<UpcomingWarrantyExpiration[]> {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() + daysAhead);
+    const cutoffDate = cutoff.toISOString().slice(0, 10);
+    return tx
+      .select({ id: items.id, name: items.name, warrantyExpires: items.warrantyExpires })
+      .from(items)
+      .where(
+        and(
+          eq(items.ownerId, ownerId),
+          eq(items.archived, false),
+          eq(items.lifetimeWarranty, false),
+          sql`${items.warrantyExpires} is not null`,
+          lte(items.warrantyExpires, cutoffDate),
+        ),
+      )
+      .orderBy(items.warrantyExpires);
   });
 }

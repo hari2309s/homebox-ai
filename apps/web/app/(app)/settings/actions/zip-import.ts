@@ -15,6 +15,7 @@ import JSZip from "jszip";
 import { revalidatePath } from "next/cache";
 
 import { mapWithConcurrency } from "../../../../lib/concurrency";
+import { normalizeCurrency } from "../../../../lib/currency";
 import { createNameResolver } from "./name-resolver";
 
 const IMPORT_CONCURRENCY = 5;
@@ -143,6 +144,7 @@ export async function importZipAction(formData: FormData): Promise<ZipImportSumm
       manufacturer: raw.manufacturer ? String(raw.manufacturer) : undefined,
       insured: Boolean(raw.insured),
       lifetimeWarranty: Boolean(raw.lifetimeWarranty),
+      currency: normalizeCurrency(raw.currency ? String(raw.currency) : undefined),
       purchasePrice: raw.purchasePrice ? String(raw.purchasePrice) : undefined,
       purchaseDate: raw.purchaseDate ? String(raw.purchaseDate) : undefined,
       purchaseFrom: raw.purchaseFrom ? String(raw.purchaseFrom) : undefined,

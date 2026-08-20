@@ -6,6 +6,7 @@ import { createSupabaseServerClient, requireSessionUser } from "@homebox-ai/supa
 import { uploadAttachment } from "@homebox-ai/supabase/storage";
 import { revalidatePath } from "next/cache";
 
+import { normalizeCurrency } from "../../../lib/currency";
 import { runTracedGraph } from "../../../lib/traced-graph";
 
 export async function analyzePhotoAction(formData: FormData): Promise<ItemDraft> {
@@ -30,6 +31,7 @@ export async function createItemFromCaptureAction(formData: FormData) {
 
   const description = String(formData.get("description") ?? "").trim() || undefined;
   const quantityRaw = String(formData.get("quantity") ?? "").trim();
+  const currency = normalizeCurrency(String(formData.get("currency") ?? ""));
   const purchasePrice = String(formData.get("purchasePrice") ?? "").trim() || undefined;
   const purchaseDate = String(formData.get("purchaseDate") ?? "").trim() || undefined;
   const locationId = String(formData.get("locationId") ?? "").trim() || null;
@@ -39,6 +41,7 @@ export async function createItemFromCaptureAction(formData: FormData) {
     name,
     description,
     quantity: quantityRaw ? Number(quantityRaw) : undefined,
+    currency,
     purchasePrice,
     purchaseDate,
     locationId,

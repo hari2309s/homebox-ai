@@ -3,6 +3,7 @@
 import { ConfirmDialog, Input, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
+import { formatCurrency } from "../../../../lib/currency";
 import { addMaintenanceEntryAction, deleteMaintenanceEntryAction, updateMaintenanceEntryAction } from "../actions";
 
 interface MaintenanceEntry {
@@ -13,7 +14,15 @@ interface MaintenanceEntry {
   cost: string | null;
 }
 
-export function MaintenanceSection({ itemId, entries }: { itemId: string; entries: MaintenanceEntry[] }) {
+export function MaintenanceSection({
+  itemId,
+  itemCurrency,
+  entries,
+}: {
+  itemId: string;
+  itemCurrency: string;
+  entries: MaintenanceEntry[];
+}) {
   return (
     <div className="flex flex-col gap-3">
       {entries.length === 0 ? (
@@ -21,7 +30,7 @@ export function MaintenanceSection({ itemId, entries }: { itemId: string; entrie
       ) : (
         <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
           {entries.map((entry) => (
-            <MaintenanceRow key={entry.id} itemId={itemId} entry={entry} />
+            <MaintenanceRow key={entry.id} itemId={itemId} itemCurrency={itemCurrency} entry={entry} />
           ))}
         </StaggerList>
       )}
@@ -43,7 +52,15 @@ export function MaintenanceSection({ itemId, entries }: { itemId: string; entrie
   );
 }
 
-function MaintenanceRow({ itemId, entry }: { itemId: string; entry: MaintenanceEntry }) {
+function MaintenanceRow({
+  itemId,
+  itemCurrency,
+  entry,
+}: {
+  itemId: string;
+  itemCurrency: string;
+  entry: MaintenanceEntry;
+}) {
   const [editing, setEditing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -97,7 +114,7 @@ function MaintenanceRow({ itemId, entry }: { itemId: string; entry: MaintenanceE
         <span className="font-medium text-ink">{entry.name}</span>
         <span className="text-xs text-muted">
           {entry.date}
-          {entry.cost ? ` · $${entry.cost}` : ""}
+          {formatCurrency(entry.cost, itemCurrency) ? ` · ${formatCurrency(entry.cost, itemCurrency)}` : ""}
         </span>
         {entry.description && <span className="text-sm text-body">{entry.description}</span>}
       </div>

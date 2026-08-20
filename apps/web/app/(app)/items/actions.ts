@@ -13,6 +13,8 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient, requireSessionUser } from "@homebox-ai/supabase/server";
 import { uploadAttachment } from "@homebox-ai/supabase/storage";
 
+import { normalizeCurrency } from "../../../lib/currency";
+
 export async function createItemAction(formData: FormData) {
   const user = await requireSessionUser();
 
@@ -62,6 +64,7 @@ export async function updateItemAction(formData: FormData) {
     insured: formData.get("insured") === "on",
     archived: formData.get("archived") === "on",
     lifetimeWarranty: formData.get("lifetimeWarranty") === "on",
+    currency: normalizeCurrency(String(formData.get("currency") ?? "")),
     purchasePrice: nullableField(formData, "purchasePrice"),
     purchaseDate: nullableField(formData, "purchaseDate"),
     purchaseFrom: nullableField(formData, "purchaseFrom"),

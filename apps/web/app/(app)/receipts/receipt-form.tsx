@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
 
+import { currencyLabel, normalizeCurrency, SUPPORTED_CURRENCIES } from "../../../lib/currency";
 import { analyzeReceiptAction, importReceiptItemsAction } from "./actions";
 
 interface ReceiptFormProps {
@@ -27,6 +28,7 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [merchant, setMerchant] = useState<string | undefined>();
   const [purchaseDate, setPurchaseDate] = useState("");
+  const [currency, setCurrency] = useState(normalizeCurrency(undefined));
   const [rows, setRows] = useState<DraftRow[] | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +50,7 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
       const draft = await analyzeReceiptAction(formData);
       setMerchant(draft.merchant);
       setPurchaseDate(draft.purchaseDate ?? "");
+      setCurrency(normalizeCurrency(draft.currency));
       setRows(
         draft.items.map((item) => ({
           key: crypto.randomUUID(),
@@ -74,6 +77,7 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
     setPreviewUrl(null);
     setRows(null);
     setError(null);
+    setCurrency(normalizeCurrency(undefined));
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
@@ -86,6 +90,7 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
 
     setError(null);
     if (file) formData.set("photo", file);
+    formData.set("currency", currency);
     formData.set(
       "items",
       JSON.stringify(
@@ -166,6 +171,15 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
         </ul>
 
         <div className="flex flex-col gap-3 sm:flex-row">
+          <FormField label="Currency" flex>
+            <Select value={currency} onChange={(event) => setCurrency(normalizeCurrency(event.target.value))}>
+              {SUPPORTED_CURRENCIES.map((code) => (
+                <option key={code} value={code}>
+                  {currencyLabel(code)}
+                </option>
+              ))}
+            </Select>
+          </FormField>
           <FormField label="Purchase date" flex>
             <Input
               name="purchaseDate"

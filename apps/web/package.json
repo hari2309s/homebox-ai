@@ -20,6 +20,7 @@
     "@opentelemetry/sdk-node": "^0.221.0",
     "@supabase/ssr": "^0.5.0",
     "@supabase/supabase-js": "^2.46.0",
+    "@zxing/browser": "^0.2.1",
     "framer-motion": "^11.11.0",
     "jszip": "^3.10.1",
     "next": "^15.0.0",

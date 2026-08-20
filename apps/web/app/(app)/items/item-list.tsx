@@ -3,8 +3,18 @@
 import { EmptyState, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import Link from "next/link";
 
+import { formatCurrency } from "../../../lib/currency";
+
 interface ItemListProps {
-  items: { id: string; name: string; locationId: string | null; assetId: number | null; archived: boolean }[];
+  items: {
+    id: string;
+    name: string;
+    locationId: string | null;
+    assetId: number | null;
+    archived: boolean;
+    currency: string;
+    purchasePrice: string | null;
+  }[];
   locationNameById: Map<string, string>;
 }
 
@@ -30,6 +40,9 @@ export function ItemList({ items, locationNameById }: ItemListProps) {
               )}
             </span>
             <span className="flex shrink-0 items-center gap-2 text-sm text-muted">
+              {formatCurrency(item.purchasePrice, item.currency) && (
+                <span className="font-semibold text-ink">{formatCurrency(item.purchasePrice, item.currency)}</span>
+              )}
               {item.assetId != null && <span>#{String(item.assetId).padStart(4, "0")}</span>}
               {item.locationId && <span>{locationNameById.get(item.locationId) ?? ""}</span>}
             </span>

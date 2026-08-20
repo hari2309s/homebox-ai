@@ -93,6 +93,11 @@ export const items = pgTable("items", {
   insured: boolean("insured").notNull().default(false),
   archived: boolean("archived").notNull().default(false),
   lifetimeWarranty: boolean("lifetime_warranty").notNull().default(false),
+  // ISO 4217 code (see apps/web/lib/currency.ts's SUPPORTED_CURRENCIES) —
+  // one currency per item, covering both purchasePrice and salePrice below.
+  // A single global "your currency" setting doesn't fit a household that
+  // buys things in several countries, so this is chosen per item instead.
+  currency: text("currency").notNull().default("USD"),
   purchasePrice: numeric("purchase_price", { precision: 12, scale: 2 }),
   purchaseDate: date("purchase_date"),
   purchaseFrom: text("purchase_from"),

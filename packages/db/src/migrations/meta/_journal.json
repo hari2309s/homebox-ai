@@ -36,6 +36,13 @@
       "when": 1786809955077,
       "tag": "0004_notifier_dedup_and_unread",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787213670061,
+      "tag": "0005_item_currency",
+      "breakpoints": true
     }
   ]
 }

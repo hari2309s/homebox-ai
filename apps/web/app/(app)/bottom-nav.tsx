@@ -19,6 +19,27 @@ function Icon(props: ComponentProps<"svg">) {
   );
 }
 
+function HomeIcon(props: ComponentProps<"svg">) {
+  return (
+    <Icon {...props}>
+      <path d="m3 11 9-7 9 7" />
+      <path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9" />
+    </Icon>
+  );
+}
+
+function ScanIcon(props: ComponentProps<"svg">) {
+  return (
+    <Icon {...props}>
+      <path d="M4 8V6a2 2 0 0 1 2-2h2" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+      <path d="M20 16v2a2 2 0 0 1-2 2h-2" />
+      <path d="M8 20H6a2 2 0 0 1-2-2v-2" />
+      <path d="M4 12h16" />
+    </Icon>
+  );
+}
+
 function ItemsIcon(props: ComponentProps<"svg">) {
   return (
     <Icon {...props}>
@@ -84,12 +105,14 @@ function MaintenanceIcon(props: ComponentProps<"svg">) {
 }
 
 const LINKS = [
+  { href: "/", label: "Home", icon: HomeIcon },
   { href: "/items", label: "Items", icon: ItemsIcon },
   { href: "/locations", label: "Locations", icon: LocationsIcon },
   { href: "/labels", label: "Labels", icon: LabelsIcon },
   { href: "/chat", label: "Chat", icon: ChatIcon },
   { href: "/capture", label: "Capture", icon: CaptureIcon },
   { href: "/receipts", label: "Receipts", icon: ReceiptsIcon },
+  { href: "/scan", label: "Scan", icon: ScanIcon },
   { href: "/maintenance", label: "Maintenance", icon: MaintenanceIcon },
 ];
 

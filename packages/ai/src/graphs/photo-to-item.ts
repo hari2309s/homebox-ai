@@ -19,7 +19,7 @@ export async function runPhotoToItemGraph(imageDataUrl: string, config?: Runnabl
         content: [
           {
             type: "text",
-            text: "Identify the single most prominent item in this photo for a home inventory app. Suggest a concise name, short description, a likely label/category, and a likely storage location if inferable from the surroundings.",
+            text: "Identify the single most prominent item in this photo for a home inventory app. Suggest a concise name, short description, a likely label/category, and a likely storage location if inferable from the surroundings. If a price tag or receipt is visible, also report the price and, from its currency symbol or text, the ISO 4217 currency code (e.g. a '€' price means EUR, '₹' means INR).",
           },
           { type: "image_url", image_url: { url: imageDataUrl } },
         ],

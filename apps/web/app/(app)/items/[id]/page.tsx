@@ -113,7 +113,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
       </Section>
 
       <Section title="Maintenance history">
-        <MaintenanceSection itemId={item.id} entries={maintenanceEntries} />
+        <MaintenanceSection itemId={item.id} itemCurrency={item.currency} entries={maintenanceEntries} />
       </Section>
     </div>
   );

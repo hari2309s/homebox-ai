@@ -7,6 +7,7 @@ import { uploadAttachment } from "@homebox-ai/supabase/storage";
 import { revalidatePath } from "next/cache";
 
 import { mapWithConcurrency } from "../../../lib/concurrency";
+import { normalizeCurrency } from "../../../lib/currency";
 import { runTracedGraph } from "../../../lib/traced-graph";
 
 const IMPORT_CONCURRENCY = 5;
@@ -35,6 +36,7 @@ export async function importReceiptItemsAction(formData: FormData) {
 
   const locationId = String(formData.get("locationId") ?? "").trim() || null;
   const purchaseDate = String(formData.get("purchaseDate") ?? "").trim() || undefined;
+  const currency = normalizeCurrency(String(formData.get("currency") ?? ""));
   const labelIds = formData.getAll("labelIds").map(String).filter(Boolean);
 
   const photo = formData.get("photo");
@@ -58,6 +60,7 @@ export async function importReceiptItemsAction(formData: FormData) {
       name: draft.name,
       description: draft.description,
       quantity: draft.quantity,
+      currency,
       purchasePrice: draft.purchasePrice,
       purchaseDate: draft.purchaseDate ?? purchaseDate,
       locationId,

@@ -5,6 +5,7 @@ import { requireSessionUser } from "@homebox-ai/supabase/server";
 import { revalidatePath } from "next/cache";
 
 import { mapWithConcurrency } from "../../../../lib/concurrency";
+import { normalizeCurrency } from "../../../../lib/currency";
 import { parseCsv, unescapeCsvFormula } from "../../../../lib/csv";
 import { createNameResolver } from "./name-resolver";
 
@@ -79,6 +80,7 @@ export async function importItemsCsvAction(formData: FormData): Promise<{ import
         manufacturer: cell(row, "manufacturer") || undefined,
         insured: cell(row, "insured").toLowerCase() === "true",
         lifetimeWarranty: cell(row, "lifetimeWarranty").toLowerCase() === "true",
+        currency: normalizeCurrency(cell(row, "currency")),
         purchasePrice: cell(row, "purchasePrice") || undefined,
         purchaseDate: cell(row, "purchaseDate") || undefined,
         purchaseFrom: cell(row, "purchaseFrom") || undefined,
