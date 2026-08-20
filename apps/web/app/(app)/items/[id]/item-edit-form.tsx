@@ -59,7 +59,7 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
       <input type="hidden" name="itemId" value={item.id} />
 
       {item.assetId != null && (
-        <span className="self-start rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-muted">
+        <span className="self-start rounded-full bg-card px-2.5 py-1 text-xs font-semibold text-muted">
           Asset #{String(item.assetId).padStart(4, "0")}
         </span>
       )}

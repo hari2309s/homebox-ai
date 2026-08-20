@@ -94,7 +94,7 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
           type="file"
           name="file"
           required
-          className="flex-1 text-sm text-body file:mr-2 file:cursor-pointer file:rounded-md file:border-none file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ink"
+          className="flex-1 text-sm text-body file:mr-2 file:cursor-pointer file:rounded-md file:border-none file:bg-card file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ink"
         />
         <Select name="type" defaultValue="manual" className="sm:w-40">
           <option value="manual">Manual</option>

@@ -65,7 +65,7 @@ function LabelChip({ label }: { label: LabelRecord }) {
             name="color"
             defaultValue={label.color ?? "#f7deae"}
             aria-label="Label color"
-            className="h-7 w-8 shrink-0 cursor-pointer rounded border border-border bg-white p-0.5"
+            className="h-7 w-8 shrink-0 cursor-pointer rounded border border-border bg-card p-0.5"
           />
           <SubmitButton className="h-7 px-2.5 py-1 text-xs">Save</SubmitButton>
           <TapButton

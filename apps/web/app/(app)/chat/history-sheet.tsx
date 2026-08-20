@@ -54,7 +54,7 @@ export function HistorySheet({ open, sessions, activeSessionId, onClose, onSelec
           />
           <motion.div
             key="sheet"
-            className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[70vh] w-full max-w-lg flex-col rounded-t-2xl bg-white md:max-w-2xl lg:max-w-4xl xl:max-w-6xl"
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[70vh] w-full max-w-lg flex-col rounded-t-2xl bg-card md:max-w-2xl lg:max-w-4xl xl:max-w-6xl"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}

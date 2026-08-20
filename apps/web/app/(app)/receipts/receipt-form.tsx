@@ -218,7 +218,7 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
         )}
       </div>
 
-      <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
+      <div className="shrink-0 border-t border-border bg-card p-4 md:p-6">
         <div className="flex items-center justify-center gap-3 md:mx-auto md:w-full md:max-w-2xl">
           <SubmitButton disabled={includedCount === 0}>
             Import {includedCount} item{includedCount === 1 ? "" : "s"}

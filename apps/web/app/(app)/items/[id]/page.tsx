@@ -98,7 +98,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
               <StaggerItem key={child.id} hover>
                 <Link
                   href={`/items/${child.id}`}
-                  className="block rounded-md border border-border bg-white px-3 py-2.5 text-sm font-medium text-ink transition-colors duration-150 hover:border-accent"
+                  className="block rounded-md border border-border bg-card px-3 py-2.5 text-sm font-medium text-ink transition-colors duration-150 hover:border-accent"
                 >
                   {child.name}
                 </Link>

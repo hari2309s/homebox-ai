@@ -57,7 +57,7 @@ export function ConfirmDialog({
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
-            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-card"
+            className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-2.5rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg bg-card p-6 shadow-card"
             initial={{ opacity: 0, y: 16, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.97 }}
@@ -71,7 +71,7 @@ export function ConfirmDialog({
               <TapButton
                 type="button"
                 onClick={onCancel}
-                className="cursor-pointer rounded-md border border-border bg-white px-4 py-2.5 font-bold text-ink transition-colors duration-150 hover:bg-surface-soft"
+                className="cursor-pointer rounded-md border border-border bg-card px-4 py-2.5 font-bold text-ink transition-colors duration-150 hover:bg-surface-soft"
               >
                 {cancelLabel}
               </TapButton>

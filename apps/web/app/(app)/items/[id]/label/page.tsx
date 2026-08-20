@@ -25,7 +25,7 @@ export default async function ItemLabelPage({ params }: { params: Promise<{ id: 
   const assetLabel = item.assetId != null ? `#${String(item.assetId).padStart(4, "0")}` : null;
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-6 bg-white p-6 print:h-auto">
+    <div className="flex h-full flex-col items-center justify-center gap-6 bg-card p-6 print:h-auto">
       <Link href={`/items/${item.id}`} className="self-start text-sm font-semibold text-ink print:hidden">
         ← Back to item
       </Link>

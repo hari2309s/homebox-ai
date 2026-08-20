@@ -16,12 +16,59 @@
   --color-muted: #8a7860;
   --color-border: #ecdcb8;
 
+  /* Card/input/dialog/sheet backgrounds — a separate token from Tailwind's
+     own `white` (used for e.g. button text on the accent color, which must
+     stay white in both themes) even though they're both `#fff` in light
+     mode; overriding Tailwind's `white` for dark mode would darken that
+     button text too, since `bg-white` and `text-white` share one variable. */
+  --color-card: #ffffff;
+
   --radius-lg: 20px;
   --radius-md: 12px;
 
   --shadow-card: 0 20px 40px -20px rgba(74, 37, 75, 0.25);
 
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/*
+ * Dark mode works by overriding these same theme variables, not by adding
+ * `dark:` utility variants everywhere — every component already builds its
+ * colors from `bg-surface`, `text-ink`, `bg-card`, etc., so redefining what
+ * those variables *are* flips the whole app through plain CSS cascade.
+ *
+ * Three states, no JS needed for two of them:
+ * - `[data-theme="dark"]`: explicit user choice, set on <html> by the theme
+ *   toggle (see lib/theme.ts) — wins regardless of OS preference.
+ * - No `data-theme` attribute at all ("system"): the media-query block below
+ *   follows the OS preference on its own, but only when the user hasn't
+ *   explicitly picked "light" (which sets `[data-theme="light"]` and must
+ *   keep the app light even if the OS is in dark mode).
+ */
+:root[data-theme="dark"] {
+  --color-card: #211a13;
+  --color-surface: #2c2117;
+  --color-surface-soft: #241b12;
+  --color-accent: #fb7369;
+  --color-accent-hover: #ff9088;
+  --color-ink: #f5e6c8;
+  --color-body: #e3d5ba;
+  --color-muted: #9c8b70;
+  --color-border: #3d3020;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --color-card: #211a13;
+    --color-surface: #2c2117;
+    --color-surface-soft: #241b12;
+    --color-accent: #fb7369;
+    --color-accent-hover: #ff9088;
+    --color-ink: #f5e6c8;
+    --color-body: #e3d5ba;
+    --color-muted: #9c8b70;
+    --color-border: #3d3020;
+  }
 }
 
 html,
@@ -32,7 +79,10 @@ body {
 }
 
 body {
-  background-color: #fff;
+  /* Mirrors light mode, where the page background is already plain white —
+     same as --color-card's light value — rather than introducing a new
+     always-white background that wouldn't flip with the rest of the app. */
+  background-color: var(--color-card);
   color: var(--color-body);
   font-family: var(--font-sans);
 }
@@ -70,5 +120,19 @@ body {
   }
   .app-content {
     overflow: visible;
+  }
+
+  /* Printed labels must stay legible on paper regardless of which theme is
+     active on screen — force the light palette here, with !important since
+     it has to beat the [data-theme="dark"] override's higher selector
+     specificity, not just source order. */
+  :root {
+    --color-card: #ffffff !important;
+    --color-surface: #f7deae !important;
+    --color-surface-soft: #fbf1de !important;
+    --color-ink: #4a254b !important;
+    --color-body: #4a3b2a !important;
+    --color-muted: #8a7860 !important;
+    --color-border: #ecdcb8 !important;
   }
 }

@@ -80,7 +80,7 @@ function MaintenanceRow({
             await updateMaintenanceEntryAction(formData);
             setEditing(false);
           }}
-          className="flex flex-col gap-2 rounded-md border border-border bg-white p-3"
+          className="flex flex-col gap-2 rounded-md border border-border bg-card p-3"
         >
           <input type="hidden" name="itemId" value={itemId} />
           <input type="hidden" name="entryId" value={entry.id} />
@@ -108,7 +108,7 @@ function MaintenanceRow({
   return (
     <StaggerItem
       hover
-      className="flex items-start justify-between gap-2 rounded-md border border-border bg-white px-3 py-2.5"
+      className="flex items-start justify-between gap-2 rounded-md border border-border bg-card px-3 py-2.5"
     >
       <div className="flex flex-col gap-0.5">
         <span className="font-medium text-ink">{entry.name}</span>

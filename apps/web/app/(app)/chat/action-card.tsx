@@ -33,7 +33,7 @@ export function ActionCard({ action, onConfirm, onCancel }: ActionCardProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-accent/30 bg-white p-4 text-sm shadow-sm">
+    <div className="flex flex-col gap-3 rounded-2xl border border-accent/30 bg-card p-4 text-sm shadow-sm">
       <span className="w-fit rounded-full bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent-hover">
         {ACTION_LABELS[action.type]}
       </span>
@@ -53,7 +53,7 @@ export function ActionCard({ action, onConfirm, onCancel }: ActionCardProps) {
           onClick={onCancel}
           disabled={pending}
           whileHover={pending ? undefined : { scale: 1.02 }}
-          className="cursor-pointer rounded-md border border-border bg-white px-3 py-2 font-semibold text-body transition-colors duration-150 hover:border-accent disabled:cursor-default disabled:opacity-60"
+          className="cursor-pointer rounded-md border border-border bg-card px-3 py-2 font-semibold text-body transition-colors duration-150 hover:border-accent disabled:cursor-default disabled:opacity-60"
         >
           Cancel
         </TapButton>

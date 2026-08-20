@@ -53,7 +53,7 @@ export function CapturePhotoPicker({
           </p>
         )}
       </div>
-      <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
+      <div className="shrink-0 border-t border-border bg-card p-4 md:p-6">
         <div className="flex justify-center md:mx-auto md:w-full md:max-w-2xl">
           <label className="cursor-pointer rounded-md bg-accent px-4 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-accent-hover">
             {previewUrl ? retakeLabel : pickerLabel}

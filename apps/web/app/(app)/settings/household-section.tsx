@@ -122,7 +122,7 @@ export function HouseholdSection() {
             <StaggerItem
               key={member.userId}
               hover
-              className="flex items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-sm"
+              className="flex items-center justify-between gap-2 rounded-md bg-card px-3 py-2 text-sm"
             >
               <span className="text-ink">{member.email ?? member.userId}</span>
               <TapButton

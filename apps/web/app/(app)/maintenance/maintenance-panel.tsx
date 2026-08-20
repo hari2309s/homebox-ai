@@ -98,7 +98,7 @@ export function MaintenancePanel({ items }: MaintenancePanelProps) {
         )}
       </div>
 
-      <div className="shrink-0 border-t border-border bg-white p-4 md:p-6">
+      <div className="shrink-0 border-t border-border bg-card p-4 md:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center md:mx-auto md:w-full md:max-w-2xl">
           <Select value={itemId} onChange={(event) => setItemId(event.target.value)} className="sm:flex-1">
             <option value="">Choose an item…</option>

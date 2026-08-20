@@ -39,7 +39,7 @@ export function ImportForm<T>({ action, accept, submitLabel, formatMessage }: Im
         name="file"
         accept={accept}
         required
-        className="text-sm text-body file:mr-2 file:cursor-pointer file:rounded-md file:border-none file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ink"
+        className="text-sm text-body file:mr-2 file:cursor-pointer file:rounded-md file:border-none file:bg-card file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ink"
       />
       <Button type="submit" disabled={pending} className="self-start">
         {pending ? <Spinner size={16} /> : submitLabel}

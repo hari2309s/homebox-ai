@@ -199,7 +199,7 @@ function LoginForm() {
             onClick={handleGoogleSignIn}
             disabled={pending}
             whileHover={pending ? undefined : { scale: 1.015 }}
-            className="flex cursor-pointer items-center justify-center gap-2.5 rounded-md border border-border bg-white px-3 py-2.5 font-semibold text-ink transition-colors duration-150 hover:bg-surface-soft disabled:cursor-default disabled:opacity-60"
+            className="flex cursor-pointer items-center justify-center gap-2.5 rounded-md border border-border bg-card px-3 py-2.5 font-semibold text-ink transition-colors duration-150 hover:bg-surface-soft disabled:cursor-default disabled:opacity-60"
           >
             <GoogleIcon />
             Continue with Google

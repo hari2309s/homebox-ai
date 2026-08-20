@@ -228,7 +228,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-card">
       {headerActionsEl &&
         createPortal(
           <>
@@ -339,7 +339,7 @@ export default function ChatPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="flex shrink-0 justify-center gap-2 border-t border-border bg-white p-4 sm:p-6"
+        className="flex shrink-0 justify-center gap-2 border-t border-border bg-card p-4 sm:p-6"
       >
         <div className="mx-auto flex w-full max-w-2xl gap-2">
           <Input

@@ -78,7 +78,7 @@ export default async function DashboardPage() {
               <StaggerItem key={item.id} hover>
                 <Link
                   href={`/items/${item.id}`}
-                  className="flex items-center justify-between gap-2 rounded-md border border-border bg-white px-3 py-2 text-sm transition-colors duration-150 hover:border-accent"
+                  className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm transition-colors duration-150 hover:border-accent"
                 >
                   <span className="font-medium text-ink">{item.name}</span>
                   <span className="text-muted">{item.warrantyExpires}</span>
