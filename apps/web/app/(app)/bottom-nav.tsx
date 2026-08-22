@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentProps } from "react";
+import { useState } from "react";
 
 function Icon(props: ComponentProps<"svg">) {
   return (
@@ -104,12 +105,29 @@ function MaintenanceIcon(props: ComponentProps<"svg">) {
   );
 }
 
-const LINKS = [
+function MoreIcon(props: ComponentProps<"svg">) {
+  return (
+    <Icon {...props}>
+      <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
+    </Icon>
+  );
+}
+
+// Kept to 3 so the collapsed bar always fits one row without scrolling —
+// everything else lives behind "More", which expands the same scrollable
+// strip to reveal the rest (see `expanded` below) rather than opening a
+// separate sheet.
+const PRIMARY_LINKS = [
   { href: "/", label: "Home", icon: HomeIcon },
   { href: "/items", label: "Items", icon: ItemsIcon },
+  { href: "/chat", label: "Chat", icon: ChatIcon },
+];
+
+const MORE_LINKS = [
   { href: "/locations", label: "Locations", icon: LocationsIcon },
   { href: "/labels", label: "Labels", icon: LabelsIcon },
-  { href: "/chat", label: "Chat", icon: ChatIcon },
   { href: "/capture", label: "Capture", icon: CaptureIcon },
   { href: "/receipts", label: "Receipts", icon: ReceiptsIcon },
   { href: "/scan", label: "Scan", icon: ScanIcon },
@@ -118,46 +136,83 @@ const LINKS = [
 
 export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number }) {
   const pathname = usePathname();
+  const [expanded, setExpanded] = useState(false);
+  const isOnHiddenLink = !expanded && MORE_LINKS.some((link) => link.href === pathname);
+
+  function renderLink({ href, label, icon: LinkIcon }: (typeof PRIMARY_LINKS)[number]) {
+    const active = pathname === href;
+    return (
+      <Link
+        key={href}
+        href={href}
+        className="relative flex min-w-16 flex-1 flex-col items-center gap-1 py-2.5 md:gap-1.5 md:py-4"
+      >
+        {active && (
+          <motion.span
+            layoutId="bottom-nav-active"
+            className="absolute inset-x-2 inset-y-1 rounded-md bg-surface"
+            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+          />
+        )}
+        <motion.span
+          className="relative"
+          whileHover={{ scale: 1.12 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        >
+          <LinkIcon className={`h-5 w-5 md:h-6 md:w-6 ${active ? "text-ink" : "text-muted"}`} />
+          {href === "/chat" && unreadChatCount > 0 && (
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent" />
+          )}
+        </motion.span>
+        <span
+          className={`relative text-[10px] font-semibold transition-colors duration-150 md:text-xs ${active ? "text-ink" : "text-muted"}`}
+        >
+          {label}
+        </span>
+      </Link>
+    );
+  }
 
   return (
     <nav
       id="app-bottom-nav"
       className="no-scrollbar flex shrink-0 overflow-x-auto rounded-t-lg border-t border-border bg-surface-soft"
     >
-      {LINKS.map(({ href, label, icon: LinkIcon }) => {
-        const active = pathname === href;
-        return (
-          <Link
-            key={href}
-            href={href}
-            className="relative flex min-w-16 flex-1 flex-col items-center gap-1 py-2.5 md:gap-1.5 md:py-4"
-          >
-            {active && (
-              <motion.span
-                layoutId="bottom-nav-active"
-                className="absolute inset-x-2 inset-y-1 rounded-md bg-surface"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
-            )}
-            <motion.span
-              className="relative"
-              whileHover={{ scale: 1.12 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <LinkIcon className={`h-5 w-5 md:h-6 md:w-6 ${active ? "text-ink" : "text-muted"}`} />
-              {href === "/chat" && unreadChatCount > 0 && (
-                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent" />
-              )}
-            </motion.span>
-            <span
-              className={`relative text-[10px] font-semibold transition-colors duration-150 md:text-xs ${active ? "text-ink" : "text-muted"}`}
-            >
-              {label}
-            </span>
-          </Link>
-        );
-      })}
+      {PRIMARY_LINKS.map(renderLink)}
+      {MORE_LINKS.map((link) => (
+        // Desktop has room for all of them in one row (unchanged from
+        // before) — `md:flex` forces that regardless of `expanded`, which
+        // only ever matters below that breakpoint, where the collapsed
+        // class is `hidden`.
+        <div key={link.href} className={expanded ? "flex" : "hidden md:flex"}>
+          {renderLink(link)}
+        </div>
+      ))}
+      {/* Mobile-only: desktop already shows every tab, so there's nothing
+          to expand there. Sticky so it stays reachable at the right edge
+          once expanding makes the row wider than the screen, instead of
+          making the user scroll all the way back just to collapse it again. */}
+      <button
+        type="button"
+        onClick={() => setExpanded((current) => !current)}
+        aria-label={expanded ? "Show fewer tabs" : "Show more tabs"}
+        aria-expanded={expanded}
+        className="sticky right-0 flex min-w-16 shrink-0 cursor-pointer flex-col items-center gap-1 border-none bg-surface-soft py-2.5 md:hidden"
+      >
+        <motion.span
+          whileHover={{ scale: 1.12 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        >
+          <MoreIcon className={`h-5 w-5 ${isOnHiddenLink || expanded ? "text-ink" : "text-muted"}`} />
+        </motion.span>
+        <span
+          className={`text-[10px] font-semibold transition-colors duration-150 ${isOnHiddenLink || expanded ? "text-ink" : "text-muted"}`}
+        >
+          {expanded ? "Less" : "More"}
+        </span>
+      </button>
     </nav>
   );
 }
