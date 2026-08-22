@@ -159,7 +159,18 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
     ? MORE_LINKS.map((link) => (link.href === activeMoreLink.href ? ITEMS_LINK : link))
     : MORE_LINKS;
 
-  function renderLink({ href, label, icon: LinkIcon }: (typeof ALL_LINKS)[number], onNavigate?: () => void) {
+  // Mobile and desktop rows are both always mounted (CSS just hides
+  // whichever doesn't match the current breakpoint), so on shared routes
+  // like "/items" both would otherwise render an active pill with the same
+  // layoutId at once — Framer Motion only expects one live match per id, and
+  // with two the shared-layout transition breaks until a full reload cold-
+  // mounts it with nothing to reconcile against. Scoping the id per row
+  // keeps each row's shared-element animation independent of the other.
+  function renderLink(
+    { href, label, icon: LinkIcon }: (typeof ALL_LINKS)[number],
+    group: "mobile" | "desktop",
+    onNavigate?: () => void,
+  ) {
     const active = isActive(pathname, href);
     return (
       <Link
@@ -170,7 +181,7 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
       >
         {active && (
           <motion.span
-            layoutId="bottom-nav-active"
+            layoutId={`bottom-nav-active-${group}`}
             className="absolute inset-x-2 inset-y-1 rounded-md bg-surface"
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
           />
@@ -219,14 +230,14 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
               transition={{ type: "spring", stiffness: 380, damping: 32 }}
               className="absolute inset-x-0 bottom-full z-50 grid grid-cols-3 gap-1 rounded-t-lg border border-b-0 border-border bg-surface-soft p-2 md:hidden"
             >
-              {mobileMoreLinks.map((link) => renderLink(link, () => setExpanded(false)))}
+              {mobileMoreLinks.map((link) => renderLink(link, "mobile", () => setExpanded(false)))}
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
       <div className="no-scrollbar flex md:hidden">
-        {mobilePrimaryLinks.map((link) => renderLink(link))}
+        {mobilePrimaryLinks.map((link) => renderLink(link, "mobile"))}
         <button
           type="button"
           onClick={() => setExpanded((current) => !current)}
@@ -249,7 +260,7 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
         </button>
       </div>
 
-      <div className="no-scrollbar hidden md:flex">{ALL_LINKS.map((link) => renderLink(link))}</div>
+      <div className="no-scrollbar hidden md:flex">{ALL_LINKS.map((link) => renderLink(link, "desktop"))}</div>
     </nav>
   );
 }
