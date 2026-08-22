@@ -28,4 +28,13 @@ describe("safeRedirect", () => {
   it("blocks an absolute URL disguised as a path", () => {
     expect(safeRedirect("https://evil.com")).toBe("/items");
   });
+
+  it("blocks a backslash open-redirect attempt (browsers treat \\ like / in a URL path)", () => {
+    expect(safeRedirect("/\\evil.com")).toBe("/items");
+    expect(safeRedirect("/\\evil.com/phishing")).toBe("/items");
+  });
+
+  it("preserves a query string and hash on an otherwise-safe path", () => {
+    expect(safeRedirect("/join/abc123?ref=email#top")).toBe("/join/abc123?ref=email#top");
+  });
 });
