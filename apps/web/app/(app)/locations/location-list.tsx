@@ -54,9 +54,14 @@ function LocationRow({
 
   async function handleDelete() {
     setConfirmOpen(false);
+    setError(null);
     const formData = new FormData();
     formData.set("id", location.id);
-    await deleteLocationAction(formData);
+    try {
+      await deleteLocationAction(formData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't delete this location");
+    }
   }
 
   if (editing) {
@@ -114,26 +119,33 @@ function LocationRow({
   return (
     <StaggerItem
       hover
-      className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3"
+      className="flex flex-col gap-1.5 rounded-md border border-border px-4 py-3"
       data-testid={`location-row-${location.name}`}
     >
-      <span className="font-medium text-ink">{pathById.get(location.id) ?? location.name}</span>
-      <div className="flex shrink-0 items-center gap-3">
-        <TapButton
-          type="button"
-          onClick={() => setEditing(true)}
-          className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
-        >
-          Edit
-        </TapButton>
-        <TapButton
-          type="button"
-          onClick={() => setConfirmOpen(true)}
-          className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent-hover"
-        >
-          Delete
-        </TapButton>
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-medium text-ink">{pathById.get(location.id) ?? location.name}</span>
+        <div className="flex shrink-0 items-center gap-3">
+          <TapButton
+            type="button"
+            onClick={() => setEditing(true)}
+            className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
+          >
+            Edit
+          </TapButton>
+          <TapButton
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+            className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent-hover"
+          >
+            Delete
+          </TapButton>
+        </div>
       </div>
+      {error && (
+        <p role="alert" className="text-sm text-accent-hover">
+          {error}
+        </p>
+      )}
       <ConfirmDialog
         open={confirmOpen}
         title={`Delete "${location.name}"?`}

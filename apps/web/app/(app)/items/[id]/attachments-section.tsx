@@ -15,6 +15,7 @@ interface AttachmentRecord {
 
 export function AttachmentsSection({ itemId, attachments }: { itemId: string; attachments: AttachmentRecord[] }) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
     if (!pendingDeleteId) return;
@@ -22,11 +23,21 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
     formData.set("itemId", itemId);
     formData.set("attachmentId", pendingDeleteId);
     setPendingDeleteId(null);
-    await deleteAttachmentAction(formData);
+    setError(null);
+    try {
+      await deleteAttachmentAction(formData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't delete this attachment");
+    }
   }
 
   return (
     <div className="flex flex-col gap-3">
+      {error && (
+        <p role="alert" className="text-sm text-accent-hover">
+          {error}
+        </p>
+      )}
       {attachments.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {attachments.map((attachment) => (

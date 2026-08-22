@@ -39,22 +39,33 @@ export function LabelList({ labels }: { labels: LabelRecord[] }) {
 function LabelChip({ label }: { label: LabelRecord }) {
   const [editing, setEditing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const textColor = textColorFor(label.color);
 
   async function handleDelete() {
     setConfirmOpen(false);
+    setError(null);
     const formData = new FormData();
     formData.set("id", label.id);
-    await deleteLabelAction(formData);
+    try {
+      await deleteLabelAction(formData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't delete this label");
+    }
   }
 
   if (editing) {
     return (
-      <StaggerItem>
+      <StaggerItem className="flex flex-col items-start gap-1">
         <form
           action={async (formData) => {
-            await updateLabelAction(formData);
-            setEditing(false);
+            setError(null);
+            try {
+              await updateLabelAction(formData);
+              setEditing(false);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Couldn't save that change");
+            }
           }}
           className="flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-1"
         >
@@ -76,33 +87,44 @@ function LabelChip({ label }: { label: LabelRecord }) {
             Cancel
           </TapButton>
         </form>
+        {error && (
+          <p role="alert" className="text-xs text-accent-hover">
+            {error}
+          </p>
+        )}
       </StaggerItem>
     );
   }
 
   return (
-    <StaggerItem
-      hover
-      className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium ${label.color ? "" : "bg-surface text-ink"}`}
-      style={label.color ? { backgroundColor: label.color, color: textColor } : undefined}
-    >
-      <TapButton
-        type="button"
-        onClick={() => setEditing(true)}
-        className="cursor-pointer border-none bg-transparent p-0 text-sm font-medium"
-        style={label.color ? { color: textColor } : undefined}
+    <StaggerItem hover className="flex flex-col items-start gap-1">
+      <div
+        className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium ${label.color ? "" : "bg-surface text-ink"}`}
+        style={label.color ? { backgroundColor: label.color, color: textColor } : undefined}
       >
-        {label.name}
-      </TapButton>
-      <TapButton
-        type="button"
-        onClick={() => setConfirmOpen(true)}
-        aria-label={`Delete ${label.name}`}
-        className="cursor-pointer border-none bg-transparent text-xs opacity-70 hover:opacity-100"
-        style={{ color: textColor }}
-      >
-        ✕
-      </TapButton>
+        <TapButton
+          type="button"
+          onClick={() => setEditing(true)}
+          className="cursor-pointer border-none bg-transparent p-0 text-sm font-medium"
+          style={label.color ? { color: textColor } : undefined}
+        >
+          {label.name}
+        </TapButton>
+        <TapButton
+          type="button"
+          onClick={() => setConfirmOpen(true)}
+          aria-label={`Delete ${label.name}`}
+          className="cursor-pointer border-none bg-transparent text-xs opacity-70 hover:opacity-100"
+          style={{ color: textColor }}
+        >
+          ✕
+        </TapButton>
+      </div>
+      {error && (
+        <p role="alert" className="text-xs text-accent-hover">
+          {error}
+        </p>
+      )}
       <ConfirmDialog
         open={confirmOpen}
         title={`Delete label "${label.name}"?`}

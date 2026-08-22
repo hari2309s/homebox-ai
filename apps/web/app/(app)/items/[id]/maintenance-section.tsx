@@ -63,22 +63,33 @@ function MaintenanceRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
     setConfirmOpen(false);
+    setError(null);
     const formData = new FormData();
     formData.set("itemId", itemId);
     formData.set("entryId", entry.id);
-    await deleteMaintenanceEntryAction(formData);
+    try {
+      await deleteMaintenanceEntryAction(formData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't delete this entry");
+    }
   }
 
   if (editing) {
     return (
-      <StaggerItem>
+      <StaggerItem className="flex flex-col gap-1">
         <form
           action={async (formData) => {
-            await updateMaintenanceEntryAction(formData);
-            setEditing(false);
+            setError(null);
+            try {
+              await updateMaintenanceEntryAction(formData);
+              setEditing(false);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Couldn't save that change");
+            }
           }}
           className="flex flex-col gap-2 rounded-md border border-border bg-card p-3"
         >
@@ -101,39 +112,48 @@ function MaintenanceRow({
             </TapButton>
           </div>
         </form>
+        {error && (
+          <p role="alert" className="text-sm text-accent-hover">
+            {error}
+          </p>
+        )}
       </StaggerItem>
     );
   }
 
   return (
-    <StaggerItem
-      hover
-      className="flex items-start justify-between gap-2 rounded-md border border-border bg-card px-3 py-2.5"
-    >
-      <div className="flex flex-col gap-0.5">
-        <span className="font-medium text-ink">{entry.name}</span>
-        <span className="text-xs text-muted">
-          {entry.date}
-          {formatCurrency(entry.cost, itemCurrency) ? ` · ${formatCurrency(entry.cost, itemCurrency)}` : ""}
-        </span>
-        {entry.description && <span className="text-sm text-body">{entry.description}</span>}
+    <StaggerItem hover className="flex flex-col gap-1 rounded-md border border-border bg-card px-3 py-2.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-0.5">
+          <span className="font-medium text-ink">{entry.name}</span>
+          <span className="text-xs text-muted">
+            {entry.date}
+            {formatCurrency(entry.cost, itemCurrency) ? ` · ${formatCurrency(entry.cost, itemCurrency)}` : ""}
+          </span>
+          {entry.description && <span className="text-sm text-body">{entry.description}</span>}
+        </div>
+        <div className="flex shrink-0 items-center gap-2 text-sm">
+          <TapButton
+            type="button"
+            onClick={() => setEditing(true)}
+            className="cursor-pointer border-none bg-transparent font-semibold text-ink"
+          >
+            Edit
+          </TapButton>
+          <TapButton
+            type="button"
+            onClick={() => setConfirmOpen(true)}
+            className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
+          >
+            Delete
+          </TapButton>
+        </div>
       </div>
-      <div className="flex shrink-0 items-center gap-2 text-sm">
-        <TapButton
-          type="button"
-          onClick={() => setEditing(true)}
-          className="cursor-pointer border-none bg-transparent font-semibold text-ink"
-        >
-          Edit
-        </TapButton>
-        <TapButton
-          type="button"
-          onClick={() => setConfirmOpen(true)}
-          className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
-        >
-          Delete
-        </TapButton>
-      </div>
+      {error && (
+        <p role="alert" className="text-sm text-accent-hover">
+          {error}
+        </p>
+      )}
       <ConfirmDialog
         open={confirmOpen}
         title={`Delete "${entry.name}"?`}
