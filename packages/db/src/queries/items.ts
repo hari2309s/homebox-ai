@@ -2,7 +2,7 @@ import { and, eq, ilike, lte, sql } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { wouldFormCycle } from "../cycle";
-import { items } from "../schema";
+import { attachments, items } from "../schema";
 import { withRLS, type Tx } from "../rls";
 
 export interface SearchItemsFilters {
@@ -22,6 +22,31 @@ export function searchItems(userId: string, filters: SearchItemsFilters = {}) {
     return tx
       .select()
       .from(items)
+      .where(and(...conditions));
+  });
+}
+
+/** Like searchItems but also returns each item's primary photo storage path (null if none). Used for the grid view on the items list page. */
+export function searchItemsWithPrimaryPhoto(userId: string, filters: SearchItemsFilters = {}) {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    const conditions = [eq(items.ownerId, ownerId)];
+    if (filters.query) conditions.push(ilike(items.name, `%${filters.query}%`));
+    if (filters.locationId) conditions.push(eq(items.locationId, filters.locationId));
+    if (!filters.includeArchived) conditions.push(eq(items.archived, false));
+    return tx
+      .select({
+        id: items.id,
+        name: items.name,
+        locationId: items.locationId,
+        assetId: items.assetId,
+        archived: items.archived,
+        currency: items.currency,
+        purchasePrice: items.purchasePrice,
+        primaryPhotoPath: attachments.storagePath,
+      })
+      .from(items)
+      .leftJoin(attachments, and(eq(attachments.itemId, items.id), eq(attachments.isPrimary, true)))
       .where(and(...conditions));
   });
 }

@@ -211,6 +211,40 @@ export default function ChatPage() {
         },
       ]);
       requestAnimationFrame(scrollToBottom);
+
+      // Auto-continue: re-invoke the agent so it can propose the next step of
+      // the original request (e.g. "add item to Backyard" after Backyard was just
+      // confirmed-created) without forcing the user to re-state the request.
+      // isContinuation=true keeps the synthetic "Continue." prompt out of the
+      // saved history so the conversation stays coherent on reload.
+      setPending(true);
+      setError(null);
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "Continue.", sessionId: requestSessionId, isContinuation: true }),
+        });
+        let data: { reply?: string; error?: string; pendingAction?: PendingAction } = {};
+        try {
+          data = await response.json();
+        } catch {
+          // handled below
+        }
+        if (response.ok && data.reply && sessionIdRef.current === requestSessionId) {
+          setMessages((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), role: "assistant", content: data.reply!, pendingAction: data.pendingAction },
+          ]);
+          requestAnimationFrame(scrollToBottom);
+        }
+      } catch {
+        // Swallow continuation errors — the primary action already succeeded and
+        // was shown; losing the auto-follow-up is acceptable, the user can still
+        // type a follow-up themselves.
+      } finally {
+        if (sessionIdRef.current === requestSessionId) setPending(false);
+      }
     } catch (err) {
       if (sessionIdRef.current === requestSessionId) {
         setError(err instanceof Error ? err.message : "Couldn't complete that action");

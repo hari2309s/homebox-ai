@@ -34,7 +34,12 @@ export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { message, sessionId: rawSessionId } = (await request.json()) as { message?: string; sessionId?: string };
+  const { message, sessionId: rawSessionId, isContinuation } = (await request.json()) as {
+    message?: string;
+    sessionId?: string;
+    /** True when the client is auto-invoking the agent after a confirmed action to continue a multi-step request. The synthetic "Continue." prompt is not saved to the chat history — only the agent's follow-up response is stored, keeping the history coherent. */
+    isContinuation?: boolean;
+  };
   if (!message) return NextResponse.json({ error: "message is required" }, { status: 400 });
 
   const sessionId = rawSessionId ?? crypto.randomUUID();
@@ -58,7 +63,9 @@ export async function POST(request: Request) {
     // proposed but not a still-actionable card for an old, possibly-stale turn.
     const pendingAction = extractPendingAction(result.messages);
 
-    await chatQueries.createChatMessage(user.id, { sessionId, role: "user", content: message });
+    // Continuation messages are synthetic ("Continue.") — not real user input, so
+    // omitting them keeps the saved history clean and coherent on reload.
+    if (!isContinuation) await chatQueries.createChatMessage(user.id, { sessionId, role: "user", content: message });
     if (reply) await chatQueries.createChatMessage(user.id, { sessionId, role: "assistant", content: reply });
 
     return NextResponse.json({ reply, sessionId, pendingAction });

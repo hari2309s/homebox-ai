@@ -36,6 +36,26 @@ export function getAttachmentSignedUrl(supabase: SupabaseClient, path: string, e
 }
 
 /**
+ * Batch equivalent of getAttachmentSignedUrl — one round trip for any number
+ * of paths. Returns a Map from path → signed URL (only includes paths that
+ * resolved successfully, so callers can safely do `urlMap.get(path) ?? null`).
+ */
+export async function getAttachmentSignedUrls(
+  supabase: SupabaseClient,
+  paths: string[],
+  expiresInSeconds = 3600,
+): Promise<Map<string, string>> {
+  if (paths.length === 0) return new Map();
+  const { data, error } = await supabase.storage.from(ATTACHMENTS_BUCKET).createSignedUrls(paths, expiresInSeconds);
+  if (error || !data) return new Map();
+  const result = new Map<string, string>();
+  for (const entry of data) {
+    if (entry.signedUrl && entry.path) result.set(entry.path, entry.signedUrl);
+  }
+  return result;
+}
+
+/**
  * `.list()` defaults to (and caps at) 100 entries per call, so any prefix
  * that might hold more than that needs to be paged through with `offset`
  * rather than trusting a single call to return everything.

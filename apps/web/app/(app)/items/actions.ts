@@ -110,7 +110,12 @@ export async function uploadItemAttachmentAction(formData: FormData) {
 
   const ownerId = await resolveEffectiveOwnerId(user.id);
   const supabase = await createSupabaseServerClient();
-  const path = await uploadAttachment(supabase, ownerId, itemId, file, file.name || "attachment");
+  // Prepend a UUID so two uploads of the same filename (e.g. "photo.jpg" from a
+  // camera roll) to the same item never collide — storage.upload with upsert:false
+  // would otherwise throw a 409 on the second upload.
+  const ext = (file.name || "").split(".").pop();
+  const uniqueName = ext ? `${crypto.randomUUID()}.${ext}` : crypto.randomUUID();
+  const path = await uploadAttachment(supabase, ownerId, itemId, file, uniqueName);
   await attachmentQueries.createAttachment(user.id, { itemId, type, storagePath: path });
 
   revalidatePath(`/items/${itemId}`);
