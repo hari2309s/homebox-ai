@@ -349,7 +349,7 @@ export function createChatSearchGraph(userId: string, options: { displayName?: s
   return {
     async invoke(input: InvokeInput, config?: InvokeConfig) {
       let lastError: unknown;
-      for (const llm of models) {
+      for (const [index, llm] of models.entries()) {
         try {
           const result = await createReactAgent({ llm, tools, prompt }).invoke(input, config);
           const lastMessage = result.messages.at(-1);
@@ -358,6 +358,12 @@ export function createChatSearchGraph(userId: string, options: { displayName?: s
           }
           return result;
         } catch (error) {
+          // Logged with its position in the chain (not the provider's name,
+          // which isn't reliably exposed the same way across model classes) —
+          // this loop previously swallowed every attempt silently, which is
+          // exactly what made a stale/misconfigured provider indistinguishable
+          // from "the whole task is just slow" until traced by hand.
+          console.error(`chat-search: provider ${index + 1}/${models.length} in the chat_tools chain failed:`, error);
           lastError = error;
         }
       }
