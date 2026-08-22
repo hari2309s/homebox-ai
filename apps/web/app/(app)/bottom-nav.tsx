@@ -115,15 +115,15 @@ function MoreIcon(props: ComponentProps<"svg">) {
   );
 }
 
+const HOME_LINK = { href: "/", label: "Home", icon: HomeIcon };
+const ITEMS_LINK = { href: "/items", label: "Items", icon: ItemsIcon };
+const CHAT_LINK = { href: "/chat", label: "Chat", icon: ChatIcon };
+
 // Kept to 3 so the collapsed mobile bar always fits one row without
 // scrolling — everything else lives behind "More", which opens a small grid
 // popover above the bar (see `expanded` below) instead of extending the same
 // row, which would need horizontal scrolling to reach.
-const PRIMARY_LINKS = [
-  { href: "/", label: "Home", icon: HomeIcon },
-  { href: "/items", label: "Items", icon: ItemsIcon },
-  { href: "/chat", label: "Chat", icon: ChatIcon },
-];
+const PRIMARY_LINKS = [HOME_LINK, ITEMS_LINK, CHAT_LINK];
 
 const MORE_LINKS = [
   { href: "/locations", label: "Locations", icon: LocationsIcon },
@@ -138,13 +138,29 @@ const MORE_LINKS = [
 // "More" button existed).
 const ALL_LINKS = [...PRIMARY_LINKS, ...MORE_LINKS];
 
+// A link is "active" for any page nested under it (e.g. `/items/[id]`), not
+// just its exact path, so a tab stays highlighted while drilled into detail
+// pages instead of going dark the moment the URL grows past the tab's root.
+function isActive(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number }) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
-  const isOnHiddenLink = MORE_LINKS.some((link) => link.href === pathname);
+
+  // If the current page is one of the hidden "More" links, surface it as a
+  // primary tab (in the last slot) in place of Items, so a single tap
+  // reaches it again instead of reopening the More panel every time. Items
+  // moves into the More panel in its place while that's the case.
+  const activeMoreLink = MORE_LINKS.find((link) => isActive(pathname, link.href));
+  const mobilePrimaryLinks = activeMoreLink ? [HOME_LINK, CHAT_LINK, activeMoreLink] : PRIMARY_LINKS;
+  const mobileMoreLinks = activeMoreLink
+    ? MORE_LINKS.map((link) => (link.href === activeMoreLink.href ? ITEMS_LINK : link))
+    : MORE_LINKS;
 
   function renderLink({ href, label, icon: LinkIcon }: (typeof ALL_LINKS)[number], onNavigate?: () => void) {
-    const active = pathname === href;
+    const active = isActive(pathname, href);
     return (
       <Link
         key={href}
@@ -203,14 +219,14 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
               transition={{ type: "spring", stiffness: 380, damping: 32 }}
               className="absolute inset-x-0 bottom-full z-50 grid grid-cols-3 gap-1 rounded-t-lg border border-b-0 border-border bg-surface-soft p-2 md:hidden"
             >
-              {MORE_LINKS.map((link) => renderLink(link, () => setExpanded(false)))}
+              {mobileMoreLinks.map((link) => renderLink(link, () => setExpanded(false)))}
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
       <div className="no-scrollbar flex md:hidden">
-        {PRIMARY_LINKS.map((link) => renderLink(link))}
+        {mobilePrimaryLinks.map((link) => renderLink(link))}
         <button
           type="button"
           onClick={() => setExpanded((current) => !current)}
@@ -223,10 +239,10 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
             whileTap={{ scale: 0.9 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <MoreIcon className={`h-5 w-5 ${isOnHiddenLink || expanded ? "text-ink" : "text-muted"}`} />
+            <MoreIcon className={`h-5 w-5 ${expanded ? "text-ink" : "text-muted"}`} />
           </motion.span>
           <span
-            className={`text-[10px] font-semibold transition-colors duration-150 ${isOnHiddenLink || expanded ? "text-ink" : "text-muted"}`}
+            className={`text-[10px] font-semibold transition-colors duration-150 ${expanded ? "text-ink" : "text-muted"}`}
           >
             {expanded ? "Less" : "More"}
           </span>
