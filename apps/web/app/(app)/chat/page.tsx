@@ -30,6 +30,15 @@ interface ChatMessage {
   viewHrefLabel?: string;
   /** Items with cover photos that the AI referenced this turn — shown as clickable thumbnails below the text. Ephemeral (not persisted to DB). */
   referencedItems?: ReferencedItem[];
+  /** ISO timestamp — from DB on history load, set client-side for new messages. */
+  createdAt?: string;
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  const isToday = d.toDateString() === new Date().toDateString();
+  const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return isToday ? time : `${d.toLocaleDateString([], { month: "short", day: "numeric" })} · ${time}`;
 }
 
 interface ChatSession {
@@ -160,7 +169,7 @@ export default function ChatPage() {
     // response must only be applied if that session is still the active one.
     const requestSessionId = sessionId;
 
-    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed }]);
+    setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed, createdAt: new Date().toISOString() }]);
     setInput("");
     setPending(true);
     setError(null);
@@ -193,6 +202,7 @@ export default function ChatPage() {
             content: data.reply!,
             pendingAction: data.pendingAction,
             referencedItems: data.referencedItems?.length ? data.referencedItems : undefined,
+            createdAt: new Date().toISOString(),
           },
         ]);
       }
@@ -223,6 +233,7 @@ export default function ChatPage() {
           content: result.message,
           viewHref: result.href,
           viewHrefLabel: result.hrefLabel,
+          createdAt: new Date().toISOString(),
         },
       ]);
       requestAnimationFrame(scrollToBottom);
@@ -256,6 +267,7 @@ export default function ChatPage() {
               content: data.reply!,
               pendingAction: data.pendingAction,
               referencedItems: data.referencedItems?.length ? data.referencedItems : undefined,
+              createdAt: new Date().toISOString(),
             },
           ]);
           requestAnimationFrame(scrollToBottom);
@@ -329,18 +341,17 @@ export default function ChatPage() {
             <StaggerList className="m-0 flex list-none flex-col gap-3 p-0">
               {messages.map((message) => {
                 const resolution = resolvedActions[message.id];
+                const isUser = message.role === "user";
                 return (
                   <StaggerItem
                     key={message.id}
-                    className={
+                    className={`flex flex-col gap-0.5 ${
                       message.pendingAction
-                        ? "max-w-[85%] self-start"
-                        : `max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${
-                            message.role === "user"
-                              ? "self-end whitespace-pre-wrap rounded-br-sm bg-accent text-white"
-                              : "self-start rounded-bl-sm border border-border bg-surface-soft text-body"
-                          }`
-                    }
+                        ? "max-w-[85%] self-start items-start"
+                        : isUser
+                          ? "max-w-[80%] self-end items-end"
+                          : "max-w-[80%] self-start items-start"
+                    }`}
                   >
                     {message.pendingAction ? (
                       <div className="flex flex-col gap-2">
@@ -357,42 +368,49 @@ export default function ChatPage() {
                           />
                         )}
                       </div>
-                    ) : message.role === "assistant" ? (
-                      <div className="flex flex-col gap-1.5">
-                        <MessageContent content={message.content} />
-                        {message.referencedItems && message.referencedItems.length > 0 && (
-                          <div className="flex flex-wrap gap-2 pt-1">
-                            {message.referencedItems.map((item) => (
-                              <Link
-                                key={item.id}
-                                href={`/items/${item.id}`}
-                                className="group flex flex-col overflow-hidden rounded-xl border border-border transition-opacity duration-150 hover:opacity-80"
-                                style={{ width: message.referencedItems!.length === 1 ? "100%" : "calc(50% - 4px)" }}
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL, not a static asset */}
-                                <img
-                                  src={item.photoUrl}
-                                  alt={item.name}
-                                  className="aspect-video w-full object-cover"
-                                />
-                                <div className="bg-surface-soft px-2.5 py-1.5 text-xs font-medium text-body">
-                                  {item.name}
-                                </div>
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                        {message.viewHref && (
-                          <Link
-                            href={message.viewHref}
-                            className="self-start text-xs font-semibold text-accent-hover underline underline-offset-4"
-                          >
-                            {message.viewHrefLabel ?? "View"} →
-                          </Link>
-                        )}
+                    ) : isUser ? (
+                      <div className="rounded-2xl rounded-br-sm bg-accent px-4 py-2.5 text-sm text-white whitespace-pre-wrap">
+                        {message.content}
                       </div>
                     ) : (
-                      message.content
+                      <div className="rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-2.5 text-sm text-body">
+                        <div className="flex flex-col gap-1.5">
+                          <MessageContent content={message.content} />
+                          {message.referencedItems && message.referencedItems.length > 0 && (
+                            <div className="flex flex-wrap gap-2 pt-1">
+                              {message.referencedItems.map((item) => (
+                                <Link
+                                  key={item.id}
+                                  href={`/items/${item.id}`}
+                                  className="group flex flex-col overflow-hidden rounded-xl border border-border transition-opacity duration-150 hover:opacity-80"
+                                  style={{ width: message.referencedItems!.length === 1 ? "100%" : "calc(50% - 4px)" }}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL, not a static asset */}
+                                  <img
+                                    src={item.photoUrl}
+                                    alt={item.name}
+                                    className="aspect-video w-full object-cover"
+                                  />
+                                  <div className="bg-surface-soft px-2.5 py-1.5 text-xs font-medium text-body">
+                                    {item.name}
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
+                          )}
+                          {message.viewHref && (
+                            <Link
+                              href={message.viewHref}
+                              className="self-start text-xs font-semibold text-accent-hover underline underline-offset-4"
+                            >
+                              {message.viewHrefLabel ?? "View"} →
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {message.createdAt && (
+                      <span className="px-1 text-[10px] text-muted">{formatTime(message.createdAt)}</span>
                     )}
                   </StaggerItem>
                 );

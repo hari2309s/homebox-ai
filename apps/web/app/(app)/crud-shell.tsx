@@ -16,7 +16,9 @@ export function CrudShell({ form, children }: CrudShellProps) {
       <div className="order-2 shrink-0 border-t border-border bg-card p-4 md:p-6">
         <div className="md:mx-auto md:w-full md:max-w-2xl">{form}</div>
       </div>
-      <div className="order-1 flex flex-1 flex-col gap-6 overflow-y-auto p-4 sm:p-6">{children}</div>
+      <div className="order-1 flex flex-1 flex-col overflow-y-auto p-4 sm:p-6">
+        <div className="flex flex-1 flex-col gap-6 md:mx-auto md:w-full md:max-w-2xl">{children}</div>
+      </div>
     </div>
   );
 }

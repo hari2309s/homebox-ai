@@ -1,4 +1,4 @@
-import { itemQueries } from "@homebox-ai/db";
+import { itemQueries, maintenanceQueries } from "@homebox-ai/db";
 import { FadeIn, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import Link from "next/link";
 
@@ -6,6 +6,19 @@ import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { formatCurrency } from "../../lib/currency";
 import { listLabelsCached, listLocationsCached } from "../../lib/cached-queries";
+
+function formatRelativeTime(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "yesterday";
+  if (days < 7) return `${days}d ago`;
+  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+}
 
 const QUICK_ACTIONS = [
   { href: "/capture", label: "Capture an item" },
@@ -17,15 +30,42 @@ const QUICK_ACTIONS = [
 export default async function DashboardPage() {
   const user = await getSessionUser();
 
-  const [itemCount, locations, labels, valueByCurrency, expiringWarranties] = user
+  const [itemCount, locations, labels, valueByCurrency, expiringWarranties, recentItems, recentMaintenance] = user
     ? await Promise.all([
         itemQueries.countItems(user.id),
         listLocationsCached(user.id),
         listLabelsCached(user.id),
         itemQueries.getInventoryValueByCurrency(user.id),
         itemQueries.listUpcomingWarrantyExpirations(user.id),
+        itemQueries.listRecentItems(user.id, 5),
+        maintenanceQueries.listRecentMaintenance(user.id, 5),
       ])
-    : [0, [], [], [], []];
+    : [0, [], [], [], [], [], []];
+
+  // Merge items and maintenance into one chronological feed, newest first.
+  type ActivityEntry =
+    | { type: "item"; id: string; label: string; href: string; at: Date }
+    | { type: "maintenance"; id: string; label: string; subtext: string; href: string; at: Date };
+
+  const activity: ActivityEntry[] = [
+    ...recentItems.map((item) => ({
+      type: "item" as const,
+      id: item.id,
+      label: item.name,
+      href: `/items/${item.id}`,
+      at: new Date(item.createdAt),
+    })),
+    ...recentMaintenance.map((entry) => ({
+      type: "maintenance" as const,
+      id: entry.id,
+      label: entry.name,
+      subtext: entry.itemName,
+      href: `/items/${entry.itemId}`,
+      at: new Date(entry.createdAt),
+    })),
+  ]
+    .sort((a, b) => b.at.getTime() - a.at.getTime())
+    .slice(0, 8);
 
   const displayName = typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : undefined;
 
@@ -94,6 +134,47 @@ export default async function DashboardPage() {
         <p className="text-center text-sm text-muted">
           Nothing in your inventory yet — capture a photo or import a receipt to get started.
         </p>
+      )}
+
+      {activity.length > 0 && (
+        <section className="flex flex-col gap-2 rounded-md border border-border bg-surface-soft p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Recent activity</h2>
+          <StaggerList className="m-0 flex list-none flex-col gap-1.5 p-0">
+            {activity.map((entry) => (
+              <StaggerItem key={`${entry.type}-${entry.id}`} hover>
+                <Link
+                  href={entry.href}
+                  className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="shrink-0 text-muted">
+                      {entry.type === "item" ? (
+                        /* box icon */
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <path d="M3 8l9-5 9 5-9 5-9-5Z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" />
+                        </svg>
+                      ) : (
+                        /* wrench icon */
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <circle cx="6" cy="18" r="2.75" /><circle cx="18" cy="6" r="2.75" /><path d="m8 16 8-8" />
+                        </svg>
+                      )}
+                    </span>
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate font-medium text-ink">
+                        {entry.type === "item" ? `Added ${entry.label}` : entry.label}
+                      </span>
+                      {entry.type === "maintenance" && (
+                        <span className="truncate text-xs text-muted">{entry.subtext}</span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted">{formatRelativeTime(entry.at)}</span>
+                </Link>
+              </StaggerItem>
+            ))}
+          </StaggerList>
+        </section>
       )}
 
       <section className="flex flex-col gap-2 rounded-md border border-border bg-surface-soft p-4">

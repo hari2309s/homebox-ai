@@ -173,6 +173,6 @@ export async function loadChatSessionAction(sessionId: string) {
             return info?.photoUrl ? [{ id, name: info.name, photoUrl: info.photoUrl }] : [];
           })
         : undefined;
-    return { id: message.id, role: message.role, content: message.content, referencedItems };
+    return { id: message.id, role: message.role, content: message.content, referencedItems, createdAt: message.createdAt.toISOString() };
   });
 }

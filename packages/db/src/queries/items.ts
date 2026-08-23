@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, inArray, lte, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, lte, sql } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { wouldFormCycle } from "../cycle";
@@ -96,6 +96,19 @@ export function getItemWithPrimaryPhoto(userId: string, itemId: string) {
       .leftJoin(attachments, and(eq(attachments.itemId, items.id), eq(attachments.isPrimary, true)))
       .where(and(eq(items.id, itemId), eq(items.ownerId, ownerId)));
     return rows[0] ?? null;
+  });
+}
+
+/** Most recently created items — used for the home page activity feed. */
+export function listRecentItems(userId: string, limit = 5) {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    return tx
+      .select({ id: items.id, name: items.name, createdAt: items.createdAt })
+      .from(items)
+      .where(eq(items.ownerId, ownerId))
+      .orderBy(desc(items.createdAt))
+      .limit(limit);
   });
 }
 

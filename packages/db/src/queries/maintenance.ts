@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
-import { maintenanceEntries } from "../schema";
+import { items, maintenanceEntries } from "../schema";
 import { withRLS } from "../rls";
 
 export interface CreateMaintenanceEntryInput {
@@ -19,6 +19,26 @@ export function listMaintenanceForItem(userId: string, itemId: string) {
       .select()
       .from(maintenanceEntries)
       .where(and(eq(maintenanceEntries.itemId, itemId), eq(maintenanceEntries.ownerId, ownerId)));
+  });
+}
+
+/** Most recently logged maintenance entries with their item name — used for the home page activity feed. */
+export function listRecentMaintenance(userId: string, limit = 5) {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    return tx
+      .select({
+        id: maintenanceEntries.id,
+        name: maintenanceEntries.name,
+        itemId: maintenanceEntries.itemId,
+        itemName: items.name,
+        createdAt: maintenanceEntries.createdAt,
+      })
+      .from(maintenanceEntries)
+      .innerJoin(items, eq(maintenanceEntries.itemId, items.id))
+      .where(eq(maintenanceEntries.ownerId, ownerId))
+      .orderBy(desc(maintenanceEntries.createdAt))
+      .limit(limit);
   });
 }
 
