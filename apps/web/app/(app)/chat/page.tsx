@@ -362,20 +362,23 @@ export default function ChatPage() {
                       <div className="flex flex-col gap-1.5">
                         <MessageContent content={message.content} />
                         {message.referencedItems && message.referencedItems.length > 0 && (
-                          <div className="flex flex-wrap gap-2 pt-0.5">
+                          <div className="flex flex-wrap gap-2 pt-1">
                             {message.referencedItems.map((item) => (
                               <Link
                                 key={item.id}
                                 href={`/items/${item.id}`}
-                                title={item.name}
-                                className="overflow-hidden rounded-md border border-border transition-opacity duration-150 hover:opacity-80"
+                                className="group flex flex-col overflow-hidden rounded-xl border border-border transition-opacity duration-150 hover:opacity-80"
+                                style={{ width: message.referencedItems!.length === 1 ? "100%" : "calc(50% - 4px)" }}
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL, not a static asset */}
                                 <img
                                   src={item.photoUrl}
                                   alt={item.name}
-                                  className="h-16 w-16 object-cover"
+                                  className="aspect-video w-full object-cover"
                                 />
+                                <div className="bg-surface-soft px-2.5 py-1.5 text-xs font-medium text-body">
+                                  {item.name}
+                                </div>
                               </Link>
                             ))}
                           </div>
