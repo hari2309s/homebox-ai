@@ -16,6 +16,15 @@ create policy "attachments_bucket_insert_own" on storage.objects
     and public.has_shared_access((storage.foldername(name))[1]::uuid)
   );
 
+create policy "attachments_bucket_update_own" on storage.objects
+  for update using (
+    bucket_id = 'attachments'
+    and public.has_shared_access((storage.foldername(name))[1]::uuid)
+  ) with check (
+    bucket_id = 'attachments'
+    and public.has_shared_access((storage.foldername(name))[1]::uuid)
+  );
+
 create policy "attachments_bucket_delete_own" on storage.objects
   for delete using (
     bucket_id = 'attachments'
