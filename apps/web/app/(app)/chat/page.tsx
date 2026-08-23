@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, FadeIn, Input, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
+import { AnimatedHomeboxIcon, Button, FadeIn, Input, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import type { ComponentProps, FormEvent } from "react";
@@ -369,7 +369,11 @@ export default function ChatPage() {
                     }`}
                   >
                     {message.pendingAction ? (
-                      <div className="flex flex-col gap-2">
+                      <div className="flex items-start gap-2">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card mt-0.5">
+                          <AnimatedHomeboxIcon size={22} className="h-full w-full" />
+                        </div>
+                        <div className="flex flex-col gap-2">
                         <div className="rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-2.5 text-sm text-body">
                           <MessageContent content={message.content} />
                         </div>
@@ -382,6 +386,7 @@ export default function ChatPage() {
                             onCancel={() => handleCancelAction(message.id)}
                           />
                         )}
+                        </div>
                       </div>
                     ) : isUser ? (
                       <div className="flex items-end gap-2">
@@ -390,13 +395,17 @@ export default function ChatPage() {
                         </div>
                         {myAvatarUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL
-                          <img src={myAvatarUrl} alt="You" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                          <img src={myAvatarUrl} alt="You" className="h-6 w-6 shrink-0 rounded-lg object-cover" />
                         ) : (
-                          <div className="h-6 w-6 shrink-0 rounded-full bg-accent/40" />
+                          <div className="h-6 w-6 shrink-0 rounded-lg bg-accent/40" />
                         )}
                       </div>
                     ) : (
-                      <div className="rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-2.5 text-sm text-body">
+                      <div className="flex items-end gap-2">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+                          <AnimatedHomeboxIcon size={22} className="h-full w-full" />
+                        </div>
+                        <div className="rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-2.5 text-sm text-body">
                         <div className="flex flex-col gap-1.5">
                           <MessageContent content={message.content} />
                           {message.referencedItems && message.referencedItems.length > 0 && (
@@ -430,6 +439,7 @@ export default function ChatPage() {
                             </Link>
                           )}
                         </div>
+                      </div>
                       </div>
                     )}
                     {message.createdAt && (
