@@ -122,7 +122,7 @@ function MaintenanceRow({
   }
 
   return (
-    <StaggerItem hover className="flex flex-col gap-1 rounded-md border border-border bg-card px-3 py-2.5 transition-colors duration-150 hover:border-accent">
+    <StaggerItem hover className="flex flex-col gap-1 rounded-md border border-border bg-card px-3 py-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5">
           <span className="font-medium text-ink">{entry.name}</span>

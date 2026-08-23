@@ -29,7 +29,7 @@ export function ItemList({ items, locationNameById }: ItemListProps) {
         <StaggerItem key={item.id} hover>
           <Link
             href={`/items/${item.id}`}
-            className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3 transition-colors duration-150 hover:border-accent"
+            className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3"
           >
             <span className="flex items-center gap-2 font-medium text-ink">
               {item.name}

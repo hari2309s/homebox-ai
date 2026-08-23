@@ -119,7 +119,7 @@ function LocationRow({
   return (
     <StaggerItem
       hover
-      className="flex flex-col gap-1.5 rounded-md border border-border px-4 py-3 transition-colors duration-150 hover:border-accent"
+      className="flex flex-col gap-1.5 rounded-md border border-border px-4 py-3"
       data-testid={`location-row-${location.name}`}
     >
       <div className="flex items-center justify-between gap-3">
