@@ -395,9 +395,9 @@ export default function ChatPage() {
                         </div>
                         {myAvatarUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL
-                          <img src={myAvatarUrl} alt="You" className="h-6 w-6 shrink-0 rounded-lg object-cover" />
+                          <img src={myAvatarUrl} alt="You" className="h-6 w-6 shrink-0 rounded-lg border border-border object-cover" />
                         ) : (
-                          <div className="h-6 w-6 shrink-0 rounded-lg bg-accent/40" />
+                          <div className="h-6 w-6 shrink-0 rounded-lg border border-border bg-accent/40" />
                         )}
                       </div>
                     ) : (
