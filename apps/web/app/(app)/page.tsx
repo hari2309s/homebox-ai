@@ -37,8 +37,8 @@ export default async function DashboardPage() {
         listLabelsCached(user.id),
         itemQueries.getInventoryValueByCurrency(user.id),
         itemQueries.listUpcomingWarrantyExpirations(user.id),
-        itemQueries.listRecentItems(user.id, 5),
-        maintenanceQueries.listRecentMaintenance(user.id, 5),
+        itemQueries.listRecentItems(user.id, 5).catch(() => []),
+        maintenanceQueries.listRecentMaintenance(user.id, 5).catch(() => []),
       ])
     : [0, [], [], [], [], [], []];
 
