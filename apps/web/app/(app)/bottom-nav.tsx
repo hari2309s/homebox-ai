@@ -188,8 +188,8 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
         )}
         <motion.span
           className="relative"
-          whileHover={{ scale: 1.12 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.06 }}
+          whileTap={{ scale: 0.94 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
           <LinkIcon className={`h-5 w-5 md:h-6 md:w-6 ${active ? "text-ink" : "text-muted"}`} />
@@ -246,8 +246,8 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
           className="flex min-w-16 flex-1 cursor-pointer flex-col items-center gap-1 border-none bg-transparent py-2.5"
         >
           <motion.span
-            whileHover={{ scale: 1.12 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
             <MoreIcon className={`h-5 w-5 ${expanded ? "text-ink" : "text-muted"}`} />

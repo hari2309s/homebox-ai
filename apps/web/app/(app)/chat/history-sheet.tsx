@@ -80,7 +80,7 @@ export function HistorySheet({ open, sessions, activeSessionId, onClose, onSelec
                       <TapButton
                         type="button"
                         onClick={() => onSelect(session.sessionId)}
-                        whileHover={{ scale: 1.01 }}
+                        whileHover={{ scale: 1.015 }}
                         className={`flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-md border-none px-3 py-2.5 text-left transition-colors duration-150 ${
                           session.sessionId === activeSessionId
                             ? "bg-surface-soft"

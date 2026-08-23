@@ -56,7 +56,6 @@ export function PasswordInput({ className, ...props }: Omit<ComponentProps<"inpu
         type="button"
         onClick={() => setVisible((current) => !current)}
         aria-label={visible ? "Hide password" : "Show password"}
-        whileHover={{ scale: 1.1 }}
         className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer border-none bg-transparent p-0.5 text-muted transition-colors duration-150 hover:text-ink"
       >
         {visible ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}

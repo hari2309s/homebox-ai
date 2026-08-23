@@ -318,7 +318,6 @@ export default function ChatPage() {
                     key={suggestion}
                     type="button"
                     onClick={() => sendMessage(suggestion)}
-                    whileHover={{ scale: 1.04 }}
                     className="cursor-pointer rounded-full border border-border bg-surface-soft px-3 py-1.5 text-sm text-body transition-colors duration-150 hover:border-accent"
                   >
                     {suggestion}

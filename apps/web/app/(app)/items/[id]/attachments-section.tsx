@@ -43,7 +43,8 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
           {attachments.map((attachment) => (
             <motion.div
               key={attachment.id}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.015, y: -1 }}
+              whileTap={{ scale: 0.985 }}
               transition={{ type: "spring", stiffness: 400, damping: 22 }}
               className="flex flex-col gap-1"
             >
