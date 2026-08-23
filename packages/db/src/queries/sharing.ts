@@ -18,8 +18,9 @@ export interface UserProfile {
 export async function getUserProfiles(userIds: string[]): Promise<Map<string, UserProfile>> {
   if (userIds.length === 0) return new Map();
   const db = getDb();
+  const idList = sql.join(userIds.map((id) => sql`${id}::uuid`), sql`, `);
   const rows = await db.execute<{ id: string; name: string | null; avatar_url: string | null }>(
-    sql`SELECT id, raw_user_meta_data->>'full_name' AS name, raw_user_meta_data->>'avatar_url' AS avatar_url FROM auth.users WHERE id = ANY(${userIds})`,
+    sql`SELECT id, raw_user_meta_data->>'full_name' AS name, raw_user_meta_data->>'avatar_url' AS avatar_url FROM auth.users WHERE id IN (${idList})`,
   );
   return new Map(rows.map((row) => [row.id, { name: row.name ?? null, avatarUrl: row.avatar_url ?? null }]));
 }
