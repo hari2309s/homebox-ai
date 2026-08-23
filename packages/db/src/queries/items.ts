@@ -104,7 +104,7 @@ export function listRecentItems(userId: string, limit = 5) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
     return tx
-      .select({ id: items.id, name: items.name, createdAt: items.createdAt })
+      .select({ id: items.id, name: items.name, createdBy: items.createdBy, createdAt: items.createdAt })
       .from(items)
       .where(eq(items.ownerId, ownerId))
       .orderBy(desc(items.createdAt))
@@ -181,7 +181,7 @@ export function createItem(userId: string, data: CreateItemInput) {
     const assetId = await nextAssetId(tx, ownerId);
     return tx
       .insert(items)
-      .values({ ownerId, assetId, ...data })
+      .values({ ownerId, assetId, createdBy: userId, ...data })
       .returning();
   });
 }

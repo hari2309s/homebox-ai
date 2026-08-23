@@ -112,6 +112,8 @@ export const items = pgTable("items", {
   locationId: uuid("location_id").references(() => locations.id, { onDelete: "set null" }),
   parentItemId: uuid("parent_item_id").references((): AnyPgColumn => items.id, { onDelete: "set null" }),
   notes: text("notes"),
+  /** The user who actually created this item — may differ from ownerId when a shared household member adds it. Null on rows predating this column. */
+  createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -190,5 +192,7 @@ export const maintenanceEntries = pgTable("maintenance_entries", {
   name: text("name").notNull(),
   description: text("description"),
   cost: numeric("cost", { precision: 12, scale: 2 }),
+  /** The user who logged this entry — may differ from ownerId for shared household members. Null on rows predating this column. */
+  createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

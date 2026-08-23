@@ -1,4 +1,4 @@
-import { itemQueries, maintenanceQueries } from "@homebox-ai/db";
+import { itemQueries, maintenanceQueries, sharingQueries } from "@homebox-ai/db";
 import { FadeIn, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import Link from "next/link";
 
@@ -42,16 +42,24 @@ export default async function DashboardPage() {
       ])
     : [0, [], [], [], [], [], []];
 
+  // Resolve display names for all actors that appear in the activity feed.
+  const actorIds = [...new Set([
+    ...recentItems.flatMap((i) => (i.createdBy ? [i.createdBy] : [])),
+    ...recentMaintenance.flatMap((e) => (e.createdBy ? [e.createdBy] : [])),
+  ])];
+  const displayNameById = actorIds.length > 0 ? await sharingQueries.getUserDisplayNames(actorIds) : new Map<string, string | null>();
+
   // Merge items and maintenance into one chronological feed, newest first.
   type ActivityEntry =
-    | { type: "item"; id: string; label: string; href: string; at: Date }
-    | { type: "maintenance"; id: string; label: string; subtext: string; href: string; at: Date };
+    | { type: "item"; id: string; label: string; actor: string | null; href: string; at: Date }
+    | { type: "maintenance"; id: string; label: string; subtext: string; actor: string | null; href: string; at: Date };
 
   const activity: ActivityEntry[] = [
     ...recentItems.map((item) => ({
       type: "item" as const,
       id: item.id,
       label: item.name,
+      actor: item.createdBy ? (displayNameById.get(item.createdBy) ?? null) : null,
       href: `/items/${item.id}`,
       at: new Date(item.createdAt),
     })),
@@ -60,6 +68,7 @@ export default async function DashboardPage() {
       id: entry.id,
       label: entry.name,
       subtext: entry.itemName,
+      actor: entry.createdBy ? (displayNameById.get(entry.createdBy) ?? null) : null,
       href: `/items/${entry.itemId}`,
       at: new Date(entry.createdAt),
     })),
@@ -169,7 +178,10 @@ export default async function DashboardPage() {
                       )}
                     </div>
                   </div>
-                  <span className="shrink-0 text-xs text-muted">{formatRelativeTime(entry.at)}</span>
+                  <span className="shrink-0 text-right text-xs text-muted">
+                    {entry.actor && <span className="block font-medium text-ink">{entry.actor}</span>}
+                    {formatRelativeTime(entry.at)}
+                  </span>
                 </Link>
               </StaggerItem>
             ))}

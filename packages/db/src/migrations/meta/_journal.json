@@ -50,6 +50,13 @@
       "when": 1787300000000,
       "tag": "0006_chat_referenced_items",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787310000000,
+      "tag": "0007_activity_actor",
+      "breakpoints": true
     }
   ]
 }

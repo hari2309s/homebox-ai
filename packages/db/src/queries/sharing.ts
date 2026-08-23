@@ -5,6 +5,21 @@ import { getDb } from "../client";
 import { sharedAccess, sharedAccessInvites } from "../schema";
 import { withRLS, type Tx } from "../rls";
 
+/**
+ * Fetches the `full_name` from `auth.users.raw_user_meta_data` for a batch of
+ * user IDs. Uses the direct (non-RLS) connection — same pattern as `emailFor`
+ * — because `auth.users` is outside the RLS policy boundary.
+ * Returns a map of userId → display name (null if the user has no name set).
+ */
+export async function getUserDisplayNames(userIds: string[]): Promise<Map<string, string | null>> {
+  if (userIds.length === 0) return new Map();
+  const db = getDb();
+  const rows = await db.execute<{ id: string; display_name: string | null }>(
+    sql`SELECT id, raw_user_meta_data->>'full_name' AS display_name FROM auth.users WHERE id = ANY(${userIds})`,
+  );
+  return new Map(rows.map((row) => [row.id, row.display_name ?? null]));
+}
+
 // auth.users.email is a real column, but it's deliberately not declared on
 // the `authUsers` Drizzle table (see schema.ts) — drizzle-kit would then try
 // to manage/diff it as if we owned that table, which risks generating an

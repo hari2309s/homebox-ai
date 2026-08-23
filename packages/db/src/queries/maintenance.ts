@@ -32,6 +32,7 @@ export function listRecentMaintenance(userId: string, limit = 5) {
         name: maintenanceEntries.name,
         itemId: maintenanceEntries.itemId,
         itemName: items.name,
+        createdBy: maintenanceEntries.createdBy,
         createdAt: maintenanceEntries.createdAt,
       })
       .from(maintenanceEntries)
@@ -54,7 +55,7 @@ export function createMaintenanceEntry(userId: string, data: CreateMaintenanceEn
     const ownerId = await getEffectiveOwnerId(tx, userId);
     return tx
       .insert(maintenanceEntries)
-      .values({ ownerId, ...data })
+      .values({ ownerId, createdBy: userId, ...data })
       .returning();
   });
 }
