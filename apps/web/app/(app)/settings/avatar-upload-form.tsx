@@ -41,11 +41,6 @@ async function cropImageToBlob(imageSrc: string, pixelCrop: Area): Promise<Blob>
   canvas.height = size;
   const ctx = canvas.getContext("2d")!;
 
-  // Circular clip so the saved file already has a round shape on transparent-aware viewers.
-  ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-  ctx.clip();
-
   ctx.drawImage(
     image,
     pixelCrop.x,
