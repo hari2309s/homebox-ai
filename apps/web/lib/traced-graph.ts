@@ -20,7 +20,6 @@ export async function runTracedGraph<T>(
     const langfuseHandler = createLangfuseHandler(context);
     const result = await run({ callbacks: [langfuseHandler], runName: context.runName });
     after(async () => {
-      await langfuseHandler.langfuse.flushAsync();
       await langfuseSpanProcessor.forceFlush();
     });
     return result;
