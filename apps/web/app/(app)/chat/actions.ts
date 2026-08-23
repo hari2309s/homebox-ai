@@ -11,7 +11,8 @@ import {
 } from "@homebox-ai/db";
 import { revalidatePath, revalidateTag } from "next/cache";
 
-import { requireSessionUser } from "@homebox-ai/supabase/server";
+import { createSupabaseServerClient, requireSessionUser } from "@homebox-ai/supabase/server";
+import { getAttachmentSignedUrls } from "@homebox-ai/supabase/storage";
 
 import { labelTag, locationTag } from "../../../lib/cached-queries";
 
@@ -143,5 +144,35 @@ export async function loadChatSessionAction(sessionId: string) {
 
   const messages = await chatQueries.listChatMessages(user.id, sessionId);
   await chatQueries.markSessionMessagesRead(user.id, sessionId);
-  return messages.map((message) => ({ id: message.id, role: message.role, content: message.content }));
+
+  // Collect all item IDs from assistant messages that stored photo references.
+  const allReferencedIds = [...new Set(messages.flatMap((m) => m.referencedItemIds ?? []))];
+
+  // Batch-fetch primary photo paths for all referenced items in one query.
+  const itemRows =
+    allReferencedIds.length > 0 ? await itemQueries.getItemsPrimaryPhotos(user.id, allReferencedIds) : [];
+
+  // Batch-sign all photo paths in one Supabase call.
+  const photoPaths = itemRows.flatMap((row) => (row.primaryPhotoPath ? [row.primaryPhotoPath] : []));
+  const urlMap =
+    photoPaths.length > 0 ? await getAttachmentSignedUrls(await createSupabaseServerClient(), photoPaths) : new Map();
+
+  // Build a lookup from item ID → { name, photoUrl } for assembling referencedItems per message.
+  const itemPhotoById = new Map(
+    itemRows.map((row) => [
+      row.id,
+      { name: row.name, photoUrl: row.primaryPhotoPath ? (urlMap.get(row.primaryPhotoPath) ?? null) : null },
+    ]),
+  );
+
+  return messages.map((message) => {
+    const referencedItems =
+      message.referencedItemIds && message.referencedItemIds.length > 0
+        ? message.referencedItemIds.flatMap((id) => {
+            const info = itemPhotoById.get(id);
+            return info?.photoUrl ? [{ id, name: info.name, photoUrl: info.photoUrl }] : [];
+          })
+        : undefined;
+    return { id: message.id, role: message.role, content: message.content, referencedItems };
+  });
 }

@@ -167,6 +167,8 @@ export const chatMessages = pgTable(
     // migrations/0004_*.sql) makes re-running a notifier check a no-op
     // instead of a duplicate message, even under concurrent execution.
     nudgeKey: text("nudge_key"),
+    /** Item IDs whose cover photos were shown inline with this assistant message — stored so history reload can re-fetch and re-sign the photo URLs. */
+    referencedItemIds: text("referenced_item_ids").array(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

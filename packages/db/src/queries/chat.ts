@@ -11,6 +11,8 @@ export interface CreateChatMessageInput {
   isProactive?: boolean;
   /** Deterministic per-notification-event key; a duplicate insert with the same (ownerId, nudgeKey) is a no-op. */
   nudgeKey?: string;
+  /** IDs of items whose cover photos appeared inline with this assistant message — persisted so history reload can re-sign the URLs. */
+  referencedItemIds?: string[];
 }
 
 export function createChatMessage(userId: string, data: CreateChatMessageInput) {

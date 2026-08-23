@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
@@ -124,9 +125,6 @@ export function ItemViewClient({ items, locationNameById }: ItemViewClientProps)
     localStorage.setItem(STORAGE_KEY, next);
   }
 
-  const activeClass = "border-accent bg-accent/10 text-accent";
-  const inactiveClass = "border-border bg-card text-muted hover:border-accent hover:text-accent";
-
   const gridItems = items.map((item) => ({
     id: item.id,
     name: item.name,
@@ -138,25 +136,35 @@ export function ItemViewClient({ items, locationNameById }: ItemViewClientProps)
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex shrink-0 justify-end gap-1">
-        <button
-          type="button"
-          onClick={() => switchView("list")}
-          aria-label="List view"
-          aria-pressed={view === "list"}
-          className={`flex cursor-pointer items-center rounded-md border p-2 transition-colors duration-150 ${view === "list" ? activeClass : inactiveClass}`}
-        >
-          <ListViewIcon />
-        </button>
-        <button
-          type="button"
-          onClick={() => switchView("grid")}
-          aria-label="Grid view"
-          aria-pressed={view === "grid"}
-          className={`flex cursor-pointer items-center rounded-md border p-2 transition-colors duration-150 ${view === "grid" ? activeClass : inactiveClass}`}
-        >
-          <GridViewIcon />
-        </button>
+      <div className="flex shrink-0 justify-end">
+        <div className="relative flex items-center rounded-md bg-surface-soft p-0.5">
+          {(["list", "grid"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => switchView(v)}
+              aria-label={v === "list" ? "List view" : "Grid view"}
+              aria-pressed={view === v}
+              className="relative cursor-pointer rounded-[5px] border-none bg-transparent p-2"
+            >
+              {view === v && (
+                <motion.span
+                  layoutId="items-view-toggle"
+                  className="absolute inset-0 rounded-[5px] bg-surface shadow-sm"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              <motion.span
+                className={`relative flex ${view === v ? "text-ink" : "text-muted"}`}
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.94 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                {v === "list" ? <ListViewIcon /> : <GridViewIcon />}
+              </motion.span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {view === "list" ? (

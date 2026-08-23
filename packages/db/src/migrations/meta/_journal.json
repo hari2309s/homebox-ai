@@ -43,6 +43,13 @@
       "when": 1787213670061,
       "tag": "0005_item_currency",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787300000000,
+      "tag": "0006_chat_referenced_items",
+      "breakpoints": true
     }
   ]
 }

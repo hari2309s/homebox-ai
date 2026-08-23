@@ -126,7 +126,14 @@ export async function POST(request: Request) {
     // Continuation messages are synthetic ("Continue.") — not real user input, so
     // omitting them keeps the saved history clean and coherent on reload.
     if (!isContinuation) await chatQueries.createChatMessage(user.id, { sessionId, role: "user", content: message });
-    if (reply) await chatQueries.createChatMessage(user.id, { sessionId, role: "assistant", content: reply });
+    if (reply) {
+      await chatQueries.createChatMessage(user.id, {
+        sessionId,
+        role: "assistant",
+        content: reply,
+        referencedItemIds: referencedItems.length > 0 ? referencedItems.map((i) => i.id) : undefined,
+      });
+    }
 
     return NextResponse.json({ reply, sessionId, pendingAction, referencedItems });
   } catch (error) {

@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, lte, sql } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, lte, sql } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { wouldFormCycle } from "../cycle";
@@ -96,6 +96,23 @@ export function getItemWithPrimaryPhoto(userId: string, itemId: string) {
       .leftJoin(attachments, and(eq(attachments.itemId, items.id), eq(attachments.isPrimary, true)))
       .where(and(eq(items.id, itemId), eq(items.ownerId, ownerId)));
     return rows[0] ?? null;
+  });
+}
+
+/** Fetches name + primary photo path for a batch of item IDs — used when rehydrating chat history photo thumbnails. */
+export function getItemsPrimaryPhotos(userId: string, itemIds: string[]) {
+  if (itemIds.length === 0) return Promise.resolve([]);
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    return tx
+      .select({
+        id: items.id,
+        name: items.name,
+        primaryPhotoPath: attachments.storagePath,
+      })
+      .from(items)
+      .leftJoin(attachments, and(eq(attachments.itemId, items.id), eq(attachments.isPrimary, true)))
+      .where(and(inArray(items.id, itemIds), eq(items.ownerId, ownerId)));
   });
 }
 
