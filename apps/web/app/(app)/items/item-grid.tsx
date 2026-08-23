@@ -10,6 +10,8 @@ interface ItemGridProps {
     locationId: string | null;
     archived: boolean;
     photoUrl: string | null;
+    /** True while the signed URL is being fetched — shows a shimmer instead of the placeholder icon. */
+    isLoadingPhoto?: boolean;
   }[];
   locationNameById: Map<string, string>;
 }
@@ -50,6 +52,8 @@ export function ItemGrid({ items, locationNameById }: ItemGridProps) {
                   alt={item.name}
                   className="aspect-square w-full object-cover"
                 />
+              ) : item.isLoadingPhoto ? (
+                <div className="aspect-square w-full animate-pulse bg-muted/20" />
               ) : (
                 <div className="flex aspect-square w-full items-center justify-center">
                   <PlaceholderIcon />

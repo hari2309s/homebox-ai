@@ -2,8 +2,6 @@ import {
   attachmentQueries,
   itemLabelQueries,
   itemQueries,
-  labelQueries,
-  locationQueries,
   maintenanceQueries,
 } from "@homebox-ai/db";
 import { StaggerItem, StaggerList } from "@homebox-ai/ui";
@@ -12,8 +10,9 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
-import { getAttachmentSignedUrl } from "@homebox-ai/supabase/storage";
+import { getAttachmentSignedUrls } from "@homebox-ai/supabase/storage";
 
+import { listLabelsCached, listLocationsCached } from "../../../../lib/cached-queries";
 import { AttachmentsSection } from "./attachments-section";
 import { DeleteItemButton } from "./delete-item-button";
 import { ItemEditForm } from "./item-edit-form";
@@ -36,8 +35,8 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
   const [item, locations, labels, itemLabelRows, attachments, maintenanceEntries, allItems, childItems] =
     await Promise.all([
       itemQueries.getItem(user.id, id),
-      locationQueries.listLocations(user.id),
-      labelQueries.listLabels(user.id),
+      listLocationsCached(user.id),
+      listLabelsCached(user.id),
       itemLabelQueries.listLabelsForItem(user.id, id),
       attachmentQueries.listAttachmentsForItem(user.id, id),
       maintenanceQueries.listMaintenanceForItem(user.id, id),
@@ -50,12 +49,15 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
   const otherItems = allItems.filter((candidate) => candidate.id !== id);
 
   const supabase = await createSupabaseServerClient();
-  const attachmentsWithUrls = await Promise.all(
-    attachments.map(async (attachment) => {
-      const { data } = await getAttachmentSignedUrl(supabase, attachment.storagePath);
-      return { ...attachment, url: data?.signedUrl ?? null };
-    }),
+  // One batch request instead of N individual signed-URL calls.
+  const urlMap = await getAttachmentSignedUrls(
+    supabase,
+    attachments.map((a) => a.storagePath),
   );
+  const attachmentsWithUrls = attachments.map((attachment) => ({
+    ...attachment,
+    url: urlMap.get(attachment.storagePath) ?? null,
+  }));
 
   const selectedLabelIds = itemLabelRows.map((row) => row.labelId);
 

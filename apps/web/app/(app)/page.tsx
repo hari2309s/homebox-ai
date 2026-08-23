@@ -1,10 +1,11 @@
-import { itemQueries, labelQueries, locationQueries } from "@homebox-ai/db";
+import { itemQueries } from "@homebox-ai/db";
 import { FadeIn, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import Link from "next/link";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { formatCurrency } from "../../lib/currency";
+import { listLabelsCached, listLocationsCached } from "../../lib/cached-queries";
 
 const QUICK_ACTIONS = [
   { href: "/capture", label: "Capture an item" },
@@ -16,20 +17,20 @@ const QUICK_ACTIONS = [
 export default async function DashboardPage() {
   const user = await getSessionUser();
 
-  const [items, locations, labels, valueByCurrency, expiringWarranties] = user
+  const [itemCount, locations, labels, valueByCurrency, expiringWarranties] = user
     ? await Promise.all([
-        itemQueries.searchItems(user.id),
-        locationQueries.listLocations(user.id),
-        labelQueries.listLabels(user.id),
+        itemQueries.countItems(user.id),
+        listLocationsCached(user.id),
+        listLabelsCached(user.id),
         itemQueries.getInventoryValueByCurrency(user.id),
         itemQueries.listUpcomingWarrantyExpirations(user.id),
       ])
-    : [[], [], [], [], []];
+    : [0, [], [], [], []];
 
   const displayName = typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name : undefined;
 
   const stats = [
-    { label: "Items", value: items.length, href: "/items" },
+    { label: "Items", value: itemCount, href: "/items" },
     { label: "Locations", value: locations.length, href: "/locations" },
     { label: "Labels", value: labels.length, href: "/labels" },
   ];
@@ -89,7 +90,7 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      {items.length === 0 && (
+      {itemCount === 0 && (
         <p className="text-center text-sm text-muted">
           Nothing in your inventory yet — capture a photo or import a receipt to get started.
         </p>

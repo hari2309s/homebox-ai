@@ -1,4 +1,4 @@
-import { locationQueries } from "@homebox-ai/db";
+import { listLocationsCached } from "../../../lib/cached-queries";
 import { Input, Select, SubmitButton } from "@homebox-ai/ui";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
@@ -9,7 +9,7 @@ import { LocationList } from "./location-list";
 
 export default async function LocationsPage() {
   const user = await getSessionUser();
-  const locations = user ? await locationQueries.listLocations(user.id) : [];
+  const locations = user ? await listLocationsCached(user.id) : [];
   const byId = new Map(locations.map((location) => [location.id, location]));
 
   // `seen` guards against a circular parentId chain — shouldn't exist given

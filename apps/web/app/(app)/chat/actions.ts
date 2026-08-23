@@ -9,9 +9,11 @@ import {
   locationQueries,
   maintenanceQueries,
 } from "@homebox-ai/db";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireSessionUser } from "@homebox-ai/supabase/server";
+
+import { labelTag, locationTag } from "../../../lib/cached-queries";
 
 /**
  * The only place that actually performs a chat-proposed mutation. `rawAction`
@@ -48,6 +50,7 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
       });
       if (!created) throw new Error("Couldn't create the location.");
       revalidatePath("/locations");
+      revalidateTag(locationTag(user.id));
       message = `Added the "${created.name}" location.`;
       href = "/locations";
       hrefLabel = "View locations";
@@ -57,6 +60,7 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
       const [created] = await labelQueries.createLabel(user.id, { name: action.name, color: action.color ?? null });
       if (!created) throw new Error("Couldn't create the label.");
       revalidatePath("/labels");
+      revalidateTag(labelTag(user.id));
       message = `Added the "${created.name}" label.`;
       href = "/labels";
       hrefLabel = "View labels";

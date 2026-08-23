@@ -1,9 +1,11 @@
 "use server";
 
 import { labelQueries } from "@homebox-ai/db";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireSessionUser } from "@homebox-ai/supabase/server";
+
+import { labelTag } from "../../../lib/cached-queries";
 
 export async function createLabelAction(formData: FormData) {
   const user = await requireSessionUser();
@@ -14,6 +16,7 @@ export async function createLabelAction(formData: FormData) {
 
   await labelQueries.createLabel(user.id, { name, color: color || null });
   revalidatePath("/labels");
+  revalidateTag(labelTag(user.id));
 }
 
 export async function updateLabelAction(formData: FormData) {
@@ -26,6 +29,7 @@ export async function updateLabelAction(formData: FormData) {
 
   await labelQueries.updateLabel(user.id, id, { name, color: color || null });
   revalidatePath("/labels");
+  revalidateTag(labelTag(user.id));
 }
 
 export async function deleteLabelAction(formData: FormData) {
@@ -36,4 +40,5 @@ export async function deleteLabelAction(formData: FormData) {
 
   await labelQueries.deleteLabel(user.id, id);
   revalidatePath("/labels");
+  revalidateTag(labelTag(user.id));
 }

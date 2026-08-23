@@ -1,4 +1,4 @@
-import { labelQueries } from "@homebox-ai/db";
+import { listLabelsCached } from "../../../lib/cached-queries";
 import { Input, SubmitButton } from "@homebox-ai/ui";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
@@ -9,7 +9,7 @@ import { LabelList } from "./label-list";
 
 export default async function LabelsPage() {
   const user = await getSessionUser();
-  const labels = user ? await labelQueries.listLabels(user.id) : [];
+  const labels = user ? await listLabelsCached(user.id) : [];
 
   return (
     <CrudShell

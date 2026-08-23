@@ -1,4 +1,4 @@
-import { and, eq, ilike, lte, sql } from "drizzle-orm";
+import { and, count, eq, ilike, lte, sql } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { wouldFormCycle } from "../cycle";
@@ -10,6 +10,18 @@ export interface SearchItemsFilters {
   locationId?: string;
   /** Archived items are hidden by default — pass true to include them (e.g. an "Archived" filter view). */
   includeArchived?: boolean;
+}
+
+/** Lightweight count of active (non-archived) items — use on the dashboard instead of fetching all rows. */
+export function countItems(userId: string): Promise<number> {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    const [row] = await tx
+      .select({ n: count() })
+      .from(items)
+      .where(and(eq(items.ownerId, ownerId), eq(items.archived, false)));
+    return row?.n ?? 0;
+  });
 }
 
 export function searchItems(userId: string, filters: SearchItemsFilters = {}) {
