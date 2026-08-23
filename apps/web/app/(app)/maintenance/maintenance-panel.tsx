@@ -72,7 +72,7 @@ export function MaintenancePanel({ items }: MaintenancePanelProps) {
                     <StaggerItem
                       key={`${suggestion.name}-${index}`}
                       hover
-                      className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3"
+                      className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3 transition-colors duration-150 hover:border-accent"
                     >
                       <div className="flex flex-col gap-0.5">
                         <span className="font-medium text-ink">{suggestion.name}</span>
