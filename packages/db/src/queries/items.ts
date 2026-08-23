@@ -74,6 +74,31 @@ export function getItem(userId: string, itemId: string) {
   });
 }
 
+/** Like getItem but also returns the primary photo storage path — used by the AI search tools so the chat UI can show cover photos. */
+export function getItemWithPrimaryPhoto(userId: string, itemId: string) {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    const rows = await tx
+      .select({
+        id: items.id,
+        name: items.name,
+        locationId: items.locationId,
+        assetId: items.assetId,
+        archived: items.archived,
+        currency: items.currency,
+        purchasePrice: items.purchasePrice,
+        description: items.description,
+        quantity: items.quantity,
+        warrantyExpires: items.warrantyExpires,
+        primaryPhotoPath: attachments.storagePath,
+      })
+      .from(items)
+      .leftJoin(attachments, and(eq(attachments.itemId, items.id), eq(attachments.isPrimary, true)))
+      .where(and(eq(items.id, itemId), eq(items.ownerId, ownerId)));
+    return rows[0] ?? null;
+  });
+}
+
 export function listChildItems(userId: string, parentItemId: string) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);

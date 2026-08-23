@@ -14,6 +14,12 @@ import { ActionCard } from "./action-card";
 import { HistorySheet } from "./history-sheet";
 import { MessageContent } from "./message-content";
 
+interface ReferencedItem {
+  id: string;
+  name: string;
+  photoUrl: string;
+}
+
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
@@ -22,6 +28,8 @@ interface ChatMessage {
   /** Set on the confirmation-result message after a pending action succeeds — where the confirmed thing now lives, so the user can jump straight to it. */
   viewHref?: string;
   viewHrefLabel?: string;
+  /** Items with cover photos that the AI referenced this turn — shown as clickable thumbnails below the text. Ephemeral (not persisted to DB). */
+  referencedItems?: ReferencedItem[];
 }
 
 interface ChatSession {
@@ -166,7 +174,8 @@ export default function ChatPage() {
 
       // A crashed/timed-out function can return an empty or non-JSON body —
       // parse defensively instead of letting `.json()` throw a raw parse error.
-      let data: { reply?: string; error?: string; pendingAction?: PendingAction } = {};
+      let data: { reply?: string; error?: string; pendingAction?: PendingAction; referencedItems?: ReferencedItem[] } =
+        {};
       try {
         data = await response.json();
       } catch {
@@ -178,7 +187,13 @@ export default function ChatPage() {
       if (sessionIdRef.current === requestSessionId) {
         setMessages((prev) => [
           ...prev,
-          { id: crypto.randomUUID(), role: "assistant", content: data.reply!, pendingAction: data.pendingAction },
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: data.reply!,
+            pendingAction: data.pendingAction,
+            referencedItems: data.referencedItems?.length ? data.referencedItems : undefined,
+          },
         ]);
       }
       listChatSessionsAction()
@@ -225,7 +240,8 @@ export default function ChatPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: "Continue.", sessionId: requestSessionId, isContinuation: true }),
         });
-        let data: { reply?: string; error?: string; pendingAction?: PendingAction } = {};
+        let data: { reply?: string; error?: string; pendingAction?: PendingAction; referencedItems?: ReferencedItem[] } =
+          {};
         try {
           data = await response.json();
         } catch {
@@ -234,7 +250,13 @@ export default function ChatPage() {
         if (response.ok && data.reply && sessionIdRef.current === requestSessionId) {
           setMessages((prev) => [
             ...prev,
-            { id: crypto.randomUUID(), role: "assistant", content: data.reply!, pendingAction: data.pendingAction },
+            {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: data.reply!,
+              pendingAction: data.pendingAction,
+              referencedItems: data.referencedItems?.length ? data.referencedItems : undefined,
+            },
           ]);
           requestAnimationFrame(scrollToBottom);
         }
@@ -339,6 +361,25 @@ export default function ChatPage() {
                     ) : message.role === "assistant" ? (
                       <div className="flex flex-col gap-1.5">
                         <MessageContent content={message.content} />
+                        {message.referencedItems && message.referencedItems.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-0.5">
+                            {message.referencedItems.map((item) => (
+                              <Link
+                                key={item.id}
+                                href={`/items/${item.id}`}
+                                title={item.name}
+                                className="overflow-hidden rounded-md border border-border transition-opacity duration-150 hover:opacity-80"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL, not a static asset */}
+                                <img
+                                  src={item.photoUrl}
+                                  alt={item.name}
+                                  className="h-16 w-16 object-cover"
+                                />
+                              </Link>
+                            ))}
+                          </div>
+                        )}
                         {message.viewHref && (
                           <Link
                             href={message.viewHref}

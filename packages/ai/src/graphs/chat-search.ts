@@ -34,7 +34,8 @@ function proposal(action: PendingAction) {
 function buildTools(userId: string) {
   return [
     tool(
-      async ({ query, locationId }) => JSON.stringify(await itemQueries.searchItems(userId, { query, locationId })),
+      async ({ query, locationId }) =>
+        JSON.stringify(await itemQueries.searchItemsWithPrimaryPhoto(userId, { query, locationId })),
       {
         name: "search_items",
         description: "Search the user's inventory by name substring and/or location.",
@@ -44,7 +45,7 @@ function buildTools(userId: string) {
         }),
       },
     ),
-    tool(async ({ itemId }) => JSON.stringify(await itemQueries.getItem(userId, itemId)), {
+    tool(async ({ itemId }) => JSON.stringify(await itemQueries.getItemWithPrimaryPhoto(userId, itemId)), {
       name: "get_item",
       description: "Look up a single item by id.",
       schema: z.object({ itemId: z.string() }),
