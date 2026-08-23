@@ -174,9 +174,9 @@ export default async function DashboardPage() {
                     {/* Actor avatar or type icon */}
                     {entry.actorAvatar ? (
                       // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL
-                      <img src={entry.actorAvatar} alt={entry.actor ?? ""} className="h-7 w-7 shrink-0 rounded-lg border border-border object-cover" />
+                      <img src={entry.actorAvatar} alt={entry.actor ?? ""} className="h-7 w-7 shrink-0 rounded-[7px] border border-border object-cover" />
                     ) : (
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-muted">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[7px] border border-border bg-surface text-muted">
                         {entry.type === "item" ? (
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                             <path d="M3 8l9-5 9 5-9 5-9-5Z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" />

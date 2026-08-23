@@ -46,7 +46,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
               <img
                 src={avatarUrl}
                 alt={displayName ?? "Profile"}
-                className="h-7 w-7 rounded-xl object-cover md:h-8 md:w-8"
+                className="h-7 w-7 rounded-[8px] object-cover md:h-8 md:w-8"
               />
             ) : (
               <SettingsIcon className="h-5 w-5 md:h-6 md:w-6" />
