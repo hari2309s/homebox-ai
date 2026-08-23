@@ -5,7 +5,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 // "-latest" alias, which Google keeps pointed at their current recommended
 // flash-tier model, rather than a dated version string that will go stale
 // the same way; still overridable via env for anyone who wants to pin one.
-export function createGeminiModel(model = process.env.GOOGLE_MODEL ?? "gemini-flash-latest") {
+export function createGeminiModel(model = process.env.GOOGLE_MODEL ?? "gemini-2.0-flash") {
   const apiKey = process.env.GOOGLE_API_KEY;
   if (!apiKey) throw new Error("GOOGLE_API_KEY is not set");
   return new ChatGoogleGenerativeAI({ apiKey, model });
