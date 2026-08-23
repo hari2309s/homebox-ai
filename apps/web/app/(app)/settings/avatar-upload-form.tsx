@@ -193,7 +193,7 @@ export function AvatarUploadForm({ userId, currentAvatarUrl }: AvatarUploadFormP
               <h2 className="text-sm font-bold text-ink">Crop photo</h2>
 
               {/* Crop canvas */}
-              <div className="relative h-64 w-full overflow-hidden rounded-xl bg-black">
+              <div className="relative h-80 w-full overflow-hidden rounded-xl bg-black">
                 <Cropper
                   image={cropSrc}
                   crop={crop}
