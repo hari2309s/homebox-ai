@@ -47,31 +47,46 @@ export default async function DashboardPage() {
     ...recentItems.flatMap((i) => (i.createdBy ? [i.createdBy] : [])),
     ...recentMaintenance.flatMap((e) => (e.createdBy ? [e.createdBy] : [])),
   ])];
-  const displayNameById = actorIds.length > 0 ? await sharingQueries.getUserDisplayNames(actorIds) : new Map<string, string | null>();
+  const profileById = actorIds.length > 0 ? await sharingQueries.getUserProfiles(actorIds) : new Map<string, sharingQueries.UserProfile>();
 
   // Merge items and maintenance into one chronological feed, newest first.
-  type ActivityEntry =
-    | { type: "item"; id: string; label: string; actor: string | null; href: string; at: Date }
-    | { type: "maintenance"; id: string; label: string; subtext: string; actor: string | null; href: string; at: Date };
+  type ActivityEntry = {
+    type: "item" | "maintenance";
+    id: string;
+    label: string;
+    subtext?: string;
+    actor: string | null;
+    actorAvatar: string | null;
+    href: string;
+    at: Date;
+  };
 
   const activity: ActivityEntry[] = [
-    ...recentItems.map((item) => ({
-      type: "item" as const,
-      id: item.id,
-      label: item.name,
-      actor: item.createdBy ? (displayNameById.get(item.createdBy) ?? null) : null,
-      href: `/items/${item.id}`,
-      at: new Date(item.createdAt),
-    })),
-    ...recentMaintenance.map((entry) => ({
-      type: "maintenance" as const,
-      id: entry.id,
-      label: entry.name,
-      subtext: entry.itemName,
-      actor: entry.createdBy ? (displayNameById.get(entry.createdBy) ?? null) : null,
-      href: `/items/${entry.itemId}`,
-      at: new Date(entry.createdAt),
-    })),
+    ...recentItems.map((item) => {
+      const profile = item.createdBy ? profileById.get(item.createdBy) : null;
+      return {
+        type: "item" as const,
+        id: item.id,
+        label: item.name,
+        actor: profile?.name ?? null,
+        actorAvatar: profile?.avatarUrl ?? null,
+        href: `/items/${item.id}`,
+        at: new Date(item.createdAt),
+      };
+    }),
+    ...recentMaintenance.map((entry) => {
+      const profile = entry.createdBy ? profileById.get(entry.createdBy) : null;
+      return {
+        type: "maintenance" as const,
+        id: entry.id,
+        label: entry.name,
+        subtext: entry.itemName,
+        actor: profile?.name ?? null,
+        actorAvatar: profile?.avatarUrl ?? null,
+        href: `/items/${entry.itemId}`,
+        at: new Date(entry.createdAt),
+      };
+    }),
   ]
     .sort((a, b) => b.at.getTime() - a.at.getTime())
     .slice(0, 8);
@@ -153,35 +168,37 @@ export default async function DashboardPage() {
               <StaggerItem key={`${entry.type}-${entry.id}`} hover>
                 <Link
                   href={entry.href}
-                  className="flex items-center justify-between gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm"
+                  className="flex items-center gap-3 rounded-md border border-border bg-card px-3 py-2 text-sm"
                 >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <span className="shrink-0 text-muted">
-                      {entry.type === "item" ? (
-                        /* box icon */
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                          <path d="M3 8l9-5 9 5-9 5-9-5Z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" />
-                        </svg>
-                      ) : (
-                        /* wrench icon */
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                          <circle cx="6" cy="18" r="2.75" /><circle cx="18" cy="6" r="2.75" /><path d="m8 16 8-8" />
-                        </svg>
-                      )}
-                    </span>
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    {/* Actor avatar or type icon */}
+                    {entry.actorAvatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL
+                      <img src={entry.actorAvatar} alt={entry.actor ?? ""} className="h-7 w-7 shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface text-muted">
+                        {entry.type === "item" ? (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                            <path d="M3 8l9-5 9 5-9 5-9-5Z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                            <circle cx="6" cy="18" r="2.75" /><circle cx="18" cy="6" r="2.75" /><path d="m8 16 8-8" />
+                          </svg>
+                        )}
+                      </span>
+                    )}
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate font-medium text-ink">
                         {entry.type === "item" ? `Added ${entry.label}` : entry.label}
                       </span>
-                      {entry.type === "maintenance" && (
-                        <span className="truncate text-xs text-muted">{entry.subtext}</span>
-                      )}
+                      <span className="truncate text-xs text-muted">
+                        {entry.actor && `${entry.actor} · `}
+                        {entry.type === "maintenance" && entry.subtext ? `${entry.subtext} · ` : ""}
+                        {formatRelativeTime(entry.at)}
+                      </span>
                     </div>
                   </div>
-                  <span className="shrink-0 text-right text-xs text-muted">
-                    {entry.actor && <span className="block font-medium text-ink">{entry.actor}</span>}
-                    {formatRelativeTime(entry.at)}
-                  </span>
                 </Link>
               </StaggerItem>
             ))}

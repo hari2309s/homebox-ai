@@ -31,6 +31,31 @@ export async function uploadAttachment(
   return path;
 }
 
+/** Fixed storage path for a user's avatar — under their own id prefix so the bucket RLS policy allows it. */
+export function avatarPath(userId: string) {
+  return `${userId}/avatar/profile.jpg`;
+}
+
+/**
+ * Uploads a new avatar for `userId`, replacing any previous one (upsert).
+ * Returns a 10-year signed URL suitable for storing in user_metadata.avatar_url.
+ */
+export async function uploadAvatar(supabase: SupabaseClient, userId: string, file: File | Blob): Promise<string> {
+  const path = avatarPath(userId);
+  const { error: uploadError } = await supabase.storage.from(ATTACHMENTS_BUCKET).upload(path, file, {
+    upsert: true,
+    contentType: file instanceof File ? file.type : "image/jpeg",
+  });
+  if (uploadError) throw uploadError;
+
+  // 10 years — effectively permanent for a personal app.
+  const { data, error: signError } = await supabase.storage
+    .from(ATTACHMENTS_BUCKET)
+    .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+  if (signError || !data?.signedUrl) throw signError ?? new Error("Failed to sign avatar URL");
+  return data.signedUrl;
+}
+
 export function getAttachmentSignedUrl(supabase: SupabaseClient, path: string, expiresInSeconds = 3600) {
   return supabase.storage.from(ATTACHMENTS_BUCKET).createSignedUrl(path, expiresInSeconds);
 }

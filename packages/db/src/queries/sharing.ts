@@ -5,19 +5,23 @@ import { getDb } from "../client";
 import { sharedAccess, sharedAccessInvites } from "../schema";
 import { withRLS, type Tx } from "../rls";
 
+export interface UserProfile {
+  name: string | null;
+  avatarUrl: string | null;
+}
+
 /**
- * Fetches the `full_name` from `auth.users.raw_user_meta_data` for a batch of
- * user IDs. Uses the direct (non-RLS) connection — same pattern as `emailFor`
- * — because `auth.users` is outside the RLS policy boundary.
- * Returns a map of userId → display name (null if the user has no name set).
+ * Fetches display name and avatar URL from `auth.users.raw_user_meta_data` for
+ * a batch of user IDs. Uses the direct (non-RLS) connection because `auth.users`
+ * is outside the RLS boundary. Returns a map of userId → UserProfile.
  */
-export async function getUserDisplayNames(userIds: string[]): Promise<Map<string, string | null>> {
+export async function getUserProfiles(userIds: string[]): Promise<Map<string, UserProfile>> {
   if (userIds.length === 0) return new Map();
   const db = getDb();
-  const rows = await db.execute<{ id: string; display_name: string | null }>(
-    sql`SELECT id, raw_user_meta_data->>'full_name' AS display_name FROM auth.users WHERE id = ANY(${userIds})`,
+  const rows = await db.execute<{ id: string; name: string | null; avatar_url: string | null }>(
+    sql`SELECT id, raw_user_meta_data->>'full_name' AS name, raw_user_meta_data->>'avatar_url' AS avatar_url FROM auth.users WHERE id = ANY(${userIds})`,
   );
-  return new Map(rows.map((row) => [row.id, row.display_name ?? null]));
+  return new Map(rows.map((row) => [row.id, { name: row.name ?? null, avatarUrl: row.avatar_url ?? null }]));
 }
 
 // auth.users.email is a real column, but it's deliberately not declared on

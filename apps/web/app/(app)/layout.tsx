@@ -16,6 +16,8 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   if (!user) redirect("/login");
 
   const unreadChatCount = await chatQueries.countUnreadProactiveMessages(user.id);
+  const avatarUrl = typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
+  const displayName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : null;
 
   return (
     <div
@@ -39,7 +41,16 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             aria-label="Settings"
             className="rounded-md p-1 text-ink transition-colors duration-150 hover:text-accent"
           >
-            <SettingsIcon className="h-5 w-5 md:h-6 md:w-6" />
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL, not a static asset
+              <img
+                src={avatarUrl}
+                alt={displayName ?? "Profile"}
+                className="h-7 w-7 rounded-full object-cover md:h-8 md:w-8"
+              />
+            ) : (
+              <SettingsIcon className="h-5 w-5 md:h-6 md:w-6" />
+            )}
           </Link>
           <LogoutButton />
         </div>

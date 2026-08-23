@@ -9,6 +9,8 @@ import { createPortal } from "react-dom";
 
 import type { PendingAction } from "@homebox-ai/ai";
 
+import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
+
 import { confirmChatActionAction, listChatSessionsAction, loadChatSessionAction } from "./actions";
 import { ActionCard } from "./action-card";
 import { HistorySheet } from "./history-sheet";
@@ -113,6 +115,8 @@ export default function ChatPage() {
   // per message, so this is enough to hide it after confirm/cancel without
   // needing to mutate the message list itself.
   const [resolvedActions, setResolvedActions] = useState<Record<string, "confirmed" | "cancelled">>({});
+  const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
+  const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef(sessionId);
 
@@ -130,6 +134,14 @@ export default function ChatPage() {
       .then(setSessions)
       .catch(() => {});
     setHeaderActionsEl(document.getElementById("header-actions"));
+    // Fetch avatar URL from the current session's user metadata.
+    createSupabaseBrowserClient()
+      .auth.getUser()
+      .then(({ data }) => {
+        const url = data.user?.user_metadata?.avatar_url;
+        if (typeof url === "string") setMyAvatarUrl(url);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -151,11 +163,14 @@ export default function ChatPage() {
     setMessages([]);
     setResolvedActions({});
     setSessionId(id);
+    setLoadingSessionId(id);
     try {
       const history = await loadChatSessionAction(id);
       setMessages(history);
     } catch {
       setError("Couldn't load that conversation");
+    } finally {
+      setLoadingSessionId(null);
     }
   }
 
@@ -369,8 +384,16 @@ export default function ChatPage() {
                         )}
                       </div>
                     ) : isUser ? (
-                      <div className="rounded-2xl rounded-br-sm bg-accent px-4 py-2.5 text-sm text-white whitespace-pre-wrap">
-                        {message.content}
+                      <div className="flex items-end gap-2">
+                        <div className="rounded-2xl rounded-br-sm bg-accent px-4 py-2.5 text-sm text-white whitespace-pre-wrap">
+                          {message.content}
+                        </div>
+                        {myAvatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL
+                          <img src={myAvatarUrl} alt="You" className="h-6 w-6 shrink-0 rounded-full object-cover" />
+                        ) : (
+                          <div className="h-6 w-6 shrink-0 rounded-full bg-accent/40" />
+                        )}
                       </div>
                     ) : (
                       <div className="rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-2.5 text-sm text-body">
@@ -454,6 +477,7 @@ export default function ChatPage() {
         open={historyOpen}
         sessions={sessions}
         activeSessionId={sessionId}
+        loadingSessionId={loadingSessionId}
         onClose={() => setHistoryOpen(false)}
         onSelect={switchToSession}
         onNewChat={startNewChat}

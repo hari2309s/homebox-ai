@@ -2,6 +2,7 @@ import { getSessionUser } from "@homebox-ai/supabase/server";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { AvatarUploadForm } from "./avatar-upload-form";
 import { CsvImportForm } from "./csv-import-form";
 import { DeleteAccountForm } from "./delete-account-form";
 import { DisplayNameForm } from "./display-name-form";
@@ -24,6 +25,7 @@ export default async function SettingsPage() {
 
   const email = user.email ?? "";
   const displayName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "";
+  const avatarUrl = typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
 
   return (
     <div className="flex h-full flex-col gap-4 overflow-y-auto p-4 sm:p-6 md:mx-auto md:w-full md:max-w-2xl">
@@ -34,6 +36,7 @@ export default async function SettingsPage() {
       </SettingsSection>
 
       <SettingsSection title="Profile">
+        <AvatarUploadForm userId={user.id} currentAvatarUrl={avatarUrl} />
         <DisplayNameForm initialName={displayName} />
       </SettingsSection>
 

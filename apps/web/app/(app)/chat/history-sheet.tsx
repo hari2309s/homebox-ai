@@ -1,6 +1,6 @@
 "use client";
 
-import { StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
+import { Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface ChatSession {
@@ -14,6 +14,7 @@ interface HistorySheetProps {
   open: boolean;
   sessions: ChatSession[];
   activeSessionId: string;
+  loadingSessionId: string | null;
   onClose: () => void;
   onSelect: (sessionId: string) => void;
   onNewChat: () => void;
@@ -39,7 +40,7 @@ function timeAgo(iso: string) {
   return relativeTimeFormatter.format(-diffSeconds, "second");
 }
 
-export function HistorySheet({ open, sessions, activeSessionId, onClose, onSelect, onNewChat }: HistorySheetProps) {
+export function HistorySheet({ open, sessions, activeSessionId, loadingSessionId, onClose, onSelect, onNewChat }: HistorySheetProps) {
   return (
     <AnimatePresence>
       {open && (
@@ -81,15 +82,19 @@ export function HistorySheet({ open, sessions, activeSessionId, onClose, onSelec
                         type="button"
                         onClick={() => onSelect(session.sessionId)}
                         whileHover={{ scale: 1.015 }}
+                        disabled={loadingSessionId !== null}
                         className={`flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-md border-none px-3 py-2.5 text-left transition-colors duration-150 ${
                           session.sessionId === activeSessionId
                             ? "bg-surface-soft"
                             : "bg-transparent hover:bg-surface-soft"
                         }`}
                       >
-                        <span className="flex items-center gap-1.5 text-sm text-ink">
+                        <span className="flex w-full items-center gap-1.5 text-sm text-ink">
                           {session.hasUnread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />}
-                          {session.title}
+                          <span className="flex-1 truncate">{session.title}</span>
+                          {loadingSessionId === session.sessionId && (
+                            <Spinner size={12} className="shrink-0 text-muted" />
+                          )}
                         </span>
                         <span className="text-xs text-muted">{timeAgo(session.lastMessageAt)}</span>
                       </TapButton>
