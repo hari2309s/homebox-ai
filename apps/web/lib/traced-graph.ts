@@ -3,25 +3,26 @@ import { after } from "next/server";
 
 import { langfuseSpanProcessor } from "../instrumentation-node";
 
+const langfuseEnabled =
+  Boolean(process.env.LANGFUSE_PUBLIC_KEY) && Boolean(process.env.LANGFUSE_SECRET_KEY);
+
 /**
- * Every AI-graph Server Action follows the same shape: build a per-call
- * Langfuse handler, invoke the graph with it, then flush the span processor
- * after the response is sent (serverless functions can be frozen right after
- * returning, before background export would otherwise run). This centralizes
- * that so each action only supplies the graph-specific `run` call.
+ * Every AI-graph Server Action follows the same shape: optionally build a
+ * per-call Langfuse handler, invoke the graph with it, then flush the span
+ * processor after the response is sent. When Langfuse keys are not configured
+ * the graph runs without any callbacks so missing keys never block AI calls.
  */
 export async function runTracedGraph<T>(
   context: TracingContext & { runName: string },
-  run: (options: { callbacks: [ReturnType<typeof createLangfuseHandler>]; runName: string }) => Promise<T>,
+  run: (options: { callbacks: ReturnType<typeof createLangfuseHandler>[]; runName: string }) => Promise<T>,
 ): Promise<T> {
-  const langfuseHandler = createLangfuseHandler(context);
+  if (langfuseEnabled) {
+    const langfuseHandler = createLangfuseHandler(context);
+    after(async () => {
+      await langfuseSpanProcessor.forceFlush();
+    });
+    return run({ callbacks: [langfuseHandler], runName: context.runName });
+  }
 
-  // Registered before the call, not after — a rejected `run()` would
-  // otherwise skip this entirely, losing the trace for every failed call
-  // (the exact case most worth having a trace for).
-  after(async () => {
-    await langfuseSpanProcessor.forceFlush();
-  });
-
-  return run({ callbacks: [langfuseHandler], runName: context.runName });
+  return run({ callbacks: [], runName: context.runName });
 }
