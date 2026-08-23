@@ -148,6 +148,14 @@ export default function ChatPage() {
     sessionIdRef.current = sessionId;
   }, [sessionId]);
 
+  // Scroll to the bottom whenever a new message lands or the typing indicator
+  // appears/disappears. useEffect fires after React commits the DOM, so
+  // scrollHeight is already correct — unlike requestAnimationFrame which can
+  // fire before the new nodes are painted.
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, pending]);
+
   function startNewChat() {
     setSessionId(crypto.randomUUID());
     setMessages([]);
@@ -230,7 +238,6 @@ export default function ChatPage() {
       }
     } finally {
       setPending(false);
-      requestAnimationFrame(scrollToBottom);
     }
   }
 
@@ -251,7 +258,6 @@ export default function ChatPage() {
           createdAt: new Date().toISOString(),
         },
       ]);
-      requestAnimationFrame(scrollToBottom);
 
       // Auto-continue: re-invoke the agent so it can propose the next step of
       // the original request (e.g. "add item to Backyard" after Backyard was just
@@ -285,7 +291,6 @@ export default function ChatPage() {
               createdAt: new Date().toISOString(),
             },
           ]);
-          requestAnimationFrame(scrollToBottom);
         }
       } catch {
         // Swallow continuation errors — the primary action already succeeded and
