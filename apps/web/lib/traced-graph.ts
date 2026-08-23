@@ -18,10 +18,12 @@ export async function runTracedGraph<T>(
 ): Promise<T> {
   if (langfuseEnabled) {
     const langfuseHandler = createLangfuseHandler(context);
+    const result = await run({ callbacks: [langfuseHandler], runName: context.runName });
     after(async () => {
+      await langfuseHandler.langfuse.flushAsync();
       await langfuseSpanProcessor.forceFlush();
     });
-    return run({ callbacks: [langfuseHandler], runName: context.runName });
+    return result;
   }
 
   return run({ callbacks: [], runName: context.runName });
