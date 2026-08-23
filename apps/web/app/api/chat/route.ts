@@ -1,3 +1,5 @@
+export const maxDuration = 60;
+
 import { createChatSearchGraph, pendingActionSchema, type PendingAction } from "@homebox-ai/ai";
 import { chatQueries } from "@homebox-ai/db";
 import { AIMessage, HumanMessage, ToolMessage, type BaseMessage } from "@langchain/core/messages";

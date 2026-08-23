@@ -1,3 +1,7 @@
+// AI server actions (capture, receipts, maintenance) can take up to ~30 s —
+// raise the Vercel function limit so they aren't killed before completion.
+export const maxDuration = 60;
+
 import { chatQueries } from "@homebox-ai/db";
 import { AnimatedHomeboxIcon, FadeIn } from "@homebox-ai/ui";
 import Link from "next/link";
