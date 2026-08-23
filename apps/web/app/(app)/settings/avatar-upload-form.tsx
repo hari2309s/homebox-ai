@@ -129,7 +129,7 @@ export function AvatarUploadForm({ userId, currentAvatarUrl }: AvatarUploadFormP
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
           aria-label="Change profile picture"
-          className="relative flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-border bg-surface-soft transition-opacity duration-150 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+          className="relative flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-2xl border-2 border-border bg-surface-soft transition-opacity duration-150 hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL

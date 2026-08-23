@@ -157,8 +157,7 @@ export default function ChatPage() {
   }
 
   async function switchToSession(id: string) {
-    setHistoryOpen(false);
-    if (id === sessionId) return;
+    if (id === sessionId) { setHistoryOpen(false); return; }
     setError(null);
     setMessages([]);
     setResolvedActions({});
@@ -171,6 +170,7 @@ export default function ChatPage() {
       setError("Couldn't load that conversation");
     } finally {
       setLoadingSessionId(null);
+      setHistoryOpen(false);
     }
   }
 

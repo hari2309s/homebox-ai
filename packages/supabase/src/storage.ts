@@ -42,8 +42,11 @@ export function avatarPath(userId: string) {
  */
 export async function uploadAvatar(supabase: SupabaseClient, userId: string, file: File | Blob): Promise<string> {
   const path = avatarPath(userId);
+  // Delete before re-upload so we only need INSERT + DELETE policies (no UPDATE policy required).
+  // Ignore the error — it just means no previous avatar existed yet.
+  await supabase.storage.from(ATTACHMENTS_BUCKET).remove([path]);
   const { error: uploadError } = await supabase.storage.from(ATTACHMENTS_BUCKET).upload(path, file, {
-    upsert: true,
+    upsert: false,
     contentType: file instanceof File ? file.type : "image/jpeg",
   });
   if (uploadError) throw uploadError;
