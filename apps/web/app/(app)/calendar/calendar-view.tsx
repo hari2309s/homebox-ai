@@ -77,6 +77,7 @@ export function CalendarView({
   const [visibleMonth, setVisibleMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDateKey, setSelectedDateKey] = useState(() => toDateKey(today));
   const [error, setError] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
 
   const remindersByDate = useMemo(() => {
     const map = new Map<string, Reminder[]>();
@@ -110,48 +111,72 @@ export function CalendarView({
     }
   }
 
+  async function handleCreate(formData: FormData) {
+    setError(null);
+    try {
+      await createReminderAction(formData);
+      setFormOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't add this reminder");
+    }
+  }
+
   return (
     <div className="flex h-full flex-col">
-      <div className="order-2 shrink-0 border-t border-border bg-card p-4 md:p-6">
-        <form
-          action={async (formData) => {
-            await runAction(createReminderAction, formData, "Couldn't add this reminder");
-          }}
-          className="flex flex-col gap-2 md:mx-auto md:w-full md:max-w-2xl"
-        >
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input name="title" placeholder="What needs doing" required className="sm:flex-1" />
-            <Input name="dueDate" type="date" defaultValue={selectedDateKey} required className="sm:w-40" />
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Select name="itemId" className="sm:flex-1" defaultValue="">
-              <option value="">No specific item</option>
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </Select>
-            <Select name="assignedToUserId" className="sm:w-48" defaultValue={currentUserId}>
-              <option value="">Unassigned</option>
-              {householdUsers.map((person) => (
-                <option key={person.userId} value={person.userId}>
-                  {person.isSelf ? "Myself" : (person.email ?? "Family member")}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <Input name="description" placeholder="Notes (optional)" />
-          <SubmitButton className="self-start">Add reminder</SubmitButton>
-          {error && (
-            <p role="alert" className="text-sm text-accent-hover">
-              {error}
-            </p>
-          )}
-        </form>
+      <div className="order-2 shrink-0 border-t border-border bg-card p-3 md:px-6">
+        {formOpen ? (
+          <form action={handleCreate} className="flex flex-col gap-2 md:mx-auto md:w-full md:max-w-2xl">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input name="title" placeholder="What needs doing" required autoFocus className="sm:flex-1" />
+              <Input name="dueDate" type="date" defaultValue={selectedDateKey} required className="sm:w-40" />
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Select name="itemId" className="sm:flex-1" defaultValue="">
+                <option value="">No specific item</option>
+                {items.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </Select>
+              <Select name="assignedToUserId" className="sm:w-48" defaultValue={currentUserId}>
+                <option value="">Unassigned</option>
+                {householdUsers.map((person) => (
+                  <option key={person.userId} value={person.userId}>
+                    {person.isSelf ? "Myself" : (person.email ?? "Family member")}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Input name="description" placeholder="Notes (optional)" />
+            <div className="flex items-center gap-3">
+              <SubmitButton className="self-start">Add reminder</SubmitButton>
+              <TapButton
+                type="button"
+                onClick={() => setFormOpen(false)}
+                className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
+              >
+                Cancel
+              </TapButton>
+            </div>
+            {error && (
+              <p role="alert" className="text-sm text-accent-hover">
+                {error}
+              </p>
+            )}
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-border py-2 text-sm font-semibold text-muted transition-colors duration-150 hover:border-accent hover:text-accent-hover md:mx-auto md:max-w-2xl"
+          >
+            + Add reminder
+          </button>
+        )}
       </div>
 
-      <div className="order-1 flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6 md:mx-auto md:w-full md:max-w-2xl">
+      <div className="order-1 flex flex-1 flex-col gap-3 overflow-y-auto p-4 sm:p-6 md:mx-auto md:w-full md:max-w-2xl">
         <div className="flex items-center justify-between">
           <TapButton
             type="button"
@@ -207,8 +232,12 @@ export function CalendarView({
                 key={dateKey}
                 type="button"
                 onClick={() => setSelectedDateKey(dateKey)}
-                className={`flex aspect-square cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border text-sm transition-colors duration-150 ${
-                  isSelected ? "border-accent bg-accent/10" : "border-transparent hover:bg-surface-soft"
+                className={`flex h-10 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border text-sm transition-colors duration-150 sm:h-12 ${
+                  isSelected
+                    ? "border-accent bg-accent/10"
+                    : isToday
+                      ? "border-accent/40 bg-card hover:border-accent/60 hover:bg-surface-soft"
+                      : "border-border bg-card hover:border-accent/30 hover:bg-surface-soft"
                 } ${inMonth ? "" : "opacity-40"}`}
               >
                 <span className={isToday ? "font-bold text-accent-hover" : "text-ink"}>{date.getDate()}</span>
