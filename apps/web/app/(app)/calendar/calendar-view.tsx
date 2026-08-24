@@ -306,14 +306,16 @@ function ReminderRow({
   }
 
   return (
-    <StaggerItem
-      hover
-      className="flex flex-col gap-1 rounded-md border border-border bg-card py-2.5 pl-2.5 pr-3"
-      style={{ borderLeft: `3px solid ${colorForAssignee(reminder.assignedToUserId)}` }}
-    >
+    <StaggerItem hover className="flex flex-col gap-1 rounded-md border border-border bg-card px-3 py-2.5">
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5">
-          <span className={`font-medium ${done ? "text-muted line-through" : "text-ink"}`}>{reminder.title}</span>
+          <span className="flex items-center gap-1.5">
+            <span
+              className="h-2 w-2 shrink-0 rounded-full"
+              style={{ backgroundColor: colorForAssignee(reminder.assignedToUserId) }}
+            />
+            <span className={`font-medium ${done ? "text-muted line-through" : "text-ink"}`}>{reminder.title}</span>
+          </span>
           <span className="text-xs text-muted">
             {reminder.itemName ? `${reminder.itemName} · ` : ""}Assigned to {assignee}
           </span>
