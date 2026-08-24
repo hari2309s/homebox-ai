@@ -15,6 +15,7 @@ interface AttachmentRecord {
 
 export function AttachmentsSection({ itemId, attachments }: { itemId: string; attachments: AttachmentRecord[] }) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
@@ -22,12 +23,16 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
     const formData = new FormData();
     formData.set("itemId", itemId);
     formData.set("attachmentId", pendingDeleteId);
-    setPendingDeleteId(null);
     setError(null);
+    setDeleting(true);
     try {
       await deleteAttachmentAction(formData);
+      setPendingDeleteId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't delete this attachment");
+      setPendingDeleteId(null);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -121,6 +126,7 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
         open={pendingDeleteId !== null}
         title="Delete this attachment?"
         confirmLabel="Delete"
+        confirming={deleting}
         onConfirm={handleDelete}
         onCancel={() => setPendingDeleteId(null)}
       />

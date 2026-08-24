@@ -39,18 +39,23 @@ export function LabelList({ labels }: { labels: LabelRecord[] }) {
 function LabelChip({ label }: { label: LabelRecord }) {
   const [editing, setEditing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const textColor = textColorFor(label.color);
 
   async function handleDelete() {
-    setConfirmOpen(false);
     setError(null);
+    setDeleting(true);
     const formData = new FormData();
     formData.set("id", label.id);
     try {
       await deleteLabelAction(formData);
+      setConfirmOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't delete this label");
+      setConfirmOpen(false);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -129,6 +134,7 @@ function LabelChip({ label }: { label: LabelRecord }) {
         open={confirmOpen}
         title={`Delete label "${label.name}"?`}
         confirmLabel="Delete"
+        confirming={deleting}
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />

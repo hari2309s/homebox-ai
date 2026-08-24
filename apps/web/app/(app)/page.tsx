@@ -1,4 +1,4 @@
-import { itemQueries, maintenanceQueries, reminderQueries, sharingQueries } from "@homebox-ai/db";
+import { itemActivityQueries, itemQueries, maintenanceQueries, reminderQueries, sharingQueries } from "@homebox-ai/db";
 import { FadeIn, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import Link from "next/link";
 
@@ -30,14 +30,14 @@ const QUICK_ACTIONS = [
 export default async function DashboardPage() {
   const user = await getSessionUser();
 
-  const [itemCount, locations, labels, valueByCurrency, expiringWarranties, recentItems, recentMaintenance, recentReminders] = user
+  const [itemCount, locations, labels, valueByCurrency, expiringWarranties, recentItemActivity, recentMaintenance, recentReminders] = user
     ? await Promise.all([
         itemQueries.countItems(user.id),
         listLocationsCached(user.id),
         listLabelsCached(user.id),
         itemQueries.getInventoryValueByCurrency(user.id),
         itemQueries.listUpcomingWarrantyExpirations(user.id),
-        itemQueries.listRecentItems(user.id, 5).catch(() => []),
+        itemActivityQueries.listRecentItemActivity(user.id, 5).catch(() => []),
         maintenanceQueries.listRecentMaintenance(user.id, 5).catch(() => []),
         reminderQueries.listRecentReminders(user.id, 5).catch(() => []),
       ])
@@ -45,11 +45,17 @@ export default async function DashboardPage() {
 
   // Resolve display names for all actors that appear in the activity feed.
   const actorIds = [...new Set([
-    ...recentItems.flatMap((i) => (i.createdBy ? [i.createdBy] : [])),
+    ...recentItemActivity.flatMap((e) => (e.actorId ? [e.actorId] : [])),
     ...recentMaintenance.flatMap((e) => (e.createdBy ? [e.createdBy] : [])),
     ...recentReminders.flatMap((r) => (r.createdBy ? [r.createdBy] : [])),
   ])];
   const profileById = actorIds.length > 0 ? await sharingQueries.getUserProfiles(actorIds) : new Map<string, sharingQueries.UserProfile>();
+
+  const ITEM_ACTION_LABEL: Record<"created" | "updated" | "deleted", string> = {
+    created: "Added",
+    updated: "Updated",
+    deleted: "Deleted",
+  };
 
   // Merge items, maintenance, and reminders into one chronological feed, newest first.
   type ActivityEntry = {
@@ -64,16 +70,17 @@ export default async function DashboardPage() {
   };
 
   const activity: ActivityEntry[] = [
-    ...recentItems.map((item) => {
-      const profile = item.createdBy ? profileById.get(item.createdBy) : null;
+    ...recentItemActivity.map((entry) => {
+      const profile = entry.actorId ? profileById.get(entry.actorId) : null;
       return {
         type: "item" as const,
-        id: item.id,
-        label: item.name,
+        id: entry.id,
+        label: `${ITEM_ACTION_LABEL[entry.action]} ${entry.itemName}`,
         actor: profile?.name ?? null,
         actorAvatar: profile?.avatarUrl ?? null,
-        href: `/items/${item.id}`,
-        at: new Date(item.createdAt),
+        // A deleted item has no page left to link to — fall back to the list.
+        href: entry.action === "deleted" || !entry.itemId ? "/items" : `/items/${entry.itemId}`,
+        at: new Date(entry.createdAt),
       };
     }),
     ...recentMaintenance.map((entry) => {
@@ -208,9 +215,7 @@ export default async function DashboardPage() {
                       </span>
                     )}
                     <div className="flex min-w-0 flex-col">
-                      <span className="truncate font-medium text-ink">
-                        {entry.type === "item" ? `Added ${entry.label}` : entry.label}
-                      </span>
+                      <span className="truncate font-medium text-ink">{entry.label}</span>
                       <span className="truncate text-xs text-muted">
                         {entry.actor && `${entry.actor} · `}
                         {entry.type !== "item" && entry.subtext ? `${entry.subtext} · ` : ""}

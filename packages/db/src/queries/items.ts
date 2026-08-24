@@ -252,7 +252,10 @@ export function updateItem(userId: string, itemId: string, data: UpdateItemInput
 export function deleteItem(userId: string, itemId: string) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
-    return tx.delete(items).where(and(eq(items.id, itemId), eq(items.ownerId, ownerId)));
+    return tx
+      .delete(items)
+      .where(and(eq(items.id, itemId), eq(items.ownerId, ownerId)))
+      .returning();
   });
 }
 

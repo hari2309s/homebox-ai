@@ -2,6 +2,7 @@
 
 import {
   attachmentQueries,
+  itemActivityQueries,
   itemLabelQueries,
   itemQueries,
   maintenanceQueries,
@@ -25,8 +26,11 @@ export async function createItemAction(formData: FormData) {
   const labelIds = formData.getAll("labelIds").map(String).filter(Boolean);
 
   const [item] = await itemQueries.createItem(user.id, { name, locationId: locationId || null });
-  if (item && labelIds.length > 0) {
-    await itemLabelQueries.setItemLabels(user.id, item.id, labelIds);
+  if (item) {
+    if (labelIds.length > 0) {
+      await itemLabelQueries.setItemLabels(user.id, item.id, labelIds);
+    }
+    await itemActivityQueries.recordItemActivity(user.id, { itemName: item.name, action: "created", itemId: item.id });
   }
 
   revalidatePath("/items");
@@ -78,6 +82,7 @@ export async function updateItemAction(formData: FormData) {
     notes: nullableField(formData, "notes"),
   });
   await itemLabelQueries.setItemLabels(user.id, itemId, labelIds);
+  await itemActivityQueries.recordItemActivity(user.id, { itemName: name, action: "updated", itemId });
 
   revalidatePath("/items");
   revalidatePath(`/items/${itemId}`);
@@ -89,7 +94,12 @@ export async function deleteItemAction(formData: FormData) {
   const itemId = String(formData.get("itemId") ?? "").trim();
   if (!itemId) throw new Error("Missing item id");
 
-  await itemQueries.deleteItem(user.id, itemId);
+  const [deleted] = await itemQueries.deleteItem(user.id, itemId);
+  if (deleted) {
+    // No itemId here — the row is gone, and a "deleted" activity entry
+    // should never link back to a now-404ing item detail page.
+    await itemActivityQueries.recordItemActivity(user.id, { itemName: deleted.name, action: "deleted" });
+  }
   revalidatePath("/items");
   redirect("/items");
 }

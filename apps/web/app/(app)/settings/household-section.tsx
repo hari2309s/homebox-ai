@@ -28,7 +28,10 @@ export function HouseholdSection() {
   const [error, setError] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [pendingRemoveMemberId, setPendingRemoveMemberId] = useState<string | null>(null);
+  const [removingMember, setRemovingMember] = useState(false);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
 
   async function refresh() {
     const [nextStatus, nextInvites] = await Promise.all([getShareStatusAction(), listPendingInvitesAction()]);
@@ -69,18 +72,36 @@ export function HouseholdSection() {
   }
 
   async function handleLeave() {
-    setLeaveConfirmOpen(false);
-    await leaveHouseholdAction();
-    await refresh();
+    setError(null);
+    setLeaving(true);
+    try {
+      await leaveHouseholdAction();
+      await refresh();
+      setLeaveConfirmOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't leave this household");
+      setLeaveConfirmOpen(false);
+    } finally {
+      setLeaving(false);
+    }
   }
 
   async function handleRemoveMember() {
     if (!pendingRemoveMemberId) return;
     const formData = new FormData();
     formData.set("memberUserId", pendingRemoveMemberId);
-    setPendingRemoveMemberId(null);
-    await removeMemberAction(formData);
-    await refresh();
+    setError(null);
+    setRemovingMember(true);
+    try {
+      await removeMemberAction(formData);
+      await refresh();
+      setPendingRemoveMemberId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't remove this member");
+      setPendingRemoveMemberId(null);
+    } finally {
+      setRemovingMember(false);
+    }
   }
 
   if (loading) {
@@ -105,6 +126,7 @@ export function HouseholdSection() {
           title="Leave this household?"
           description="You'll go back to seeing only your own inventory."
           confirmLabel="Leave"
+          confirming={leaving}
           onConfirm={handleLeave}
           onCancel={() => setLeaveConfirmOpen(false)}
         />
@@ -154,28 +176,35 @@ export function HouseholdSection() {
                 >
                   {copiedToken === invite.token ? "Copied!" : "Copy link"}
                 </TapButton>
-                <form
-                  action={async (formData) => {
-                    await revokeInviteAction(formData);
-                    await refresh();
+                <TapButton
+                  type="button"
+                  disabled={revokingId === invite.id}
+                  onClick={async () => {
+                    setError(null);
+                    setRevokingId(invite.id);
+                    try {
+                      const formData = new FormData();
+                      formData.set("inviteId", invite.id);
+                      await revokeInviteAction(formData);
+                      await refresh();
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : "Couldn't revoke this invite");
+                    } finally {
+                      setRevokingId(null);
+                    }
                   }}
+                  className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover disabled:opacity-50"
                 >
-                  <input type="hidden" name="inviteId" value={invite.id} />
-                  <TapButton
-                    type="submit"
-                    className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover"
-                  >
-                    Revoke
-                  </TapButton>
-                </form>
+                  {revokingId === invite.id ? <Spinner size={12} /> : "Revoke"}
+                </TapButton>
               </div>
             </StaggerItem>
           ))}
         </StaggerList>
       )}
 
-      <Button type="button" onClick={handleInvite} disabled={creating} className="self-start">
-        {creating ? <Spinner size={16} /> : "Invite a family member"}
+      <Button type="button" onClick={handleInvite} loading={creating} className="self-start">
+        Invite a family member
       </Button>
 
       {error && (
@@ -188,6 +217,7 @@ export function HouseholdSection() {
         open={pendingRemoveMemberId !== null}
         title="Remove this person's access?"
         confirmLabel="Remove"
+        confirming={removingMember}
         onConfirm={handleRemoveMember}
         onCancel={() => setPendingRemoveMemberId(null)}
       />

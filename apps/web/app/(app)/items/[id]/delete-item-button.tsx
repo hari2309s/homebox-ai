@@ -8,11 +8,12 @@ import { deleteItemAction } from "../actions";
 
 export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemName: string }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
-    setConfirmOpen(false);
     setError(null);
+    setDeleting(true);
     const formData = new FormData();
     formData.set("itemId", itemId);
     try {
@@ -23,6 +24,8 @@ export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemNam
       // instead of treating it as a failed delete.
       unstable_rethrow(err);
       setError(err instanceof Error ? err.message : "Couldn't delete this item");
+      setDeleting(false);
+      setConfirmOpen(false);
     }
   }
 
@@ -45,6 +48,7 @@ export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemNam
         title={`Delete "${itemName}"?`}
         description="This can't be undone."
         confirmLabel="Delete"
+        confirming={deleting}
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />

@@ -12,6 +12,13 @@ interface ConfirmDialogProps {
   description?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  /**
+   * True while `onConfirm`'s work is actually in flight — keeps the dialog
+   * open with a spinner on the confirm button and Cancel/Escape/backdrop
+   * dismissal disabled, instead of closing immediately and leaving the
+   * confirmed action to finish invisibly in the background.
+   */
+  confirming?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -28,17 +35,18 @@ export function ConfirmDialog({
   description,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
+  confirming = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
   useEffect(() => {
-    if (!open) return;
+    if (!open || confirming) return;
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onCancel();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onCancel]);
+  }, [open, confirming, onCancel]);
 
   return (
     <AnimatePresence>
@@ -50,7 +58,7 @@ export function ConfirmDialog({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onCancel}
+            onClick={confirming ? undefined : onCancel}
           />
           <motion.div
             key="dialog"
@@ -71,11 +79,12 @@ export function ConfirmDialog({
               <TapButton
                 type="button"
                 onClick={onCancel}
-                className="cursor-pointer rounded-md border border-border bg-card px-4 py-2.5 font-bold text-ink transition-colors duration-150 hover:bg-surface-soft"
+                disabled={confirming}
+                className="cursor-pointer rounded-md border border-border bg-card px-4 py-2.5 font-bold text-ink transition-colors duration-150 hover:bg-surface-soft disabled:cursor-default disabled:opacity-60"
               >
                 {cancelLabel}
               </TapButton>
-              <Button type="button" onClick={onConfirm}>
+              <Button type="button" onClick={onConfirm} loading={confirming}>
                 {confirmLabel}
               </Button>
             </div>

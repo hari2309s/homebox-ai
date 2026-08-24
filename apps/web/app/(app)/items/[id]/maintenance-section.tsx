@@ -63,18 +63,23 @@ function MaintenanceRow({
 }) {
   const [editing, setEditing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleDelete() {
-    setConfirmOpen(false);
     setError(null);
+    setDeleting(true);
     const formData = new FormData();
     formData.set("itemId", itemId);
     formData.set("entryId", entry.id);
     try {
       await deleteMaintenanceEntryAction(formData);
+      setConfirmOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't delete this entry");
+      setConfirmOpen(false);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -158,6 +163,7 @@ function MaintenanceRow({
         open={confirmOpen}
         title={`Delete "${entry.name}"?`}
         confirmLabel="Delete"
+        confirming={deleting}
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />

@@ -11,6 +11,7 @@ psql "$DATABASE_URL" -f attachments.sql
 psql "$DATABASE_URL" -f maintenance_entries.sql
 psql "$DATABASE_URL" -f chat_messages.sql
 psql "$DATABASE_URL" -f reminders.sql
+psql "$DATABASE_URL" -f item_activity.sql
 ```
 
 `storage_attachments.sql` is separate: it applies to `storage.objects`, not a table from `schema.ts`, and requires the `attachments` Storage bucket to already exist (create it first via the Supabase dashboard or CLI).

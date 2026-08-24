@@ -1,7 +1,7 @@
 "use client";
 
 import type { MaintenanceSuggestion } from "@homebox-ai/ai";
-import { Button, EmptyState, Select, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { Button, EmptyState, Select, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
@@ -113,8 +113,13 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
                             </option>
                           ))}
                         </Select>
-                        <Button type="button" onClick={() => handleAccept(suggestion)} disabled={accepted || pending}>
-                          {pending ? <Spinner size={16} /> : accepted ? "Added" : "Add reminder"}
+                        <Button
+                          type="button"
+                          onClick={() => handleAccept(suggestion)}
+                          disabled={accepted}
+                          loading={pending}
+                        >
+                          {accepted ? "Added" : "Add reminder"}
                         </Button>
                       </div>
                     </StaggerItem>
@@ -138,8 +143,8 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
               </option>
             ))}
           </Select>
-          <Button type="button" onClick={handleGetSuggestions} disabled={!itemId || loading}>
-            {loading ? <Spinner size={16} /> : "Get suggestions"}
+          <Button type="button" onClick={handleGetSuggestions} disabled={!itemId} loading={loading}>
+            Get suggestions
           </Button>
         </div>
       </div>

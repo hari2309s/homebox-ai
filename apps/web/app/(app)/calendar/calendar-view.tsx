@@ -1,6 +1,6 @@
 "use client";
 
-import { ConfirmDialog, Input, Select, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { ConfirmDialog, Input, Select, Spinner, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useMemo, useState } from "react";
 
 import { completeReminderAction, createReminderAction, deleteReminderAction, reopenReminderAction } from "./actions";
@@ -292,17 +292,38 @@ function ReminderRow({
 }: {
   reminder: Reminder;
   assignee: string;
-  onComplete: (formData: FormData) => void;
-  onReopen: (formData: FormData) => void;
-  onDelete: (formData: FormData) => void;
+  onComplete: (formData: FormData) => Promise<void>;
+  onReopen: (formData: FormData) => Promise<void>;
+  onDelete: (formData: FormData) => Promise<void>;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [togglingStatus, setTogglingStatus] = useState(false);
   const done = reminder.status === "done";
 
   function idFormData() {
     const formData = new FormData();
     formData.set("reminderId", reminder.id);
     return formData;
+  }
+
+  async function handleToggleStatus() {
+    setTogglingStatus(true);
+    try {
+      await (done ? onReopen(idFormData()) : onComplete(idFormData()));
+    } finally {
+      setTogglingStatus(false);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await onDelete(idFormData());
+      setConfirmOpen(false);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -324,10 +345,11 @@ function ReminderRow({
         <div className="flex shrink-0 items-center gap-2 text-sm">
           <TapButton
             type="button"
-            onClick={() => (done ? onReopen(idFormData()) : onComplete(idFormData()))}
-            className="cursor-pointer border-none bg-transparent font-semibold text-ink"
+            onClick={handleToggleStatus}
+            disabled={togglingStatus}
+            className="cursor-pointer border-none bg-transparent font-semibold text-ink disabled:opacity-50"
           >
-            {done ? "Reopen" : "Done"}
+            {togglingStatus ? <Spinner size={12} /> : done ? "Reopen" : "Done"}
           </TapButton>
           <TapButton
             type="button"
@@ -342,10 +364,8 @@ function ReminderRow({
         open={confirmOpen}
         title={`Delete "${reminder.title}"?`}
         confirmLabel="Delete"
-        onConfirm={() => {
-          setConfirmOpen(false);
-          onDelete(idFormData());
-        }}
+        confirming={deleting}
+        onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />
     </StaggerItem>

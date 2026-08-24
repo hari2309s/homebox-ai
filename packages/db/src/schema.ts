@@ -220,3 +220,24 @@ export const maintenanceEntries = pgTable("maintenance_entries", {
   createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const itemActivityAction = pgEnum("item_activity_action", ["created", "updated", "deleted"]);
+
+// A durable log of item lifecycle events, separate from `items` itself so a
+// deletion is still visible in the home page's activity feed after the row
+// it describes is gone — everything the feed needs (name, actor) is snapshot
+// here at write time rather than joined from `items` live.
+export const itemActivity = pgTable("item_activity", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+  itemName: text("item_name").notNull(),
+  action: itemActivityAction("action").notNull(),
+  // Deliberately no FK/cascade to `items` — a "deleted" row must keep
+  // pointing at an id that no longer exists in that table, just so the feed
+  // can tell created/updated entries (still linkable) from deleted ones.
+  itemId: uuid("item_id"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

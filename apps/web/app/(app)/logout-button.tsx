@@ -30,12 +30,18 @@ export function LogoutButton() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   async function handleLogout() {
-    setConfirmOpen(false);
     setPending(true);
-    const supabase = createSupabaseBrowserClient();
-    await supabase.auth.signOut();
-    router.replace("/login");
-    router.refresh();
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      // Signing out failed (e.g. offline) — reset instead of leaving the
+      // dialog stuck on a spinner forever.
+      setPending(false);
+      setConfirmOpen(false);
+    }
   }
 
   return (
@@ -53,6 +59,7 @@ export function LogoutButton() {
         open={confirmOpen}
         title="Log out?"
         confirmLabel="Log out"
+        confirming={pending}
         onConfirm={handleLogout}
         onCancel={() => setConfirmOpen(false)}
       />

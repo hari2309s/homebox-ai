@@ -1,6 +1,6 @@
 "use client";
 
-import { EmptyState, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { EmptyState, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import Link from "next/link";
 
 interface ItemGridProps {
@@ -10,7 +10,7 @@ interface ItemGridProps {
     locationId: string | null;
     archived: boolean;
     photoUrl: string | null;
-    /** True while the signed URL is being fetched — shows a shimmer instead of the placeholder icon. */
+    /** True while the signed URL is being fetched — shows a spinner instead of the placeholder icon. */
     isLoadingPhoto?: boolean;
   }[];
   locationNameById: Map<string, string>;
@@ -53,7 +53,9 @@ export function ItemGrid({ items, locationNameById }: ItemGridProps) {
                   className="aspect-square w-full object-cover"
                 />
               ) : item.isLoadingPhoto ? (
-                <div className="aspect-square w-full animate-pulse bg-muted/20" />
+                <div className="flex aspect-square w-full items-center justify-center text-muted">
+                  <Spinner size={20} />
+                </div>
               ) : (
                 <div className="flex aspect-square w-full items-center justify-center">
                   <PlaceholderIcon />

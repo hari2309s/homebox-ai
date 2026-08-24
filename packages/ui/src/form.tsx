@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Spinner } from "./spinner";
@@ -48,18 +48,40 @@ export function Select({ className, ...props }: ComponentProps<"select">) {
   );
 }
 
-export function Button({ className, ...props }: ComponentProps<typeof motion.button>) {
+/**
+ * `loading` swaps in a centered spinner without changing the button's width:
+ * `children` stay mounted (so their rendered width still reserves the space)
+ * but turn invisible, and the spinner overlays absolutely on top — instead of
+ * the old swap-the-children approach, which shrank the button to fit
+ * whatever the spinner's own width happened to be.
+ */
+export function Button({
+  className,
+  children,
+  loading,
+  disabled,
+  ...props
+}: Omit<ComponentProps<typeof motion.button>, "children"> & { children?: ReactNode; loading?: boolean }) {
+  const isDisabled = disabled || loading;
   return (
     <motion.button
-      whileHover={props.disabled ? undefined : { scale: 1.02 }}
-      whileTap={props.disabled ? undefined : { scale: 0.97 }}
+      whileHover={isDisabled ? undefined : { scale: 1.02 }}
+      whileTap={isDisabled ? undefined : { scale: 0.97 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      disabled={isDisabled}
       className={cx(
-        "flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60",
+        "relative flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60",
         className,
       )}
       {...props}
-    />
+    >
+      <span className={cx("inline-flex items-center gap-2", loading ? "invisible" : undefined)}>{children}</span>
+      {loading && (
+        <span className="absolute inset-0 flex items-center justify-center">
+          <Spinner size={16} />
+        </span>
+      )}
+    </motion.button>
   );
 }
 
@@ -72,8 +94,8 @@ export function Button({ className, ...props }: ComponentProps<typeof motion.but
 export function SubmitButton({ children, disabled, ...props }: ComponentProps<typeof Button>) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending || disabled} {...props}>
-      {pending ? <Spinner size={16} /> : children}
+    <Button type="submit" disabled={disabled} loading={pending} {...props}>
+      {children}
     </Button>
   );
 }

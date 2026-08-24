@@ -51,16 +51,21 @@ function LocationRow({
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
-    setConfirmOpen(false);
     setError(null);
+    setDeleting(true);
     const formData = new FormData();
     formData.set("id", location.id);
     try {
       await deleteLocationAction(formData);
+      setConfirmOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't delete this location");
+      setConfirmOpen(false);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -151,6 +156,7 @@ function LocationRow({
         title={`Delete "${location.name}"?`}
         description="Items inside will become unassigned."
         confirmLabel="Delete"
+        confirming={deleting}
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />
