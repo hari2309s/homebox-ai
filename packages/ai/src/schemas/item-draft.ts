@@ -15,7 +15,11 @@ const currencyField = z
 export const itemDraftSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  quantity: z.number().int().positive().default(1),
+  // .min(1) rather than .positive(): positive() compiles to JSON Schema's
+  // exclusiveMinimum, which Gemini's function-calling schema parser rejects
+  // outright (400 "Unknown name \"exclusiveMinimum\""). min(1) is equivalent
+  // for an integer and compiles to the widely-supported `minimum` keyword.
+  quantity: z.number().int().min(1).default(1),
   purchasePrice: z.string().optional().describe("Decimal string, e.g. '129.99'"),
   currency: currencyField,
   purchaseDate: z.string().optional().describe("ISO date, e.g. '2024-03-01'"),

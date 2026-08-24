@@ -1,4 +1,5 @@
 import { itemQueries, labelQueries, locationQueries } from "@homebox-ai/db";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { tool } from "@langchain/core/tools";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { z } from "zod";
@@ -157,7 +158,9 @@ function buildTools(userId: string) {
         schema: z.object({
           name: z.string().describe("The item's name"),
           description: z.string().optional(),
-          quantity: z.number().int().positive().optional(),
+          // .min(1) not .positive() — positive() compiles to JSON Schema's
+          // exclusiveMinimum, which Gemini's function-calling parser rejects.
+          quantity: z.number().int().min(1).optional(),
           locationName: z.string().optional().describe("Name of an existing location to place this item in"),
           labelNames: z
             .array(z.string())
@@ -212,7 +215,9 @@ function buildTools(userId: string) {
           itemId: z.string(),
           name: z.string().optional(),
           description: z.string().optional(),
-          quantity: z.number().int().positive().optional(),
+          // .min(1) not .positive() — positive() compiles to JSON Schema's
+          // exclusiveMinimum, which Gemini's function-calling parser rejects.
+          quantity: z.number().int().min(1).optional(),
           locationName: z.string().optional().describe("Name of an existing location to move this item to"),
           purchasePrice: z.string().optional(),
           purchaseDate: z.string().optional(),
@@ -252,7 +257,14 @@ function buildTools(userId: string) {
   ];
 }
 
-type ReactAgent = ReturnType<typeof createReactAgent>;
+// Typed against a call shaped exactly like the one in createChatSearchGraph
+// below — ReturnType<typeof createReactAgent> alone falls back to the
+// function's default generic params, which produce a differently-shaped
+// state type than what buildTools()'s concrete tool schemas actually infer.
+function buildAgent(llm: BaseChatModel, tools: ReturnType<typeof buildTools>, prompt: string) {
+  return createReactAgent({ llm, tools, prompt });
+}
+type ReactAgent = ReturnType<typeof buildAgent>;
 type InvokeInput = Parameters<ReactAgent["invoke"]>[0];
 type InvokeConfig = Parameters<ReactAgent["invoke"]>[1];
 
@@ -357,7 +369,7 @@ export function createChatSearchGraph(userId: string, options: { displayName?: s
       let lastError: unknown;
       for (const [index, llm] of models.entries()) {
         try {
-          const result = await createReactAgent({ llm, tools, prompt }).invoke(input, config);
+          const result = await buildAgent(llm, tools, prompt).invoke(input, config);
           const lastMessage = result.messages.at(-1);
           if (typeof lastMessage?.content === "string" && looksLikeLeakedToolCall(lastMessage.content, toolNames)) {
             throw new Error("Model emitted an unparsed tool-call-like response instead of a real tool call");
