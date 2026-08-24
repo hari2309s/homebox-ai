@@ -42,7 +42,8 @@ An AI-native home inventory PWA — search your stuff in plain English, snap a p
 - 🔍 **Natural-language inventory search** — ask "where's my passport?" or "what's in the garage?" in plain English; a LangGraph tool-calling agent looks it up for real, grounded in your actual data
 - 📸 **Photo → item** — snap or upload a photo, a vision model drafts a name, description, label, and location guess for you to confirm
 - 🧾 **Receipt import** — upload a receipt/invoice photo, extract every line item as a batch of draft items in one pass
-- 🔔 **Proactive AI nudges** — a daily cron checks for warranties expiring soon and messages you in chat unprompted, with an unread badge on the Chat tab; idempotent by design, so re-running the check never double-sends
+- 🔔 **Proactive AI nudges** — a daily cron checks for warranties expiring soon and reminders coming up, and messages you in chat unprompted, with an unread badge on the Chat tab; idempotent by design, so re-running either check never double-sends
+- 📅 **Household calendar & reminders** — turn a maintenance suggestion into a scheduled reminder (instead of a silent log entry), assign it to yourself or any family member sharing your household, and see it on a hand-rolled month calendar color-coded by assignee; a daily cron nudges the assignee in chat a few days before it's due
 - 🛠️ **Maintenance & warranty tracking** — log service history per item (create/edit/delete), see warranty status at a glance
 - 📦 **Homebox-parity item fields** — serial number, model number, manufacturer, purchase/sale price & date, insured, lifetime warranty, sequential asset IDs, item nesting (an item can live "inside" another item, not just a location)
 - 🏷️ **Labels with color** and nested **locations** (locations can contain locations)
@@ -115,17 +116,18 @@ homebox-ai/
 │           │   ├── chat/                # NL search UI, session history, unread nudges
 │           │   ├── capture/             # photo → item draft review
 │           │   ├── receipts/            # receipt → batch item review
-│           │   ├── maintenance/         # maintenance dashboard
+│           │   ├── maintenance/         # AI maintenance suggestions → assignable calendar reminders
+│           │   ├── calendar/            # household calendar: month grid, reminders, assignee color-coding
 │           │   ├── join/[token]/        # accept a household-sharing invite
 │           │   └── settings/            # profile, household, exports/imports, account deletion
 │           └── api/
 │               ├── chat/                # chat-search graph
 │               ├── export/{csv,zip}/    # data export routes
-│               └── notifiers/warranty-check/  # daily cron: proactive warranty nudges
+│               └── notifiers/           # daily crons: proactive warranty + reminder nudges
 ├── packages/
 │   ├── db/                              # Drizzle schema, migrations, RLS policies, query functions
 │   │   ├── src/schema.ts                # items, locations, labels, attachments, maintenance_entries,
-│   │   │                                #   chat_messages, shared_access, shared_access_invites
+│   │   │                                #   reminders, chat_messages, shared_access, shared_access_invites
 │   │   ├── src/access.ts                # resolveEffectiveOwnerId() — the sharing indirection layer
 │   │   └── src/policies/                # one RLS policy file per table
 │   ├── supabase/                        # server/browser Supabase clients, session middleware, storage helpers
@@ -264,7 +266,10 @@ Chat history is the one thing that stays personal per member even inside a share
 
 ## Notifiers (proactive AI)
 
-`apps/web/app/api/notifiers/warranty-check` runs daily via Vercel Cron (`vercel.json`), gated by a `Bearer $CRON_SECRET` header compared with `timingSafeEqual` (not `===`, to avoid leaking the secret's length/prefix via response-time differences). It finds items with a warranty expiring soon that haven't already been flagged, and writes a proactive chat message per owner — deterministically keyed (`warranty:{ownerId}:{date}`) via a partial unique index on `chat_messages`, so re-running the check (retry, overlapping invocation) is a safe no-op rather than a duplicate nudge.
+Both notifiers below run daily via Vercel Cron (`vercel.json`), gated by a `Bearer $CRON_SECRET` header compared with `timingSafeEqual` (not `===`, to avoid leaking the secret's length/prefix via response-time differences), and each writes an AI-composed, warm/conversational proactive chat message rather than a templated one.
+
+- **`apps/web/app/api/notifiers/warranty-check`** — finds items with a warranty expiring soon that haven't already been flagged, and writes a proactive chat message per owner — deterministically keyed (`warranty:{ownerId}:{date}`) via a partial unique index on `chat_messages`, so re-running the check (retry, overlapping invocation) is a safe no-op rather than a duplicate nudge.
+- **`apps/web/app/api/notifiers/reminder-check`** — finds pending calendar reminders due within the next few days that haven't already been flagged. A reminder assigned to someone specific nudges just them; an unassigned one nudges the whole household. Keyed `reminder:{userId}:{date}` and marked via `reminders.notified_at`, so it's idempotent the same way the warranty check is.
 
 ---
 
