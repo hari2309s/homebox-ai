@@ -1,4 +1,4 @@
-import { itemQueries, maintenanceQueries, sharingQueries } from "@homebox-ai/db";
+import { itemQueries, maintenanceQueries, reminderQueries, sharingQueries } from "@homebox-ai/db";
 import { FadeIn, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import Link from "next/link";
 
@@ -30,7 +30,7 @@ const QUICK_ACTIONS = [
 export default async function DashboardPage() {
   const user = await getSessionUser();
 
-  const [itemCount, locations, labels, valueByCurrency, expiringWarranties, recentItems, recentMaintenance] = user
+  const [itemCount, locations, labels, valueByCurrency, expiringWarranties, recentItems, recentMaintenance, recentReminders] = user
     ? await Promise.all([
         itemQueries.countItems(user.id),
         listLocationsCached(user.id),
@@ -39,19 +39,21 @@ export default async function DashboardPage() {
         itemQueries.listUpcomingWarrantyExpirations(user.id),
         itemQueries.listRecentItems(user.id, 5).catch(() => []),
         maintenanceQueries.listRecentMaintenance(user.id, 5).catch(() => []),
+        reminderQueries.listRecentReminders(user.id, 5).catch(() => []),
       ])
-    : [0, [], [], [], [], [], []];
+    : [0, [], [], [], [], [], [], []];
 
   // Resolve display names for all actors that appear in the activity feed.
   const actorIds = [...new Set([
     ...recentItems.flatMap((i) => (i.createdBy ? [i.createdBy] : [])),
     ...recentMaintenance.flatMap((e) => (e.createdBy ? [e.createdBy] : [])),
+    ...recentReminders.flatMap((r) => (r.createdBy ? [r.createdBy] : [])),
   ])];
   const profileById = actorIds.length > 0 ? await sharingQueries.getUserProfiles(actorIds) : new Map<string, sharingQueries.UserProfile>();
 
-  // Merge items and maintenance into one chronological feed, newest first.
+  // Merge items, maintenance, and reminders into one chronological feed, newest first.
   type ActivityEntry = {
-    type: "item" | "maintenance";
+    type: "item" | "maintenance" | "reminder";
     id: string;
     label: string;
     subtext?: string;
@@ -85,6 +87,19 @@ export default async function DashboardPage() {
         actorAvatar: profile?.avatarUrl ?? null,
         href: `/items/${entry.itemId}`,
         at: new Date(entry.createdAt),
+      };
+    }),
+    ...recentReminders.map((reminder) => {
+      const profile = reminder.createdBy ? profileById.get(reminder.createdBy) : null;
+      return {
+        type: "reminder" as const,
+        id: reminder.id,
+        label: reminder.title,
+        subtext: reminder.itemName ?? undefined,
+        actor: profile?.name ?? null,
+        actorAvatar: profile?.avatarUrl ?? null,
+        href: "/calendar",
+        at: new Date(reminder.createdAt),
       };
     }),
   ]
@@ -181,9 +196,13 @@ export default async function DashboardPage() {
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                             <path d="M3 8l9-5 9 5-9 5-9-5Z" /><path d="M3 8v8l9 5 9-5V8" /><path d="M12 13v8" />
                           </svg>
-                        ) : (
+                        ) : entry.type === "maintenance" ? (
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
                             <circle cx="6" cy="18" r="2.75" /><circle cx="18" cy="6" r="2.75" /><path d="m8 16 8-8" />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                            <rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" />
                           </svg>
                         )}
                       </span>
@@ -194,7 +213,7 @@ export default async function DashboardPage() {
                       </span>
                       <span className="truncate text-xs text-muted">
                         {entry.actor && `${entry.actor} · `}
-                        {entry.type === "maintenance" && entry.subtext ? `${entry.subtext} · ` : ""}
+                        {entry.type !== "item" && entry.subtext ? `${entry.subtext} · ` : ""}
                         {formatRelativeTime(entry.at)}
                       </span>
                     </div>

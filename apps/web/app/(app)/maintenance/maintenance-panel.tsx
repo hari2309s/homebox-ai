@@ -24,6 +24,7 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [acceptedNames, setAcceptedNames] = useState<Set<string>>(new Set());
+  const [pendingNames, setPendingNames] = useState<Set<string>>(new Set());
   const [assignees, setAssignees] = useState<Record<string, string>>({});
 
   async function handleGetSuggestions() {
@@ -48,11 +49,18 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
     formData.set("dueDate", suggestion.recommendedDate);
     formData.set("description", suggestion.reason);
     formData.set("assignedToUserId", assignees[suggestion.name] ?? currentUserId);
+    setPendingNames((prev) => new Set(prev).add(suggestion.name));
     try {
       await createReminderFromSuggestionAction(formData);
       setAcceptedNames((prev) => new Set(prev).add(suggestion.name));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't add this reminder");
+    } finally {
+      setPendingNames((prev) => {
+        const next = new Set(prev);
+        next.delete(suggestion.name);
+        return next;
+      });
     }
   }
 
@@ -78,6 +86,7 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
               <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
                 {suggestions.suggestions.map((suggestion, index) => {
                   const accepted = acceptedNames.has(suggestion.name);
+                  const pending = pendingNames.has(suggestion.name);
                   return (
                     <StaggerItem
                       key={`${suggestion.name}-${index}`}
@@ -95,7 +104,7 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
                           onChange={(event) =>
                             setAssignees((prev) => ({ ...prev, [suggestion.name]: event.target.value }))
                           }
-                          disabled={accepted}
+                          disabled={accepted || pending}
                           className="w-36"
                         >
                           {householdUsers.map((person) => (
@@ -104,8 +113,8 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
                             </option>
                           ))}
                         </Select>
-                        <Button type="button" onClick={() => handleAccept(suggestion)} disabled={accepted}>
-                          {accepted ? "Added" : "Add reminder"}
+                        <Button type="button" onClick={() => handleAccept(suggestion)} disabled={accepted || pending}>
+                          {pending ? <Spinner size={16} /> : accepted ? "Added" : "Add reminder"}
                         </Button>
                       </div>
                     </StaggerItem>

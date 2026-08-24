@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull, lte } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lte } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { getDb } from "../client";
@@ -35,6 +35,29 @@ export function listReminders(userId: string) {
       .leftJoin(items, eq(reminders.itemId, items.id))
       .where(eq(reminders.ownerId, ownerId))
       .orderBy(asc(reminders.dueDate));
+  });
+}
+
+/** Most recently created reminders with their item name — used for the home page activity feed. */
+export function listRecentReminders(userId: string, limit = 5) {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    return tx
+      .select({
+        id: reminders.id,
+        title: reminders.title,
+        itemId: reminders.itemId,
+        itemName: items.name,
+        dueDate: reminders.dueDate,
+        assignedToUserId: reminders.assignedToUserId,
+        createdBy: reminders.createdBy,
+        createdAt: reminders.createdAt,
+      })
+      .from(reminders)
+      .leftJoin(items, eq(reminders.itemId, items.id))
+      .where(eq(reminders.ownerId, ownerId))
+      .orderBy(desc(reminders.createdAt))
+      .limit(limit);
   });
 }
 
