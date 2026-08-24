@@ -3,7 +3,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { getEffectiveOwnerId } from "../access";
 import { getDb } from "../client";
 import { sharedAccess, sharedAccessInvites } from "../schema";
-import { withRLS, type Tx } from "../rls";
+import { withRLS } from "../rls";
 
 export interface UserProfile {
   name: string | null;
@@ -29,10 +29,16 @@ export async function getUserProfiles(userIds: string[]): Promise<Map<string, Us
 // the `authUsers` Drizzle table (see schema.ts) — drizzle-kit would then try
 // to manage/diff it as if we owned that table, which risks generating an
 // ALTER TABLE against Supabase's real auth schema. Read-only raw SQL here
-// avoids that entirely.
-async function emailFor(tx: Tx, userId: string): Promise<string | null> {
-  const rows = await tx.execute<{ email: string | null }>(sql`select email from auth.users where id = ${userId}`);
-  return rows[0]?.email ?? null;
+// avoids that entirely. Uses the direct (non-RLS) connection, like
+// getUserProfiles — the RLS transaction's role has no grant on auth.users.
+async function emailsFor(userIds: string[]): Promise<Map<string, string | null>> {
+  if (userIds.length === 0) return new Map();
+  const db = getDb();
+  const idList = sql.join(userIds.map((id) => sql`${id}::uuid`), sql`, `);
+  const rows = await db.execute<{ id: string; email: string | null }>(
+    sql`SELECT id, email FROM auth.users WHERE id IN (${idList})`,
+  );
+  return new Map(rows.map((row) => [row.id, row.email ?? null]));
 }
 
 export function createInvite(userId: string, expiresInDays = 7) {
@@ -76,15 +82,41 @@ export function getShareStatus(userId: string): Promise<ShareStatus> {
   return withRLS(userId, async (tx) => {
     const [membership] = await tx.select().from(sharedAccess).where(eq(sharedAccess.memberUserId, userId));
     if (membership) {
-      const ownerEmail = await emailFor(tx, membership.ownerId);
+      // auth.users reads need the direct (non-RLS) connection — the RLS
+      // transaction's role has no grant on that table (see emailsFor above).
+      const ownerEmail = (await emailsFor([membership.ownerId])).get(membership.ownerId) ?? null;
       return { role: "member", ownerEmail, members: [] };
     }
 
     const memberRows = await tx.select().from(sharedAccess).where(eq(sharedAccess.ownerId, userId));
-    const members = await Promise.all(
-      memberRows.map(async (row) => ({ userId: row.memberUserId, email: await emailFor(tx, row.memberUserId) })),
-    );
+    const emails = await emailsFor(memberRows.map((row) => row.memberUserId));
+    const members = memberRows.map((row) => ({ userId: row.memberUserId, email: emails.get(row.memberUserId) ?? null }));
     return { role: "owner", members };
+  });
+}
+
+export interface HouseholdUser {
+  userId: string;
+  email: string | null;
+  isSelf: boolean;
+}
+
+/**
+ * Everyone with access to the caller's household — the effective owner plus
+ * every shared member — regardless of whether the caller themselves is the
+ * owner or a member. Unlike getShareStatus (which only lists members when
+ * called *by* the owner), this is symmetric, so it works as an assignee
+ * picker for any household participant.
+ */
+export function listHouseholdUsers(userId: string): Promise<HouseholdUser[]> {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    const memberRows = await tx.select().from(sharedAccess).where(eq(sharedAccess.ownerId, ownerId));
+    const ids = [ownerId, ...memberRows.map((row) => row.memberUserId)];
+    // auth.users reads need the direct (non-RLS) connection — the RLS
+    // transaction's role has no grant on that table (see emailsFor above).
+    const emails = await emailsFor(ids);
+    return ids.map((id) => ({ userId: id, email: emails.get(id) ?? null, isSelf: id === userId }));
   });
 }
 

@@ -1,5 +1,5 @@
 import { EmptyState } from "@homebox-ai/ui";
-import { itemQueries } from "@homebox-ai/db";
+import { itemQueries, sharingQueries } from "@homebox-ai/db";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
@@ -7,7 +7,19 @@ import { MaintenancePanel } from "./maintenance-panel";
 
 export default async function MaintenancePage() {
   const user = await getSessionUser();
-  const items = user ? await itemQueries.searchItems(user.id) : [];
+
+  if (!user) {
+    return (
+      <div className="flex h-full flex-col p-4 sm:p-6">
+        <EmptyState>Sign in to see maintenance and warranty suggestions.</EmptyState>
+      </div>
+    );
+  }
+
+  const [items, householdUsers] = await Promise.all([
+    itemQueries.searchItems(user.id),
+    sharingQueries.listHouseholdUsers(user.id),
+  ]);
 
   if (items.length === 0) {
     return (
@@ -19,7 +31,7 @@ export default async function MaintenancePage() {
 
   return (
     <div className="h-full">
-      <MaintenancePanel items={items} />
+      <MaintenancePanel items={items} householdUsers={householdUsers} currentUserId={user.id} />
     </div>
   );
 }

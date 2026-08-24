@@ -1,8 +1,9 @@
 "use server";
 
 import { runMaintenanceAssistantGraph, type MaintenanceSuggestion } from "@homebox-ai/ai";
-import { maintenanceQueries } from "@homebox-ai/db";
+import { reminderQueries } from "@homebox-ai/db";
 import { requireSessionUser } from "@homebox-ai/supabase/server";
+import { revalidatePath } from "next/cache";
 
 import { runTracedGraph } from "../../../lib/traced-graph";
 
@@ -16,14 +17,16 @@ export async function getMaintenanceSuggestionsAction(itemId: string): Promise<M
   );
 }
 
-export async function acceptMaintenanceSuggestionAction(formData: FormData) {
+export async function createReminderFromSuggestionAction(formData: FormData) {
   const user = await requireSessionUser();
 
   const itemId = String(formData.get("itemId") ?? "").trim();
-  const name = String(formData.get("name") ?? "").trim();
-  const date = String(formData.get("date") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const dueDate = String(formData.get("dueDate") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || undefined;
-  if (!itemId || !name || !date) throw new Error("Missing suggestion details");
+  const assignedToUserId = String(formData.get("assignedToUserId") ?? "").trim() || undefined;
+  if (!itemId || !title || !dueDate) throw new Error("Missing suggestion details");
 
-  await maintenanceQueries.createMaintenanceEntry(user.id, { itemId, name, date, description });
+  await reminderQueries.createReminder(user.id, { itemId, title, dueDate, description, assignedToUserId });
+  revalidatePath("/calendar");
 }

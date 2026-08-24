@@ -4,18 +4,27 @@ import type { MaintenanceSuggestion } from "@homebox-ai/ai";
 import { Button, EmptyState, Select, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { useState } from "react";
 
-import { acceptMaintenanceSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
+import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
+
+interface HouseholdUser {
+  userId: string;
+  email: string | null;
+  isSelf: boolean;
+}
 
 interface MaintenancePanelProps {
   items: { id: string; name: string }[];
+  householdUsers: HouseholdUser[];
+  currentUserId: string;
 }
 
-export function MaintenancePanel({ items }: MaintenancePanelProps) {
+export function MaintenancePanel({ items, householdUsers, currentUserId }: MaintenancePanelProps) {
   const [itemId, setItemId] = useState("");
   const [suggestions, setSuggestions] = useState<MaintenanceSuggestion | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [acceptedNames, setAcceptedNames] = useState<Set<string>>(new Set());
+  const [assignees, setAssignees] = useState<Record<string, string>>({});
 
   async function handleGetSuggestions() {
     if (!itemId) return;
@@ -35,14 +44,15 @@ export function MaintenancePanel({ items }: MaintenancePanelProps) {
   async function handleAccept(suggestion: MaintenanceSuggestion["suggestions"][number]) {
     const formData = new FormData();
     formData.set("itemId", itemId);
-    formData.set("name", suggestion.name);
-    formData.set("date", suggestion.recommendedDate);
+    formData.set("title", suggestion.name);
+    formData.set("dueDate", suggestion.recommendedDate);
     formData.set("description", suggestion.reason);
+    formData.set("assignedToUserId", assignees[suggestion.name] ?? currentUserId);
     try {
-      await acceptMaintenanceSuggestionAction(formData);
+      await createReminderFromSuggestionAction(formData);
       setAcceptedNames((prev) => new Set(prev).add(suggestion.name));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't add this to your maintenance log");
+      setError(err instanceof Error ? err.message : "Couldn't add this reminder");
     }
   }
 
@@ -72,21 +82,32 @@ export function MaintenancePanel({ items }: MaintenancePanelProps) {
                     <StaggerItem
                       key={`${suggestion.name}-${index}`}
                       hover
-                      className="flex items-center justify-between gap-3 rounded-md border border-border px-4 py-3"
+                      className="flex flex-col gap-3 rounded-md border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="flex flex-col gap-0.5">
                         <span className="font-medium text-ink">{suggestion.name}</span>
                         <span className="text-sm text-muted">{suggestion.reason}</span>
                         <span className="text-xs text-muted">By {suggestion.recommendedDate}</span>
                       </div>
-                      <Button
-                        type="button"
-                        onClick={() => handleAccept(suggestion)}
-                        disabled={accepted}
-                        className="shrink-0"
-                      >
-                        {accepted ? "Added" : "Add to log"}
-                      </Button>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Select
+                          value={assignees[suggestion.name] ?? currentUserId}
+                          onChange={(event) =>
+                            setAssignees((prev) => ({ ...prev, [suggestion.name]: event.target.value }))
+                          }
+                          disabled={accepted}
+                          className="w-36"
+                        >
+                          {householdUsers.map((person) => (
+                            <option key={person.userId} value={person.userId}>
+                              {person.isSelf ? "Myself" : (person.email ?? "Family member")}
+                            </option>
+                          ))}
+                        </Select>
+                        <Button type="button" onClick={() => handleAccept(suggestion)} disabled={accepted}>
+                          {accepted ? "Added" : "Add reminder"}
+                        </Button>
+                      </div>
                     </StaggerItem>
                   );
                 })}

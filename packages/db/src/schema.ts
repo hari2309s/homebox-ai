@@ -180,6 +180,27 @@ export const chatMessages = pgTable(
   ],
 );
 
+export const reminderStatus = pgEnum("reminder_status", ["pending", "done"]);
+
+export const reminders = pgTable("reminders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  // Nullable — a reminder can be general household upkeep, not just tied to one asset.
+  itemId: uuid("item_id").references(() => items.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  dueDate: date("due_date").notNull(),
+  // Who should handle it — any member of the household (see shared_access above), or null if unassigned.
+  assignedToUserId: uuid("assigned_to_user_id").references(() => authUsers.id, { onDelete: "set null" }),
+  status: reminderStatus("status").notNull().default("pending"),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  /** The user who created this reminder — may differ from ownerId for shared household members. */
+  createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const maintenanceEntries = pgTable("maintenance_entries", {
   id: uuid("id").primaryKey().defaultRandom(),
   ownerId: uuid("owner_id")

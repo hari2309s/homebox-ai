@@ -95,6 +95,15 @@ function ReceiptsIcon(props: ComponentProps<"svg">) {
   );
 }
 
+function CalendarIcon(props: ComponentProps<"svg">) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M8 3v4M16 3v4M3 10h18" />
+    </Icon>
+  );
+}
+
 function MaintenanceIcon(props: ComponentProps<"svg">) {
   return (
     <Icon {...props}>
@@ -132,6 +141,7 @@ const MORE_LINKS = [
   { href: "/receipts", label: "Receipts", icon: ReceiptsIcon },
   { href: "/scan", label: "Scan", icon: ScanIcon },
   { href: "/maintenance", label: "Maintenance", icon: MaintenanceIcon },
+  { href: "/calendar", label: "Calendar", icon: CalendarIcon },
 ];
 
 // Desktop has room to show every tab in one row (unchanged from before the
