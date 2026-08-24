@@ -1,6 +1,7 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, lte } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
+import { getDb } from "../client";
 import { items, reminders } from "../schema";
 import { withRLS } from "../rls";
 
@@ -77,4 +78,48 @@ export function deleteReminder(userId: string, reminderId: string) {
       .where(and(eq(reminders.id, reminderId), eq(reminders.ownerId, ownerId)))
       .returning();
   });
+}
+
+export interface UpcomingReminder {
+  id: string;
+  ownerId: string;
+  itemId: string | null;
+  itemName: string | null;
+  title: string;
+  description: string | null;
+  dueDate: string;
+  assignedToUserId: string | null;
+}
+
+/**
+ * System-wide scan across every owner's reminders — deliberately not scoped
+ * by withRLS/a single user, since the reminder-check cron has no session to
+ * run as (mirrors notifierQueries.listItemsWithExpiringWarranty).
+ */
+export async function listUpcomingReminders(daysAhead = 3): Promise<UpcomingReminder[]> {
+  const db = getDb();
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() + daysAhead);
+  const cutoffDate = cutoff.toISOString().slice(0, 10);
+
+  return db
+    .select({
+      id: reminders.id,
+      ownerId: reminders.ownerId,
+      itemId: reminders.itemId,
+      itemName: items.name,
+      title: reminders.title,
+      description: reminders.description,
+      dueDate: reminders.dueDate,
+      assignedToUserId: reminders.assignedToUserId,
+    })
+    .from(reminders)
+    .leftJoin(items, eq(reminders.itemId, items.id))
+    .where(and(eq(reminders.status, "pending"), isNull(reminders.notifiedAt), lte(reminders.dueDate, cutoffDate)));
+}
+
+export async function markRemindersNotified(reminderIds: string[]) {
+  if (reminderIds.length === 0) return;
+  const db = getDb();
+  await db.update(reminders).set({ notifiedAt: new Date() }).where(inArray(reminders.id, reminderIds));
 }

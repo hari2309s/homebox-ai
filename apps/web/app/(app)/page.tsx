@@ -163,7 +163,7 @@ export default async function DashboardPage() {
       {activity.length > 0 && (
         <section className="flex flex-col gap-2 rounded-md border border-border bg-surface-soft p-4">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">Recent activity</h2>
-          <StaggerList className="m-0 flex list-none flex-col gap-1.5 p-0">
+          <StaggerList className="m-0 flex max-h-72 list-none flex-col gap-1.5 overflow-y-auto p-0">
             {activity.map((entry) => (
               <StaggerItem key={`${entry.type}-${entry.id}`} hover>
                 <Link

@@ -196,6 +196,9 @@ export const reminders = pgTable("reminders", {
   assignedToUserId: uuid("assigned_to_user_id").references(() => authUsers.id, { onDelete: "set null" }),
   status: reminderStatus("status").notNull().default("pending"),
   completedAt: timestamp("completed_at", { withTimezone: true }),
+  // Set once the reminder-check notifier has nudged its recipient(s) in chat,
+  // so the daily cron doesn't re-notify every run (mirrors items.warrantyNotifiedAt).
+  notifiedAt: timestamp("notified_at", { withTimezone: true }),
   /** The user who created this reminder — may differ from ownerId for shared household members. */
   createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

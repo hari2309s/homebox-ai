@@ -3,6 +3,10 @@
     {
       "path": "/api/notifiers/warranty-check",
       "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/notifiers/reminder-check",
+      "schedule": "0 13 * * *"
     }
   ]
 }
