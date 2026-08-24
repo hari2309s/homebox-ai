@@ -122,61 +122,8 @@ export function CalendarView({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="order-2 shrink-0 border-t border-border bg-card p-3 md:px-6">
-        {formOpen ? (
-          <form action={handleCreate} className="flex flex-col gap-2 md:mx-auto md:w-full md:max-w-2xl">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input name="title" placeholder="What needs doing" required autoFocus className="sm:flex-1" />
-              <Input name="dueDate" type="date" defaultValue={selectedDateKey} required className="sm:w-40" />
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Select name="itemId" className="sm:flex-1" defaultValue="">
-                <option value="">No specific item</option>
-                {items.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </Select>
-              <Select name="assignedToUserId" className="sm:w-48" defaultValue={currentUserId}>
-                <option value="">Unassigned</option>
-                {householdUsers.map((person) => (
-                  <option key={person.userId} value={person.userId}>
-                    {person.isSelf ? "Myself" : (person.email ?? "Family member")}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <Input name="description" placeholder="Notes (optional)" />
-            <div className="flex items-center gap-3">
-              <SubmitButton className="self-start">Add reminder</SubmitButton>
-              <TapButton
-                type="button"
-                onClick={() => setFormOpen(false)}
-                className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
-              >
-                Cancel
-              </TapButton>
-            </div>
-            {error && (
-              <p role="alert" className="text-sm text-accent-hover">
-                {error}
-              </p>
-            )}
-          </form>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setFormOpen(true)}
-            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-border py-2 text-sm font-semibold text-muted transition-colors duration-150 hover:border-accent hover:text-accent-hover md:mx-auto md:max-w-2xl"
-          >
-            + Add reminder
-          </button>
-        )}
-      </div>
-
-      <div className="order-1 flex flex-1 flex-col gap-3 overflow-y-auto p-4 sm:p-6 md:mx-auto md:w-full md:max-w-2xl">
+    <div className="flex h-full flex-col overflow-y-auto p-4 sm:p-6">
+      <div className="flex flex-1 flex-col gap-3 md:mx-auto md:w-full md:max-w-2xl">
         <div className="flex items-center justify-between">
           <TapButton
             type="button"
@@ -278,6 +225,59 @@ export function CalendarView({
             </StaggerList>
           )}
         </div>
+      </div>
+
+      <div className="sticky bottom-0 -mx-4 -mb-4 mt-4 border-t border-border/70 bg-surface-soft/70 p-3 shadow-card backdrop-blur-lg sm:-mx-6 sm:-mb-6 md:mx-auto md:mb-0 md:w-full md:max-w-2xl md:px-6">
+        {formOpen ? (
+          <form action={handleCreate} className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input name="title" placeholder="What needs doing" required autoFocus className="sm:flex-1" />
+              <Input name="dueDate" type="date" defaultValue={selectedDateKey} required className="sm:w-40" />
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Select name="itemId" className="sm:flex-1" defaultValue="">
+                <option value="">No specific item</option>
+                {items.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </Select>
+              <Select name="assignedToUserId" className="sm:w-48" defaultValue={currentUserId}>
+                <option value="">Unassigned</option>
+                {householdUsers.map((person) => (
+                  <option key={person.userId} value={person.userId}>
+                    {person.isSelf ? "Myself" : (person.email ?? "Family member")}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Input name="description" placeholder="Notes (optional)" />
+            <div className="flex items-center gap-3">
+              <SubmitButton className="self-start">Add reminder</SubmitButton>
+              <TapButton
+                type="button"
+                onClick={() => setFormOpen(false)}
+                className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
+              >
+                Cancel
+              </TapButton>
+            </div>
+            {error && (
+              <p role="alert" className="text-sm text-accent-hover">
+                {error}
+              </p>
+            )}
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-border py-2 text-sm font-semibold text-muted transition-colors duration-150 hover:border-accent hover:text-accent-hover"
+          >
+            + Add reminder
+          </button>
+        )}
       </div>
     </div>
   );

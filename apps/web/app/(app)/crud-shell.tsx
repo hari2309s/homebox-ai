@@ -1,23 +1,52 @@
+"use client";
+
+import { TapButton } from "@homebox-ai/ui";
+import { useState } from "react";
 import type { ReactNode } from "react";
 
 interface CrudShellProps {
   form: ReactNode;
+  /** Label for the collapsed toggle bar, e.g. "Add item". */
+  toggleLabel: string;
   children: ReactNode;
 }
 
 /**
- * The form docks as a compact bar above the bottom nav on every screen size
- * (matching chat's input bar) — full-width on mobile, narrower and centered
- * from `md:` up — while the list fills the remaining scrollable space above it.
+ * The form docks as a translucent, blurred bar pinned to the bottom of the
+ * same scroll container as the list — `sticky` (not `fixed`), and the last
+ * child in DOM order, so it only floats over list rows while there's more
+ * of them above it; once scrolled to the very end it just settles in place,
+ * with nothing left hidden behind it. Collapsed by default behind a slim
+ * toggle; expands inline on demand, matching the calendar page's form.
  */
-export function CrudShell({ form, children }: CrudShellProps) {
+export function CrudShell({ form, toggleLabel, children }: CrudShellProps) {
+  const [formOpen, setFormOpen] = useState(false);
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="order-2 shrink-0 border-t border-border bg-card p-4 md:p-6">
-        <div className="md:mx-auto md:w-full md:max-w-2xl">{form}</div>
-      </div>
-      <div className="order-1 flex flex-1 flex-col overflow-y-auto p-4 sm:p-6">
-        <div className="flex flex-1 flex-col gap-6 md:mx-auto md:w-full md:max-w-2xl">{children}</div>
+    <div className="flex h-full flex-col overflow-y-auto p-4 sm:p-6">
+      <div className="flex flex-1 flex-col gap-6 md:mx-auto md:w-full md:max-w-2xl">{children}</div>
+
+      <div className="sticky bottom-0 -mx-4 -mb-4 mt-4 border-t border-border/70 bg-surface-soft/70 p-4 shadow-card backdrop-blur-lg sm:-mx-6 sm:-mb-6 sm:p-6 md:mx-auto md:mb-0 md:w-full md:max-w-2xl">
+        {formOpen ? (
+          <div className="flex flex-col gap-2">
+            {form}
+            <TapButton
+              type="button"
+              onClick={() => setFormOpen(false)}
+              className="cursor-pointer self-start border-none bg-transparent text-sm font-semibold text-ink"
+            >
+              Cancel
+            </TapButton>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setFormOpen(true)}
+            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-border py-2 text-sm font-semibold text-muted transition-colors duration-150 hover:border-accent hover:text-accent-hover"
+          >
+            + {toggleLabel}
+          </button>
+        )}
       </div>
     </div>
   );

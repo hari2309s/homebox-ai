@@ -27,6 +27,7 @@ export default async function LocationsPage() {
 
   return (
     <CrudShell
+      toggleLabel="Add location"
       form={
         <form action={createLocationAction} className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input name="name" placeholder="New location name" required className="sm:flex-1" />

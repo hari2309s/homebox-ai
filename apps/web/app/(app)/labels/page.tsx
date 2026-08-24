@@ -13,6 +13,7 @@ export default async function LabelsPage() {
 
   return (
     <CrudShell
+      toggleLabel="Add label"
       form={
         <form action={createLabelAction} className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Input name="name" placeholder="New label name" required className="sm:flex-1" />

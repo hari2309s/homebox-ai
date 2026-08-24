@@ -30,6 +30,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
 
   return (
     <CrudShell
+      toggleLabel="Add item"
       form={
         <form action={createItemAction} className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
