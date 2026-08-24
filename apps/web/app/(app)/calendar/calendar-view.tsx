@@ -29,6 +29,19 @@ interface Item {
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+// Fixed hues, hashed onto each assignee's user id so the same person always
+// gets the same color across the grid, the day list, and the legend — no
+// per-user color picker needed, unlike labels' user-chosen colors.
+const ASSIGNEE_PALETTE = ["#fb7369", "#4f9ddb", "#5bb98c", "#c98bd9", "#e0a83e", "#4fb8b0"];
+const UNASSIGNED_COLOR = "#8a7860";
+
+function colorForAssignee(userId: string | null): string {
+  if (!userId) return UNASSIGNED_COLOR;
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) hash = (hash * 31 + userId.charCodeAt(i)) >>> 0;
+  return ASSIGNEE_PALETTE[hash % ASSIGNEE_PALETTE.length] ?? UNASSIGNED_COLOR;
+}
+
 function toDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -159,6 +172,21 @@ export function CalendarView({
           </TapButton>
         </div>
 
+        {reminders.length > 0 && (
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {householdUsers.map((person) => (
+              <span key={person.userId} className="flex items-center gap-1.5 text-xs text-muted">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: colorForAssignee(person.userId) }} />
+                {person.isSelf ? "Myself" : (person.email ?? "Family member")}
+              </span>
+            ))}
+            <span className="flex items-center gap-1.5 text-xs text-muted">
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: UNASSIGNED_COLOR }} />
+              Unassigned
+            </span>
+          </div>
+        )}
+
         <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted">
           {WEEKDAY_LABELS.map((label) => (
             <span key={label}>{label}</span>
@@ -172,7 +200,7 @@ export function CalendarView({
             const dayReminders = remindersByDate.get(dateKey) ?? [];
             const isSelected = dateKey === selectedDateKey;
             const isToday = dateKey === todayKey;
-            const hasPending = dayReminders.some((r) => r.status === "pending");
+            const assigneeColors = [...new Set(dayReminders.map((r) => r.assignedToUserId))].map(colorForAssignee);
 
             return (
               <button
@@ -184,8 +212,12 @@ export function CalendarView({
                 } ${inMonth ? "" : "opacity-40"}`}
               >
                 <span className={isToday ? "font-bold text-accent-hover" : "text-ink"}>{date.getDate()}</span>
-                {dayReminders.length > 0 && (
-                  <span className={`h-1.5 w-1.5 rounded-full ${hasPending ? "bg-accent" : "bg-muted"}`} />
+                {assigneeColors.length > 0 && (
+                  <span className="flex items-center gap-0.5">
+                    {assigneeColors.map((color, index) => (
+                      <span key={index} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
+                    ))}
+                  </span>
                 )}
               </button>
             );
@@ -245,7 +277,11 @@ function ReminderRow({
   }
 
   return (
-    <StaggerItem hover className="flex flex-col gap-1 rounded-md border border-border bg-card px-3 py-2.5">
+    <StaggerItem
+      hover
+      className="flex flex-col gap-1 rounded-md border border-border bg-card py-2.5 pl-2.5 pr-3"
+      style={{ borderLeft: `3px solid ${colorForAssignee(reminder.assignedToUserId)}` }}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5">
           <span className={`font-medium ${done ? "text-muted line-through" : "text-ink"}`}>{reminder.title}</span>
