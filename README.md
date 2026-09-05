@@ -231,11 +231,11 @@ Pure, dependency-free logic — no DB/network calls:
 pnpm test
 ```
 
-| Package       | Covered                                                                                                             |
-| ------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `packages/db` | `wouldFormCycle` — the parent/location-chain cycle check shared by `updateLocation`/`updateItem`                    |
-| `packages/ai` | `router.ts`'s task → provider chain resolution (ordering, missing-key skipping, OpenRouter's per-task model config) |
-| `apps/web`    | `lib/csv` (round-trip parse/serialize), `lib/safe-redirect` (open-redirect prevention on the post-login redirect)   |
+| Package       | Covered                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/db` | `wouldFormCycle` — the parent/location-chain cycle check shared by `updateLocation`/`updateItem`                                                                                                                                                                                                                                                                                             |
+| `packages/ai` | `router.ts`'s task → provider chain resolution (ordering, missing-key skipping, OpenRouter's per-task model config)                                                                                                                                                                                                                                                                          |
+| `apps/web`    | `lib/csv` (round-trip parse/serialize), `lib/safe-redirect` (open-redirect prevention on the post-login redirect), `lib/cron-auth` (the notifier crons' bearer-token check), `lib/reminders` (household-membership validation for a reminder's assignee), `lib/reminder-notification-groups` (the reminder cron's per-household message grouping), `lib/household` (assignee display labels) |
 
 ### E2E tests (Playwright)
 
@@ -246,11 +246,14 @@ pnpm test:e2e          # from the repo root, or `apps/web` directly
 pnpm --filter web test:e2e:ui   # interactive Playwright UI
 ```
 
-| Spec                  | Auth        | Covers                                                                                                                                                                     |
-| --------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth.unauth.spec.ts` | none        | Login page rendering, mode switching, and the middleware's redirect-guard (including `/join/[token]` invite links)                                                         |
-| `items.spec.ts`       | e2e account | Create → view → edit → delete an item                                                                                                                                      |
-| `locations.spec.ts`   | e2e account | Regression coverage for the location-nesting cycle check — a circular re-parent is rejected inline instead of crashing the page, and a legitimate re-parent still succeeds |
+| Spec                        | Auth        | Covers                                                                                                                                                                     |
+| --------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.unauth.spec.ts`       | none        | Login page rendering, mode switching, and the middleware's redirect-guard (including `/join/[token]` invite links)                                                         |
+| `items.spec.ts`             | e2e account | Create → view → edit → delete an item                                                                                                                                      |
+| `locations.spec.ts`         | e2e account | Regression coverage for the location-nesting cycle check — a circular re-parent is rejected inline instead of crashing the page, and a legitimate re-parent still succeeds |
+| `settings-password.spec.ts` | e2e account | The password form's live strength checklist and client-side rejection of a weak new password                                                                               |
+| `calendar.spec.ts`          | e2e account | Add a reminder, confirm the docked form collapses back on success, then complete/reopen/delete it; leaving a reminder unassigned                                           |
+| `household-sharing.spec.ts` | e2e account | Owner-side invite lifecycle — create, see it pending, revoke it                                                                                                            |
 
 Everything not covered by either suite — most RLS-scoped queries, AI graphs, exports/imports — is verified manually against the real Supabase project rather than automated; see the git history for the verification passes each feature went through.
 
@@ -269,7 +272,7 @@ Chat history is the one thing that stays personal per member even inside a share
 Both notifiers below run daily via Vercel Cron (`vercel.json`), gated by a `Bearer $CRON_SECRET` header compared with `timingSafeEqual` (not `===`, to avoid leaking the secret's length/prefix via response-time differences), and each writes an AI-composed, warm/conversational proactive chat message rather than a templated one.
 
 - **`apps/web/app/api/notifiers/warranty-check`** — finds items with a warranty expiring soon that haven't already been flagged, and writes a proactive chat message per owner — deterministically keyed (`warranty:{ownerId}:{date}`) via a partial unique index on `chat_messages`, so re-running the check (retry, overlapping invocation) is a safe no-op rather than a duplicate nudge.
-- **`apps/web/app/api/notifiers/reminder-check`** — finds pending calendar reminders due within the next few days that haven't already been flagged. A reminder assigned to someone specific nudges just them; an unassigned one nudges the whole household. Keyed `reminder:{userId}:{date}` and marked via `reminders.notified_at`, so it's idempotent the same way the warranty check is.
+- **`apps/web/app/api/notifiers/reminder-check`** — finds pending calendar reminders due within the next few days that haven't already been flagged. A reminder assigned to someone specific nudges just them; an unassigned one nudges the whole household with one shared AI-composed message, not one generated per recipient. Grouped and sent per household (`apps/web/lib/reminder-notification-groups.ts`), not per recipient, so a send failure partway through a household leaves that whole group's reminders un-notified for the next run to retry — nobody in the group is marked notified while another recipient's send is still failing. Keyed `reminder:{userId}:{date}` and marked via `reminders.notified_at`, so it's idempotent the same way the warranty check is.
 
 ---
 
