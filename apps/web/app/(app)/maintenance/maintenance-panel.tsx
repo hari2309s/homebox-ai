@@ -4,13 +4,8 @@ import type { MaintenanceSuggestion } from "@homebox-ai/ai";
 import { Button, EmptyState, Select, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { useState } from "react";
 
+import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
 import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
-
-interface HouseholdUser {
-  userId: string;
-  email: string | null;
-  isSelf: boolean;
-}
 
 interface MaintenancePanelProps {
   items: { id: string; name: string }[];
@@ -23,16 +18,20 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
   const [suggestions, setSuggestions] = useState<MaintenanceSuggestion | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [acceptedNames, setAcceptedNames] = useState<Set<string>>(new Set());
-  const [pendingNames, setPendingNames] = useState<Set<string>>(new Set());
-  const [assignees, setAssignees] = useState<Record<string, string>>({});
+  // Keyed by index into `suggestions.suggestions`, not by name — the AI can
+  // return two suggestions with the same name (e.g. two due dates for the
+  // same recurring task), and a name-keyed Map/Set would conflate them:
+  // accepting one would mark both "Added" and silently drop the other.
+  const [acceptedIndexes, setAcceptedIndexes] = useState<Set<number>>(new Set());
+  const [pendingIndexes, setPendingIndexes] = useState<Set<number>>(new Set());
+  const [assignees, setAssignees] = useState<Record<number, string>>({});
 
   async function handleGetSuggestions() {
     if (!itemId) return;
     setLoading(true);
     setError(null);
     setSuggestions(null);
-    setAcceptedNames(new Set());
+    setAcceptedIndexes(new Set());
     try {
       setSuggestions(await getMaintenanceSuggestionsAction(itemId));
     } catch (err) {
@@ -42,23 +41,23 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
     }
   }
 
-  async function handleAccept(suggestion: MaintenanceSuggestion["suggestions"][number]) {
+  async function handleAccept(suggestion: MaintenanceSuggestion["suggestions"][number], index: number) {
     const formData = new FormData();
     formData.set("itemId", itemId);
     formData.set("title", suggestion.name);
     formData.set("dueDate", suggestion.recommendedDate);
     formData.set("description", suggestion.reason);
-    formData.set("assignedToUserId", assignees[suggestion.name] ?? currentUserId);
-    setPendingNames((prev) => new Set(prev).add(suggestion.name));
+    formData.set("assignedToUserId", assignees[index] ?? currentUserId);
+    setPendingIndexes((prev) => new Set(prev).add(index));
     try {
       await createReminderFromSuggestionAction(formData);
-      setAcceptedNames((prev) => new Set(prev).add(suggestion.name));
+      setAcceptedIndexes((prev) => new Set(prev).add(index));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't add this reminder");
     } finally {
-      setPendingNames((prev) => {
+      setPendingIndexes((prev) => {
         const next = new Set(prev);
-        next.delete(suggestion.name);
+        next.delete(index);
         return next;
       });
     }
@@ -85,8 +84,8 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
             ) : (
               <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
                 {suggestions.suggestions.map((suggestion, index) => {
-                  const accepted = acceptedNames.has(suggestion.name);
-                  const pending = pendingNames.has(suggestion.name);
+                  const accepted = acceptedIndexes.has(index);
+                  const pending = pendingIndexes.has(index);
                   return (
                     <StaggerItem
                       key={`${suggestion.name}-${index}`}
@@ -100,22 +99,20 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <Select
-                          value={assignees[suggestion.name] ?? currentUserId}
-                          onChange={(event) =>
-                            setAssignees((prev) => ({ ...prev, [suggestion.name]: event.target.value }))
-                          }
+                          value={assignees[index] ?? currentUserId}
+                          onChange={(event) => setAssignees((prev) => ({ ...prev, [index]: event.target.value }))}
                           disabled={accepted || pending}
                           className="w-36"
                         >
                           {householdUsers.map((person) => (
                             <option key={person.userId} value={person.userId}>
-                              {person.isSelf ? "Myself" : (person.email ?? "Family member")}
+                              {householdUserLabel(person)}
                             </option>
                           ))}
                         </Select>
                         <Button
                           type="button"
-                          onClick={() => handleAccept(suggestion)}
+                          onClick={() => handleAccept(suggestion, index)}
                           disabled={accepted}
                           loading={pending}
                         >

@@ -31,8 +31,10 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
   return (
     <CrudShell
       toggleLabel="Add item"
-      form={
-        <form action={createItemAction} className="flex flex-col gap-3">
+      formAction={createItemAction}
+      formClassName="flex flex-col gap-3"
+      formFields={
+        <>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Input name="name" placeholder="New item name" required className="sm:flex-1" />
             <Select name="locationId" defaultValue="">
@@ -58,7 +60,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
               ))}
             </fieldset>
           )}
-        </form>
+        </>
       }
     >
       <form method="GET" className="flex flex-col gap-2 sm:flex-row sm:items-center">

@@ -1,6 +1,6 @@
 "use server";
 
-import { itemLabelQueries, itemQueries, labelQueries, locationQueries } from "@homebox-ai/db";
+import { itemActivityQueries, itemLabelQueries, itemQueries, labelQueries, locationQueries } from "@homebox-ai/db";
 import { requireSessionUser } from "@homebox-ai/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -91,6 +91,11 @@ export async function importItemsCsvAction(formData: FormData): Promise<{ import
         notes: cell(row, "notes") || undefined,
       });
       if (!item) return false;
+      await itemActivityQueries.recordItemActivity(user.id, {
+        itemName: item.name,
+        action: "created",
+        itemId: item.id,
+      });
 
       if (labelNames.length > 0) {
         const labelIds: string[] = [];

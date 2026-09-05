@@ -45,6 +45,25 @@ export function HouseholdSection() {
       .finally(() => setLoading(false));
   }, []);
 
+  /** Shared busy/error/finally shape for the household actions below — each one only differs in the busy flag, the action itself, and what to reset once it settles. */
+  async function runBusy(
+    setBusy: (busy: boolean) => void,
+    action: () => Promise<void>,
+    fallbackMessage: string,
+    onSettled?: () => void,
+  ) {
+    setError(null);
+    setBusy(true);
+    try {
+      await action();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : fallbackMessage);
+    } finally {
+      setBusy(false);
+      onSettled?.();
+    }
+  }
+
   async function handleInvite() {
     setCreating(true);
     setError(null);
@@ -72,36 +91,30 @@ export function HouseholdSection() {
   }
 
   async function handleLeave() {
-    setError(null);
-    setLeaving(true);
-    try {
-      await leaveHouseholdAction();
-      await refresh();
-      setLeaveConfirmOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't leave this household");
-      setLeaveConfirmOpen(false);
-    } finally {
-      setLeaving(false);
-    }
+    await runBusy(
+      setLeaving,
+      async () => {
+        await leaveHouseholdAction();
+        await refresh();
+      },
+      "Couldn't leave this household",
+      () => setLeaveConfirmOpen(false),
+    );
   }
 
   async function handleRemoveMember() {
     if (!pendingRemoveMemberId) return;
     const formData = new FormData();
     formData.set("memberUserId", pendingRemoveMemberId);
-    setError(null);
-    setRemovingMember(true);
-    try {
-      await removeMemberAction(formData);
-      await refresh();
-      setPendingRemoveMemberId(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't remove this member");
-      setPendingRemoveMemberId(null);
-    } finally {
-      setRemovingMember(false);
-    }
+    await runBusy(
+      setRemovingMember,
+      async () => {
+        await removeMemberAction(formData);
+        await refresh();
+      },
+      "Couldn't remove this member",
+      () => setPendingRemoveMemberId(null),
+    );
   }
 
   if (loading) {
@@ -179,19 +192,17 @@ export function HouseholdSection() {
                 <TapButton
                   type="button"
                   disabled={revokingId === invite.id}
-                  onClick={async () => {
-                    setError(null);
-                    setRevokingId(invite.id);
-                    try {
-                      const formData = new FormData();
-                      formData.set("inviteId", invite.id);
-                      await revokeInviteAction(formData);
-                      await refresh();
-                    } catch (err) {
-                      setError(err instanceof Error ? err.message : "Couldn't revoke this invite");
-                    } finally {
-                      setRevokingId(null);
-                    }
+                  onClick={() => {
+                    const formData = new FormData();
+                    formData.set("inviteId", invite.id);
+                    void runBusy(
+                      (busy) => setRevokingId(busy ? invite.id : null),
+                      async () => {
+                        await revokeInviteAction(formData);
+                        await refresh();
+                      },
+                      "Couldn't revoke this invite",
+                    );
                   }}
                   className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover disabled:opacity-50"
                 >

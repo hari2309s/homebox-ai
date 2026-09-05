@@ -1,25 +1,10 @@
-import { timingSafeEqual } from "node:crypto";
-
 import { chatQueries, notifierQueries } from "@homebox-ai/db";
 import { getModelForTask } from "@homebox-ai/ai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { NextResponse } from "next/server";
 
+import { isCronRequestAuthorized } from "../../../../lib/cron-auth";
 import { runTracedGraph } from "../../../../lib/traced-graph";
-
-// Constant-time comparison so a wrong guess can't be distinguished by how
-// long the check took — a plain `===` short-circuits on the first mismatched
-// byte, which in principle leaks the secret's prefix to a timing attacker.
-function isAuthorized(request: Request): boolean {
-  const cronSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get("authorization");
-  if (!cronSecret || !authHeader) return false;
-
-  const expected = Buffer.from(`Bearer ${cronSecret}`);
-  const actual = Buffer.from(authHeader);
-  if (expected.length !== actual.length) return false;
-  return timingSafeEqual(expected, actual);
-}
 
 type ExpiringWarrantyItem = Awaited<ReturnType<typeof notifierQueries.listItemsWithExpiringWarranty>>[number];
 
@@ -45,13 +30,8 @@ async function generateWarrantyReminderMessage(ownerItems: ExpiringWarrantyItem[
   return typeof response.content === "string" ? response.content : String(response.content);
 }
 
-/**
- * Meant to be invoked by a scheduler (see vercel.json's cron entry), not a
- * user — Vercel automatically sends `Authorization: Bearer $CRON_SECRET` for
- * configured cron routes, which this checks for instead of a user session.
- */
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isCronRequestAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

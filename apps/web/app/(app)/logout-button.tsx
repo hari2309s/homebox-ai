@@ -28,27 +28,35 @@ export function LogoutButton() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleLogout() {
+    setError(null);
     setPending(true);
     try {
       const supabase = createSupabaseBrowserClient();
-      await supabase.auth.signOut();
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
       router.replace("/login");
       router.refresh();
-    } catch {
+    } catch (err) {
       // Signing out failed (e.g. offline) — reset instead of leaving the
-      // dialog stuck on a spinner forever.
+      // dialog stuck on a spinner forever, and say so instead of quietly
+      // closing as if it had worked.
       setPending(false);
       setConfirmOpen(false);
+      setError(err instanceof Error ? err.message : "Couldn't log out");
     }
   }
 
   return (
-    <>
+    <div className="relative">
       <TapButton
         type="button"
-        onClick={() => setConfirmOpen(true)}
+        onClick={() => {
+          setError(null);
+          setConfirmOpen(true);
+        }}
         disabled={pending}
         aria-label="Log out"
         className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent disabled:opacity-50"
@@ -63,6 +71,11 @@ export function LogoutButton() {
         onConfirm={handleLogout}
         onCancel={() => setConfirmOpen(false)}
       />
-    </>
+      {error && (
+        <p role="alert" className="absolute right-0 top-full mt-1 w-40 text-right text-xs text-accent-hover">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

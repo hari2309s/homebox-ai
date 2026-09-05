@@ -2,6 +2,7 @@
 
 import {
   attachmentQueries,
+  itemActivityQueries,
   itemLabelQueries,
   itemQueries,
   labelQueries,
@@ -154,6 +155,13 @@ export async function importZipAction(formData: FormData): Promise<ZipImportSumm
       locationId: oldLocationId ? (locationIdMap.get(oldLocationId) ?? null) : null,
       notes: raw.notes ? String(raw.notes) : undefined,
     });
+    if (created) {
+      await itemActivityQueries.recordItemActivity(user.id, {
+        itemName: created.name,
+        action: "created",
+        itemId: created.id,
+      });
+    }
     return created && oldId ? ([oldId, created.id] as const) : null;
   });
   const itemIdMap = new Map<string, string>(itemIdPairs.filter((pair) => pair !== null));

@@ -1,8 +1,10 @@
 "use client";
 
-import { ConfirmDialog, Input, Select, Spinner, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { ConfirmDialog, Input, Select, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useMemo, useState } from "react";
 
+import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
+import { CrudShell } from "../crud-shell";
 import { completeReminderAction, createReminderAction, deleteReminderAction, reopenReminderAction } from "./actions";
 
 interface Reminder {
@@ -14,12 +16,6 @@ interface Reminder {
   dueDate: string;
   assignedToUserId: string | null;
   status: "pending" | "done";
-}
-
-interface HouseholdUser {
-  userId: string;
-  email: string | null;
-  isSelf: boolean;
 }
 
 interface Item {
@@ -59,7 +55,7 @@ function assigneeLabel(userId: string | null, householdUsers: HouseholdUser[]): 
   if (!userId) return "Unassigned";
   const match = householdUsers.find((person) => person.userId === userId);
   if (!match) return "Someone";
-  return match.isSelf ? "Myself" : (match.email ?? "Family member");
+  return householdUserLabel(match);
 }
 
 export function CalendarView({
@@ -77,7 +73,6 @@ export function CalendarView({
   const [visibleMonth, setVisibleMonth] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDateKey, setSelectedDateKey] = useState(() => toDateKey(today));
   const [error, setError] = useState<string | null>(null);
-  const [formOpen, setFormOpen] = useState(false);
 
   const remindersByDate = useMemo(() => {
     const map = new Map<string, Reminder[]>();
@@ -89,10 +84,18 @@ export function CalendarView({
     return map;
   }, [reminders]);
 
-  const monthDays = useMemo(
-    () => getMonthGrid(visibleMonth.getFullYear(), visibleMonth.getMonth()),
-    [visibleMonth],
-  );
+  // Precomputed alongside remindersByDate (not per-render in the grid below)
+  // since it only ever needs to change when `reminders` itself does — a
+  // day-select or form-open/close shouldn't recompute colors for all 42 cells.
+  const assigneeColorsByDate = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const [dateKey, dayReminders] of remindersByDate) {
+      map.set(dateKey, [...new Set(dayReminders.map((r) => r.assignedToUserId))].map(colorForAssignee));
+    }
+    return map;
+  }, [remindersByDate]);
+
+  const monthDays = useMemo(() => getMonthGrid(visibleMonth.getFullYear(), visibleMonth.getMonth()), [visibleMonth]);
 
   const selectedReminders = remindersByDate.get(selectedDateKey) ?? [];
   const todayKey = toDateKey(today);
@@ -111,175 +114,149 @@ export function CalendarView({
     }
   }
 
-  async function handleCreate(formData: FormData) {
-    setError(null);
-    try {
-      await createReminderAction(formData);
-      setFormOpen(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't add this reminder");
-    }
-  }
-
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-4 sm:p-6">
-      <div className="flex flex-1 flex-col gap-3 md:mx-auto md:w-full md:max-w-2xl">
-        <div className="flex items-center justify-between">
-          <TapButton
-            type="button"
-            onClick={() => changeMonth(-1)}
-            aria-label="Previous month"
-            className="cursor-pointer rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold text-ink"
-          >
-            ‹
-          </TapButton>
-          <span className="text-base font-bold text-ink">{monthLabel}</span>
-          <TapButton
-            type="button"
-            onClick={() => changeMonth(1)}
-            aria-label="Next month"
-            className="cursor-pointer rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold text-ink"
-          >
-            ›
-          </TapButton>
-        </div>
-
-        {reminders.length > 0 && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {householdUsers.map((person) => (
-              <span key={person.userId} className="flex items-center gap-1.5 text-xs text-muted">
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: colorForAssignee(person.userId) }} />
-                {person.isSelf ? "Myself" : (person.email ?? "Family member")}
-              </span>
-            ))}
-            <span className="flex items-center gap-1.5 text-xs text-muted">
-              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: UNASSIGNED_COLOR }} />
-              Unassigned
-            </span>
+    <CrudShell
+      toggleLabel="Add reminder"
+      formAction={createReminderAction}
+      formFields={
+        <>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input name="title" placeholder="What needs doing" required autoFocus className="sm:flex-1" />
+            <Input name="dueDate" type="date" defaultValue={selectedDateKey} required className="sm:w-40" />
           </div>
-        )}
-
-        <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted">
-          {WEEKDAY_LABELS.map((label) => (
-            <span key={label}>{label}</span>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-7 gap-1">
-          {monthDays.map((date) => {
-            const dateKey = toDateKey(date);
-            const inMonth = date.getMonth() === visibleMonth.getMonth();
-            const dayReminders = remindersByDate.get(dateKey) ?? [];
-            const isSelected = dateKey === selectedDateKey;
-            const isToday = dateKey === todayKey;
-            const assigneeColors = [...new Set(dayReminders.map((r) => r.assignedToUserId))].map(colorForAssignee);
-
-            return (
-              <button
-                key={dateKey}
-                type="button"
-                onClick={() => setSelectedDateKey(dateKey)}
-                className={`flex h-10 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border text-sm transition-colors duration-150 sm:h-12 ${
-                  isSelected
-                    ? "border-accent bg-accent/10"
-                    : isToday
-                      ? "border-accent/40 bg-card hover:border-accent/60 hover:bg-surface-soft"
-                      : "border-border bg-card hover:border-accent/30 hover:bg-surface-soft"
-                } ${inMonth ? "" : "opacity-40"}`}
-              >
-                <span className={isToday ? "font-bold text-accent-hover" : "text-ink"}>{date.getDate()}</span>
-                {assigneeColors.length > 0 && (
-                  <span className="flex items-center gap-0.5">
-                    {assigneeColors.map((color, index) => (
-                      <span key={index} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-                    ))}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <h2 className="text-sm font-bold text-ink">
-            {new Date(`${selectedDateKey}T00:00:00`).toLocaleDateString(undefined, {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            })}
-          </h2>
-          {selectedReminders.length === 0 ? (
-            <p className="text-sm text-muted">No reminders for this day.</p>
-          ) : (
-            <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
-              {selectedReminders.map((reminder) => (
-                <ReminderRow
-                  key={reminder.id}
-                  reminder={reminder}
-                  assignee={assigneeLabel(reminder.assignedToUserId, householdUsers)}
-                  onComplete={(formData) => runAction(completeReminderAction, formData, "Couldn't update this reminder")}
-                  onReopen={(formData) => runAction(reopenReminderAction, formData, "Couldn't update this reminder")}
-                  onDelete={(formData) => runAction(deleteReminderAction, formData, "Couldn't delete this reminder")}
-                />
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Select name="itemId" className="sm:flex-1" defaultValue="">
+              <option value="">No specific item</option>
+              {items.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
               ))}
-            </StaggerList>
-          )}
-        </div>
+            </Select>
+            <Select name="assignedToUserId" className="sm:w-48" defaultValue={currentUserId}>
+              <option value="">Unassigned</option>
+              {householdUsers.map((person) => (
+                <option key={person.userId} value={person.userId}>
+                  {householdUserLabel(person)}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <Input name="description" placeholder="Notes (optional)" />
+          <SubmitButton className="self-start">Add reminder</SubmitButton>
+        </>
+      }
+    >
+      <div className="flex items-center justify-between">
+        <TapButton
+          type="button"
+          onClick={() => changeMonth(-1)}
+          aria-label="Previous month"
+          className="cursor-pointer rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold text-ink"
+        >
+          ‹
+        </TapButton>
+        <span className="text-base font-bold text-ink">{monthLabel}</span>
+        <TapButton
+          type="button"
+          onClick={() => changeMonth(1)}
+          aria-label="Next month"
+          className="cursor-pointer rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold text-ink"
+        >
+          ›
+        </TapButton>
       </div>
 
-      <div className="sticky bottom-0 -mx-4 -mb-4 mt-4 border-t border-border/70 bg-surface-soft/70 p-3 shadow-card backdrop-blur-lg sm:-mx-6 sm:-mb-6 md:mx-auto md:mb-0 md:w-full md:max-w-2xl md:px-6">
-        {formOpen ? (
-          <form action={handleCreate} className="flex flex-col gap-2">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input name="title" placeholder="What needs doing" required autoFocus className="sm:flex-1" />
-              <Input name="dueDate" type="date" defaultValue={selectedDateKey} required className="sm:w-40" />
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Select name="itemId" className="sm:flex-1" defaultValue="">
-                <option value="">No specific item</option>
-                {items.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </Select>
-              <Select name="assignedToUserId" className="sm:w-48" defaultValue={currentUserId}>
-                <option value="">Unassigned</option>
-                {householdUsers.map((person) => (
-                  <option key={person.userId} value={person.userId}>
-                    {person.isSelf ? "Myself" : (person.email ?? "Family member")}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <Input name="description" placeholder="Notes (optional)" />
-            <div className="flex items-center gap-3">
-              <SubmitButton className="self-start">Add reminder</SubmitButton>
-              <TapButton
-                type="button"
-                onClick={() => setFormOpen(false)}
-                className="cursor-pointer border-none bg-transparent text-sm font-semibold text-ink"
-              >
-                Cancel
-              </TapButton>
-            </div>
-            {error && (
-              <p role="alert" className="text-sm text-accent-hover">
-                {error}
-              </p>
-            )}
-          </form>
+      {reminders.length > 0 && (
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          {householdUsers.map((person) => (
+            <span key={person.userId} className="flex items-center gap-1.5 text-xs text-muted">
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: colorForAssignee(person.userId) }}
+              />
+              {householdUserLabel(person)}
+            </span>
+          ))}
+          <span className="flex items-center gap-1.5 text-xs text-muted">
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: UNASSIGNED_COLOR }} />
+            Unassigned
+          </span>
+        </div>
+      )}
+
+      {error && (
+        <p role="alert" className="text-sm text-accent-hover">
+          {error}
+        </p>
+      )}
+
+      <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted">
+        {WEEKDAY_LABELS.map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {monthDays.map((date) => {
+          const dateKey = toDateKey(date);
+          const inMonth = date.getMonth() === visibleMonth.getMonth();
+          const isSelected = dateKey === selectedDateKey;
+          const isToday = dateKey === todayKey;
+          const assigneeColors = assigneeColorsByDate.get(dateKey) ?? [];
+
+          return (
+            <button
+              key={dateKey}
+              type="button"
+              onClick={() => setSelectedDateKey(dateKey)}
+              className={`flex h-10 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border text-sm transition-colors duration-150 sm:h-12 ${
+                isSelected
+                  ? "border-accent bg-accent/10"
+                  : isToday
+                    ? "border-accent/40 bg-card hover:border-accent/60 hover:bg-surface-soft"
+                    : "border-border bg-card hover:border-accent/30 hover:bg-surface-soft"
+              } ${inMonth ? "" : "opacity-40"}`}
+            >
+              <span className={isToday ? "font-bold text-accent-hover" : "text-ink"}>{date.getDate()}</span>
+              {assigneeColors.length > 0 && (
+                <span className="flex items-center gap-0.5">
+                  {assigneeColors.map((color, index) => (
+                    <span key={index} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
+                  ))}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h2 className="text-sm font-bold text-ink">
+          {new Date(`${selectedDateKey}T00:00:00`).toLocaleDateString(undefined, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          })}
+        </h2>
+        {selectedReminders.length === 0 ? (
+          <p className="text-sm text-muted">No reminders for this day.</p>
         ) : (
-          <button
-            type="button"
-            onClick={() => setFormOpen(true)}
-            className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border border-dashed border-border py-2 text-sm font-semibold text-muted transition-colors duration-150 hover:border-accent hover:text-accent-hover"
-          >
-            + Add reminder
-          </button>
+          <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
+            {selectedReminders.map((reminder) => (
+              <ReminderRow
+                key={reminder.id}
+                reminder={reminder}
+                assignee={assigneeLabel(reminder.assignedToUserId, householdUsers)}
+                onComplete={(formData) => runAction(completeReminderAction, formData, "Couldn't update this reminder")}
+                onReopen={(formData) => runAction(reopenReminderAction, formData, "Couldn't update this reminder")}
+                onDelete={(formData) => runAction(deleteReminderAction, formData, "Couldn't delete this reminder")}
+              />
+            ))}
+          </StaggerList>
         )}
       </div>
-    </div>
+    </CrudShell>
   );
 }
 
@@ -346,10 +323,10 @@ function ReminderRow({
           <TapButton
             type="button"
             onClick={handleToggleStatus}
-            disabled={togglingStatus}
-            className="cursor-pointer border-none bg-transparent font-semibold text-ink disabled:opacity-50"
+            loading={togglingStatus}
+            className="cursor-pointer border-none bg-transparent font-semibold text-ink"
           >
-            {togglingStatus ? <Spinner size={12} /> : done ? "Reopen" : "Done"}
+            {done ? "Reopen" : "Done"}
           </TapButton>
           <TapButton
             type="button"

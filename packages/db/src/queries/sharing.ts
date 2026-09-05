@@ -2,7 +2,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { getDb } from "../client";
-import { sharedAccess, sharedAccessInvites } from "../schema";
+import { reminders, sharedAccess, sharedAccessInvites } from "../schema";
 import { withRLS } from "../rls";
 
 export interface UserProfile {
@@ -18,7 +18,10 @@ export interface UserProfile {
 export async function getUserProfiles(userIds: string[]): Promise<Map<string, UserProfile>> {
   if (userIds.length === 0) return new Map();
   const db = getDb();
-  const idList = sql.join(userIds.map((id) => sql`${id}::uuid`), sql`, `);
+  const idList = sql.join(
+    userIds.map((id) => sql`${id}::uuid`),
+    sql`, `,
+  );
   const rows = await db.execute<{ id: string; name: string | null; avatar_url: string | null }>(
     sql`SELECT id, raw_user_meta_data->>'full_name' AS name, raw_user_meta_data->>'avatar_url' AS avatar_url FROM auth.users WHERE id IN (${idList})`,
   );
@@ -34,7 +37,10 @@ export async function getUserProfiles(userIds: string[]): Promise<Map<string, Us
 async function emailsFor(userIds: string[]): Promise<Map<string, string | null>> {
   if (userIds.length === 0) return new Map();
   const db = getDb();
-  const idList = sql.join(userIds.map((id) => sql`${id}::uuid`), sql`, `);
+  const idList = sql.join(
+    userIds.map((id) => sql`${id}::uuid`),
+    sql`, `,
+  );
   const rows = await db.execute<{ id: string; email: string | null }>(
     sql`SELECT id, email FROM auth.users WHERE id IN (${idList})`,
   );
@@ -90,7 +96,10 @@ export function getShareStatus(userId: string): Promise<ShareStatus> {
 
     const memberRows = await tx.select().from(sharedAccess).where(eq(sharedAccess.ownerId, userId));
     const emails = await emailsFor(memberRows.map((row) => row.memberUserId));
-    const members = memberRows.map((row) => ({ userId: row.memberUserId, email: emails.get(row.memberUserId) ?? null }));
+    const members = memberRows.map((row) => ({
+      userId: row.memberUserId,
+      email: emails.get(row.memberUserId) ?? null,
+    }));
     return { role: "owner", members };
   });
 }
@@ -120,14 +129,36 @@ export function listHouseholdUsers(userId: string): Promise<HouseholdUser[]> {
   });
 }
 
+/**
+ * Removing a member's shared_access row doesn't by itself unassign the
+ * reminders they were handed — without also clearing those, the next
+ * reminder-check cron run still resolves them as a recipient and nudges them
+ * in chat about a household they no longer have access to.
+ */
 export function removeMember(userId: string, memberUserId: string) {
-  return withRLS(userId, (tx) =>
-    tx.delete(sharedAccess).where(and(eq(sharedAccess.ownerId, userId), eq(sharedAccess.memberUserId, memberUserId))),
-  );
+  return withRLS(userId, async (tx) => {
+    await tx
+      .delete(sharedAccess)
+      .where(and(eq(sharedAccess.ownerId, userId), eq(sharedAccess.memberUserId, memberUserId)));
+    await tx
+      .update(reminders)
+      .set({ assignedToUserId: null })
+      .where(and(eq(reminders.ownerId, userId), eq(reminders.assignedToUserId, memberUserId)));
+  });
 }
 
 export function leaveSharedHousehold(userId: string) {
-  return withRLS(userId, (tx) => tx.delete(sharedAccess).where(eq(sharedAccess.memberUserId, userId)));
+  return withRLS(userId, async (tx) => {
+    const [membership] = await tx.select().from(sharedAccess).where(eq(sharedAccess.memberUserId, userId));
+    await tx.delete(sharedAccess).where(eq(sharedAccess.memberUserId, userId));
+    // Same stale-assignment cleanup as removeMember, from the leaving member's side.
+    if (membership) {
+      await tx
+        .update(reminders)
+        .set({ assignedToUserId: null })
+        .where(and(eq(reminders.ownerId, membership.ownerId), eq(reminders.assignedToUserId, userId)));
+    }
+  });
 }
 
 export interface InvitePreview {

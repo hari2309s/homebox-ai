@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS "reminders_pending_due_idx" ON "reminders" USING btree ("due_date") WHERE "reminders"."status" = 'pending' and "reminders"."notified_at" is null;

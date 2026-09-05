@@ -71,26 +71,23 @@ export function createReminder(userId: string, data: CreateReminderInput) {
   });
 }
 
-export function completeReminder(userId: string, reminderId: string) {
+function setReminderStatus(userId: string, reminderId: string, status: "pending" | "done") {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
     return tx
       .update(reminders)
-      .set({ status: "done", completedAt: new Date() })
+      .set({ status, completedAt: status === "done" ? new Date() : null })
       .where(and(eq(reminders.id, reminderId), eq(reminders.ownerId, ownerId)))
       .returning();
   });
 }
 
+export function completeReminder(userId: string, reminderId: string) {
+  return setReminderStatus(userId, reminderId, "done");
+}
+
 export function reopenReminder(userId: string, reminderId: string) {
-  return withRLS(userId, async (tx) => {
-    const ownerId = await getEffectiveOwnerId(tx, userId);
-    return tx
-      .update(reminders)
-      .set({ status: "pending", completedAt: null })
-      .where(and(eq(reminders.id, reminderId), eq(reminders.ownerId, ownerId)))
-      .returning();
-  });
+  return setReminderStatus(userId, reminderId, "pending");
 }
 
 export function deleteReminder(userId: string, reminderId: string) {

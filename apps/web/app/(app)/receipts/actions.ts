@@ -1,7 +1,13 @@
 "use server";
 
 import { itemDraftSchema, runReceiptImportGraph, type ReceiptDraft } from "@homebox-ai/ai";
-import { attachmentQueries, itemLabelQueries, itemQueries, resolveEffectiveOwnerId } from "@homebox-ai/db";
+import {
+  attachmentQueries,
+  itemActivityQueries,
+  itemLabelQueries,
+  itemQueries,
+  resolveEffectiveOwnerId,
+} from "@homebox-ai/db";
 import { createSupabaseServerClient, requireSessionUser } from "@homebox-ai/supabase/server";
 import { uploadAttachment } from "@homebox-ai/supabase/storage";
 import { revalidatePath } from "next/cache";
@@ -72,6 +78,7 @@ export async function importReceiptItemsAction(formData: FormData) {
       photoPath
         ? attachmentQueries.createAttachment(user.id, { itemId: item.id, type: "receipt", storagePath: photoPath })
         : undefined,
+      itemActivityQueries.recordItemActivity(user.id, { itemName: item.name, action: "created", itemId: item.id }),
     ]);
   });
 

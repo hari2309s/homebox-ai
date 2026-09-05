@@ -3,6 +3,7 @@
 import { pendingActionSchema } from "@homebox-ai/ai";
 import {
   chatQueries,
+  itemActivityQueries,
   itemLabelQueries,
   itemQueries,
   labelQueries,
@@ -82,6 +83,11 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
         const labelIds = await labelQueries.resolveOrCreateLabelIds(user.id, action.labelNames);
         if (labelIds.length > 0) await itemLabelQueries.setItemLabels(user.id, created.id, labelIds);
       }
+      await itemActivityQueries.recordItemActivity(user.id, {
+        itemName: created.name,
+        action: "created",
+        itemId: created.id,
+      });
       revalidatePath("/items");
       message = `Added "${created.name}".`;
       href = `/items/${created.id}`;
@@ -99,6 +105,11 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
         warrantyExpires: action.warrantyExpires,
       });
       if (!updated) throw new Error("Couldn't update the item — it may no longer exist.");
+      await itemActivityQueries.recordItemActivity(user.id, {
+        itemName: updated.name,
+        action: "updated",
+        itemId: updated.id,
+      });
       revalidatePath("/items");
       revalidatePath(`/items/${updated.id}`);
       message = `Updated "${updated.name}".`;
@@ -173,6 +184,12 @@ export async function loadChatSessionAction(sessionId: string) {
             return info?.photoUrl ? [{ id, name: info.name, photoUrl: info.photoUrl }] : [];
           })
         : undefined;
-    return { id: message.id, role: message.role, content: message.content, referencedItems, createdAt: message.createdAt.toISOString() };
+    return {
+      id: message.id,
+      role: message.role,
+      content: message.content,
+      referencedItems,
+      createdAt: message.createdAt.toISOString(),
+    };
   });
 }

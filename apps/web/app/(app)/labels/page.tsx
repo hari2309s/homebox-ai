@@ -14,8 +14,10 @@ export default async function LabelsPage() {
   return (
     <CrudShell
       toggleLabel="Add label"
-      form={
-        <form action={createLabelAction} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      formAction={createLabelAction}
+      formClassName="flex flex-col gap-3 sm:flex-row sm:items-center"
+      formFields={
+        <>
           <Input name="name" placeholder="New label name" required className="sm:flex-1" />
           <input
             type="color"
@@ -25,7 +27,7 @@ export default async function LabelsPage() {
             className="h-10 w-12 shrink-0 cursor-pointer rounded-md border border-border bg-card p-1"
           />
           <SubmitButton>Add</SubmitButton>
-        </form>
+        </>
       }
     >
       <LabelList labels={labels} />

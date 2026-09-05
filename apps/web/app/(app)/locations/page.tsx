@@ -28,8 +28,10 @@ export default async function LocationsPage() {
   return (
     <CrudShell
       toggleLabel="Add location"
-      form={
-        <form action={createLocationAction} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      formAction={createLocationAction}
+      formClassName="flex flex-col gap-3 sm:flex-row sm:items-center"
+      formFields={
+        <>
           <Input name="name" placeholder="New location name" required className="sm:flex-1" />
           <Select name="parentId" defaultValue="">
             <option value="">No parent (top-level)</option>
@@ -40,7 +42,7 @@ export default async function LocationsPage() {
             ))}
           </Select>
           <SubmitButton>Add</SubmitButton>
-        </form>
+        </>
       }
     >
       <LocationList locations={locations} pathById={pathById} />

@@ -3,6 +3,7 @@ import {
   type AnyPgColumn,
   boolean,
   date,
+  index,
   integer,
   numeric,
   pgEnum,
@@ -182,27 +183,38 @@ export const chatMessages = pgTable(
 
 export const reminderStatus = pgEnum("reminder_status", ["pending", "done"]);
 
-export const reminders = pgTable("reminders", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
-  // Nullable — a reminder can be general household upkeep, not just tied to one asset.
-  itemId: uuid("item_id").references(() => items.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  dueDate: date("due_date").notNull(),
-  // Who should handle it — any member of the household (see shared_access above), or null if unassigned.
-  assignedToUserId: uuid("assigned_to_user_id").references(() => authUsers.id, { onDelete: "set null" }),
-  status: reminderStatus("status").notNull().default("pending"),
-  completedAt: timestamp("completed_at", { withTimezone: true }),
-  // Set once the reminder-check notifier has nudged its recipient(s) in chat,
-  // so the daily cron doesn't re-notify every run (mirrors items.warrantyNotifiedAt).
-  notifiedAt: timestamp("notified_at", { withTimezone: true }),
-  /** The user who created this reminder — may differ from ownerId for shared household members. */
-  createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const reminders = pgTable(
+  "reminders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    // Nullable — a reminder can be general household upkeep, not just tied to one asset.
+    itemId: uuid("item_id").references(() => items.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    dueDate: date("due_date").notNull(),
+    // Who should handle it — any member of the household (see shared_access above), or null if unassigned.
+    assignedToUserId: uuid("assigned_to_user_id").references(() => authUsers.id, { onDelete: "set null" }),
+    status: reminderStatus("status").notNull().default("pending"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    // Set once the reminder-check notifier has nudged its recipient(s) in chat,
+    // so the daily cron doesn't re-notify every run (mirrors items.warrantyNotifiedAt).
+    notifiedAt: timestamp("notified_at", { withTimezone: true }),
+    /** The user who created this reminder — may differ from ownerId for shared household members. */
+    createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    // The reminder-check cron scans exactly this predicate every run — without
+    // a matching partial index it's a full sequential scan of every reminder
+    // in the system, cost growing with total rows instead of just pending ones.
+    index("reminders_pending_due_idx")
+      .on(table.dueDate)
+      .where(sql`${table.status} = 'pending' and ${table.notifiedAt} is null`),
+  ],
+);
 
 export const maintenanceEntries = pgTable("maintenance_entries", {
   id: uuid("id").primaryKey().defaultRandom(),

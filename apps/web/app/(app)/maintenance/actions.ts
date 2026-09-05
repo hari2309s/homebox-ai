@@ -5,6 +5,7 @@ import { reminderQueries } from "@homebox-ai/db";
 import { requireSessionUser } from "@homebox-ai/supabase/server";
 import { revalidatePath } from "next/cache";
 
+import { assertAssignableToHousehold } from "../../../lib/reminders";
 import { runTracedGraph } from "../../../lib/traced-graph";
 
 export async function getMaintenanceSuggestionsAction(itemId: string): Promise<MaintenanceSuggestion> {
@@ -26,6 +27,7 @@ export async function createReminderFromSuggestionAction(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim() || undefined;
   const assignedToUserId = String(formData.get("assignedToUserId") ?? "").trim() || undefined;
   if (!itemId || !title || !dueDate) throw new Error("Missing suggestion details");
+  await assertAssignableToHousehold(user.id, assignedToUserId);
 
   await reminderQueries.createReminder(user.id, { itemId, title, dueDate, description, assignedToUserId });
   revalidatePath("/calendar");
