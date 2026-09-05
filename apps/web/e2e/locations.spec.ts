@@ -7,6 +7,10 @@ function uniqueName(label: string) {
 }
 
 async function createLocation(page: import("@playwright/test").Page, name: string, parentNameSubstring?: string) {
+  // The add-location form is docked, collapsed by default behind a toggle,
+  // and collapses again after each successful add — so this needs reopening
+  // before every call, not just the first.
+  await page.getByRole("button", { name: "+ Add location" }).click();
   await page.getByPlaceholder("New location name").fill(name);
   if (parentNameSubstring) {
     // The dropdown shows full paths ("Grandparent / Parent"), not bare
@@ -58,7 +62,8 @@ test("rejects re-parenting a location under its own sub-location, without crashi
     "Can't move a location inside itself or one of its own sub-locations.",
   );
   // The page itself must still be intact — not replaced by Next's uncaught-error page.
-  await expect(page.getByPlaceholder("New location name")).toBeVisible();
+  // (The add-location form is collapsed by default, so the toggle proves this, not its input.)
+  await expect(page.getByRole("button", { name: "+ Add location" })).toBeVisible();
 
   await parentRow.getByRole("button", { name: "Cancel" }).click();
   await deleteLocation(page, child);

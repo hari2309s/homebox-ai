@@ -10,6 +10,8 @@ test("create an item, see it in the list, open it, then delete it", async ({ pag
   const name = uniqueName("E2E Item");
 
   await page.goto("/items");
+  // The add-item form is docked and collapsed by default behind a toggle.
+  await page.getByRole("button", { name: "+ Add item" }).click();
   await page.getByPlaceholder("New item name").fill(name);
   await page.getByRole("button", { name: "Add" }).click();
 
@@ -30,6 +32,7 @@ test("editing an item's fields persists after reload", async ({ page }) => {
   const name = uniqueName("E2E Editable Item");
 
   await page.goto("/items");
+  await page.getByRole("button", { name: "+ Add item" }).click();
   await page.getByPlaceholder("New item name").fill(name);
   await page.getByRole("button", { name: "Add" }).click();
   await page.getByRole("link", { name: new RegExp(name) }).click();
