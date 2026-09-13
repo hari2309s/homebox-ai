@@ -37,7 +37,11 @@ export function CapturePhotoPicker({
       <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-4 text-center sm:p-6">
         {previewUrl ? (
           // Locally-selected blob URL, not a network image — next/image doesn't apply here.
-          <img src={previewUrl} alt="" className="max-h-64 w-auto rounded-md object-contain" />
+          <img
+            src={previewUrl}
+            alt="Selected photo preview"
+            className="max-h-64 w-auto rounded-md object-contain"
+          />
         ) : (
           <p className="text-sm text-muted">{placeholder}</p>
         )}

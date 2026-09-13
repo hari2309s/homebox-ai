@@ -4,6 +4,7 @@ import { ConfirmDialog, Input, StaggerItem, StaggerList, SubmitButton, TapButton
 import { useState } from "react";
 
 import { formatCurrency } from "../../../../lib/currency";
+import { formatDate } from "../../../../lib/date";
 import { addMaintenanceEntryAction, deleteMaintenanceEntryAction, updateMaintenanceEntryAction } from "../actions";
 
 interface MaintenanceEntry {
@@ -132,7 +133,7 @@ function MaintenanceRow({
         <div className="flex flex-col gap-0.5">
           <span className="font-medium text-ink">{entry.name}</span>
           <span className="text-xs text-muted">
-            {entry.date}
+            {formatDate(entry.date)}
             {formatCurrency(entry.cost, itemCurrency) ? ` · ${formatCurrency(entry.cost, itemCurrency)}` : ""}
           </span>
           {entry.description && <span className="text-sm text-body">{entry.description}</span>}

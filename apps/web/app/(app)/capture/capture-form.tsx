@@ -92,7 +92,11 @@ export function CaptureForm({ locations, labels }: CaptureFormProps) {
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6 md:mx-auto md:w-full md:max-w-2xl">
         {previewUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- locally-selected blob URL, not a network image
-          <img src={previewUrl} alt="" className="max-h-48 w-auto self-center rounded-md object-contain" />
+          <img
+            src={previewUrl}
+            alt="Selected photo preview"
+            className="max-h-48 w-auto self-center rounded-md object-contain"
+          />
         )}
 
         <div className="flex flex-col gap-3">

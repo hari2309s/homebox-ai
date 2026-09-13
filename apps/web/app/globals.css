@@ -54,7 +54,12 @@
  * the header/bottom-nav (surface-soft) visually indistinguishable from the
  * page background (card) — this fixes that.
  */
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --color-card: #1a130d;
   --color-surface: #33261a;
   --color-surface-soft: #261c13;
@@ -68,6 +73,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
     --color-card: #1a130d;
     --color-surface: #33261a;
     --color-surface-soft: #261c13;
@@ -77,6 +83,20 @@
     --color-body: #e3d5ba;
     --color-muted: #9c8b70;
     --color-border: #4a3a27;
+  }
+}
+
+/* Framer Motion's <MotionConfig reducedMotion="user"> (see app/layout.tsx) covers every
+   motion.* animation; this covers plain CSS transitions (buttons, links, etc.) that
+   MotionConfig has no reach into. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

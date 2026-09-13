@@ -181,17 +181,22 @@ export function AvatarUploadForm({ userId, currentAvatarUrl }: AvatarUploadFormP
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={handleCancelCrop}
+              onClick={uploading ? undefined : handleCancelCrop}
             />
             <motion.div
               key="modal"
-              className="fixed inset-x-4 top-1/2 z-50 mx-auto flex w-full max-w-sm -translate-y-1/2 flex-col gap-4 rounded-2xl bg-card p-5 shadow-xl"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="avatar-crop-title"
+              className="fixed inset-x-4 top-1/2 z-50 mx-auto flex w-full max-w-sm -translate-y-1/2 flex-col gap-4 overscroll-contain rounded-2xl bg-card p-5 shadow-xl"
               initial={{ opacity: 0, scale: 0.95, y: "-45%" }}
               animate={{ opacity: 1, scale: 1, y: "-50%" }}
               exit={{ opacity: 0, scale: 0.95, y: "-45%" }}
               transition={{ type: "spring", stiffness: 380, damping: 30 }}
             >
-              <h2 className="text-sm font-bold text-ink">Crop photo</h2>
+              <h2 id="avatar-crop-title" className="text-sm font-bold text-ink">
+                Crop photo
+              </h2>
 
               {/* Crop canvas */}
               <div className="relative h-80 w-full overflow-hidden rounded-xl bg-black">
@@ -232,7 +237,8 @@ export function AvatarUploadForm({ userId, currentAvatarUrl }: AvatarUploadFormP
                 <button
                   type="button"
                   onClick={handleCancelCrop}
-                  className="rounded-md px-4 py-2 text-sm font-semibold text-muted transition-colors duration-150 hover:text-ink"
+                  disabled={uploading}
+                  className="rounded-md px-4 py-2 text-sm font-semibold text-muted transition-colors duration-150 hover:text-ink disabled:cursor-default disabled:opacity-60"
                 >
                   Cancel
                 </button>

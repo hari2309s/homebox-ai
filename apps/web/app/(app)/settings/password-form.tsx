@@ -102,7 +102,11 @@ export function PasswordForm() {
             {error}
           </p>
         )}
-        {saved && !error && <p className="text-sm text-muted">Password updated.</p>}
+        {saved && !error && (
+          <p aria-live="polite" className="text-sm text-muted">
+            Password updated.
+          </p>
+        )}
       </div>
     </form>
   );

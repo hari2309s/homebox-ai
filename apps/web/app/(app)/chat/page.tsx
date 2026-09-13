@@ -358,7 +358,11 @@ export default function ChatPage() {
               </div>
             </FadeIn>
           ) : (
-            <StaggerList className="m-0 flex list-none flex-col gap-3 p-0">
+            <StaggerList
+              className="m-0 flex list-none flex-col gap-3 p-0"
+              aria-live="polite"
+              aria-relevant="additions"
+            >
               {messages.map((message) => {
                 const resolution = resolvedActions[message.id];
                 const isUser = message.role === "user";

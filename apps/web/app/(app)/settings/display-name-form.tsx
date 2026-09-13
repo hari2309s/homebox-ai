@@ -48,7 +48,11 @@ export function DisplayNameForm({ initialName }: { initialName: string }) {
           {error}
         </p>
       )}
-      {saved && !error && <p className="text-sm text-muted sm:basis-full">Saved.</p>}
+      {saved && !error && (
+        <p aria-live="polite" className="text-sm text-muted sm:basis-full">
+          Saved.
+        </p>
+      )}
     </form>
   );
 }

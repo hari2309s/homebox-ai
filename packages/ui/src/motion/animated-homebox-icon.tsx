@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, motion, useMotionValue, useSpring } from "framer-motion";
+import { animate, motion, useMotionValue, useReducedMotion, useSpring } from "framer-motion";
 import { useEffect, useRef } from "react";
 
 // Traced from apps/web/public/icons/icon-512.png via potrace (per-color-layer
@@ -150,7 +150,11 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false, className }:
   }, [leftPupilX, leftPupilY, rightPupilX, rightPupilY, mouthScale]);
 
   // Ambient blinking on a randomized interval, so it reads as alive rather than mechanical.
+  // Skipped entirely under prefers-reduced-motion — it's a decorative loop with no
+  // functional purpose, not an interaction response.
+  const prefersReducedMotion = useReducedMotion();
   useEffect(() => {
+    if (prefersReducedMotion) return;
     let cancelled = false;
     async function blinkLoop() {
       while (!cancelled) {
@@ -171,7 +175,7 @@ export function AnimatedHomeboxIcon({ size = 96, attentive = false, className }:
     return () => {
       cancelled = true;
     };
-  }, [leftEyeScaleY, rightEyeScaleY]);
+  }, [leftEyeScaleY, rightEyeScaleY, prefersReducedMotion]);
 
   // Independent one-shot reaction layered on top of the ambient blink loop —
   // eyes widen and the mouth stretches into a slightly bigger smile.

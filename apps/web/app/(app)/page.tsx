@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { formatCurrency } from "../../lib/currency";
+import { formatDate } from "../../lib/date";
 import { listLabelsCached, listLocationsCached } from "../../lib/cached-queries";
 
 function formatRelativeTime(date: Date): string {
@@ -168,7 +169,7 @@ export default async function DashboardPage() {
                   className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm"
                 >
                   <span className="font-medium text-ink">{item.name}</span>
-                  <span className="text-muted">{item.warrantyExpires}</span>
+                  <span className="text-muted">{item.warrantyExpires && formatDate(item.warrantyExpires)}</span>
                 </Link>
               </StaggerItem>
             ))}

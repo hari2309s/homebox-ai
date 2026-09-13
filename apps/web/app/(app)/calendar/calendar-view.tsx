@@ -121,7 +121,18 @@ export function CalendarView({
       formFields={
         <>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Input name="title" placeholder="What needs doing" required autoFocus className="sm:flex-1" />
+            <Input
+              name="title"
+              placeholder="What needs doing"
+              required
+              // Only on hover-capable/fine-pointer (desktop) input — this form
+              // is reachable on mobile too, where autofocus pops the on-screen
+              // keyboard immediately and covers half the screen unannounced.
+              // Safe to read synchronously: this input only ever mounts after
+              // a client-side "Add reminder" toggle, never during SSR.
+              autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches}
+              className="sm:flex-1"
+            />
             <Input name="dueDate" type="date" defaultValue={selectedDateKey} required className="sm:w-40" />
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">

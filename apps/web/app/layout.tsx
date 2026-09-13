@@ -1,3 +1,4 @@
+import { MotionConfig } from "framer-motion";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
@@ -47,7 +48,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Static, non-user-controlled script; must run inline and synchronously before paint. */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        {/* Disables transform/layout animations app-wide for prefers-reduced-motion,
+            without every motion.* usage needing its own check. */}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
+      </body>
     </html>
   );
 }

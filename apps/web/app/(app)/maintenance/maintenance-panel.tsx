@@ -4,6 +4,7 @@ import type { MaintenanceSuggestion } from "@homebox-ai/ai";
 import { Button, EmptyState, Select, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { useState } from "react";
 
+import { formatDate } from "../../../lib/date";
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
 import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
 
@@ -95,7 +96,7 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
                       <div className="flex flex-col gap-0.5">
                         <span className="font-medium text-ink">{suggestion.name}</span>
                         <span className="text-sm text-muted">{suggestion.reason}</span>
-                        <span className="text-xs text-muted">By {suggestion.recommendedDate}</span>
+                        <span className="text-xs text-muted">By {formatDate(suggestion.recommendedDate)}</span>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <Select
