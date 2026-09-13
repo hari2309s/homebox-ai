@@ -8,8 +8,7 @@ import { acceptInviteAction } from "./actions";
 
 export default async function JoinPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const user = await getSessionUser();
-  const invite = await sharingQueries.getInviteByToken(token);
+  const [user, invite] = await Promise.all([getSessionUser(), sharingQueries.getInviteByToken(token)]);
 
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">

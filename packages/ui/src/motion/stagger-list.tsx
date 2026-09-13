@@ -6,6 +6,10 @@ import type { ComponentProps, ReactElement, ReactNode } from "react";
 
 const BASE_DELAY = 0.05;
 const STEP = 0.07;
+// Caps the cascade's total length so a long list (hundreds of items) still
+// finishes entering within roughly a second, instead of the delay growing
+// linearly with index forever.
+const MAX_STAGGER_INDEX = 12;
 
 const itemVariants = {
   hidden: { opacity: 0, y: 10, scale: 0.98 },
@@ -13,7 +17,12 @@ const itemVariants = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { type: "spring", stiffness: 320, damping: 26, delay: BASE_DELAY + index * STEP },
+    transition: {
+      type: "spring",
+      stiffness: 320,
+      damping: 26,
+      delay: BASE_DELAY + Math.min(index, MAX_STAGGER_INDEX) * STEP,
+    },
   }),
   exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.15 } },
 };

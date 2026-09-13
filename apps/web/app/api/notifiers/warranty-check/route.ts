@@ -46,9 +46,13 @@ export async function POST(request: Request) {
   }
 
   const today = new Date().toISOString().slice(0, 10);
+  const owners = Array.from(itemsByOwner.entries());
 
-  for (const [ownerId, ownerItems] of itemsByOwner) {
-    try {
+  // Each owner's message generation and delivery is independent of every
+  // other owner's, so they run concurrently instead of one LLM round-trip
+  // at a time.
+  const results = await Promise.allSettled(
+    owners.map(async ([ownerId, ownerItems]) => {
       const message = await generateWarrantyReminderMessage(ownerItems);
       const recipients = await notifierQueries.listRecipientsForOwner(ownerId);
       const sessionId = crypto.randomUUID();
@@ -67,14 +71,23 @@ export async function POST(request: Request) {
         });
       }
 
-      await notifierQueries.markWarrantyNotified(ownerItems.map((item) => item.id));
-    } catch (error) {
+      return ownerItems.map((item) => item.id);
+    }),
+  );
+
+  const notifiedItemIds: string[] = [];
+  results.forEach((result, index) => {
+    if (result.status === "fulfilled") {
+      notifiedItemIds.push(...result.value);
+    } else {
       // One household's AI call failing (rate limit, etc.) shouldn't stop the
       // rest — those items are left un-notified (warrantyNotifiedAt still
       // null) so the next run retries them.
-      console.error(`warranty-check notifier failed for owner ${ownerId}:`, error);
+      const [ownerId] = owners[index] ?? [];
+      console.error(`warranty-check notifier failed for owner ${ownerId}:`, result.reason);
     }
-  }
+  });
 
-  return NextResponse.json({ households: itemsByOwner.size, itemsNotified: expiring.length });
+  await notifierQueries.markWarrantyNotified(notifiedItemIds);
+  return NextResponse.json({ households: itemsByOwner.size, itemsNotified: notifiedItemIds.length });
 }

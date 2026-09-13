@@ -4,9 +4,15 @@ import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
 import { uploadAvatar } from "@homebox-ai/supabase/storage";
 import { Spinner } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
-import Cropper from "react-easy-crop";
-import type { Area } from "react-easy-crop";
+import type { default as CropperComponent, Area } from "react-easy-crop";
+
+// Only needed once a photo is picked, so it's split out of the settings
+// page's initial bundle instead of loading for every visitor. Cast back to
+// the library's own component type so JSX usage still gets its defaultProps
+// (rotation, minZoom, etc. are optional there but not on the bare props type).
+const Cropper = dynamic(() => import("react-easy-crop"), { ssr: false }) as unknown as typeof CropperComponent;
 
 function UserIcon() {
   return (
