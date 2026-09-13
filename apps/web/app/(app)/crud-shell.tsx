@@ -42,7 +42,10 @@ export function CrudShell({ formAction, formFields, formClassName, toggleLabel, 
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-4 sm:p-6">
+    // The page-level scroll container — marked so a descendant virtualizer
+    // (see use-scroll-container.ts) can find it via `closest()` instead of
+    // assuming its own direct DOM parent scrolls.
+    <div data-scroll-container className="flex h-full flex-col overflow-y-auto p-4 sm:p-6">
       <div className="flex flex-1 flex-col gap-6 md:mx-auto md:w-full md:max-w-2xl">{children}</div>
 
       <div className="sticky bottom-0 -mx-4 -mb-4 mt-4 border-t border-border/70 bg-surface-soft/70 p-4 shadow-card backdrop-blur-lg sm:-mx-6 sm:-mb-6 sm:p-6 md:mx-auto md:mb-0 md:w-full md:max-w-2xl">

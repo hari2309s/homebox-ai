@@ -29,7 +29,8 @@
     "react-dom": "^19.0.0",
     "react-easy-crop": "^6.2.3",
     "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "virtua": "^0.51.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.6",
