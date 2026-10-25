@@ -28,24 +28,22 @@ export default function ForgotPasswordPage() {
       setError(authError.message);
       return;
     }
-    // Same confirmation either way — revealing whether an email is
-    // registered would be a user-enumeration leak.
     setSent(true);
   }
 
   return (
     <AuthShell>
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-bold text-ink">Reset your password</h2>
+        <h2 className="font-serif text-2xl text-ink">Reset your password</h2>
         <p className="text-sm text-muted">We&apos;ll email you a link to set a new one.</p>
       </div>
 
       {sent ? (
-        <p className="text-sm text-body">
+        <p className="text-sm leading-relaxed text-body">
           If an account exists for that email, a reset link is on its way — check your inbox.
         </p>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <FormField label="Email">
             <Input
               type="email"
@@ -56,7 +54,7 @@ export default function ForgotPasswordPage() {
             />
           </FormField>
           {error && (
-            <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
+            <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
               {error}
             </p>
           )}
@@ -66,7 +64,7 @@ export default function ForgotPasswordPage() {
         </form>
       )}
 
-      <Link href="/login" className="self-center text-sm font-semibold text-ink underline underline-offset-4">
+      <Link href="/login" className="self-center text-sm font-semibold text-accent no-underline">
         Back to sign in
       </Link>
     </AuthShell>

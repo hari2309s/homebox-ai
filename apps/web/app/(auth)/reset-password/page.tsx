@@ -6,16 +6,9 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { isPasswordValid, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_MESSAGE } from "../../../lib/password-policy";
-import { PasswordRequirementsList } from "../../../lib/password-requirements-list";
+import { PasswordStrengthBar } from "../../../lib/password-strength-bar";
 import { AuthShell } from "../auth-shell";
 
-/**
- * Reached only via the emailed reset link, which lands on /auth/callback
- * first — that route exchanges the recovery code for a real session before
- * redirecting here, so `updateUser` below works the same as it would for an
- * already-logged-in user. Middleware already bounces anyone without a
- * session to /login, so no separate guard is needed here.
- */
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
@@ -53,7 +46,7 @@ export default function ResetPasswordPage() {
   return (
     <AuthShell>
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-bold text-ink">Choose a new password</h2>
+        <h2 className="font-serif text-2xl text-ink">Choose a new password</h2>
         <p className="text-sm text-muted">Make it a strong one — you&apos;ll use it to sign in from now on.</p>
       </div>
 
@@ -67,7 +60,7 @@ export default function ResetPasswordPage() {
             autoComplete="new-password"
           />
         </FormField>
-        <PasswordRequirementsList password={password} />
+        <PasswordStrengthBar password={password} />
         <FormField label="Confirm password">
           <PasswordInput
             required
@@ -78,7 +71,7 @@ export default function ResetPasswordPage() {
           />
         </FormField>
         {error && (
-          <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
+          <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
             {error}
           </p>
         )}

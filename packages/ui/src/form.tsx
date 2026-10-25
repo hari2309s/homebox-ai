@@ -10,10 +10,10 @@ import { Spinner } from "./spinner";
 // can't just render `<Input>` — it has to inject a show/hide button inside
 // the field's own padding, not just append a sibling.
 export const fieldClassName =
-  "w-full rounded-md border border-border bg-card px-3.5 py-2.5 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20";
+  "w-full rounded-xl border border-border bg-card px-3 py-[11px] text-[15px] font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:border-2 focus:ring-4 focus:ring-[#dfe8d6]";
 
 const selectFieldClassName =
-  "w-full appearance-none rounded-md border border-border bg-card py-2.5 pl-3.5 pr-9 text-base font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:ring-4 focus:ring-accent/20";
+  "w-full appearance-none rounded-xl border border-border bg-card py-[11px] pl-3 pr-9 text-[15px] font-normal text-body outline-none transition-shadow duration-150 focus:border-accent focus:border-2 focus:ring-4 focus:ring-[#dfe8d6]";
 
 export function cx(...classes: Array<string | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -70,7 +70,7 @@ export function Button({
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       disabled={isDisabled}
       className={cx(
-        "relative flex h-11 cursor-pointer items-center justify-center gap-2 rounded-md bg-accent px-4 py-2.5 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60",
+        "relative flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-semibold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60",
         className,
       )}
       {...props}

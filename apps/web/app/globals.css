@@ -5,16 +5,16 @@
 @source "../../../packages/ui/src";
 
 @theme {
-  --color-surface: #f7deae;
-  --color-surface-soft: #fbf1de;
+  --color-surface: #f4f3ee;
+  --color-surface-soft: #e9e8e1;
 
-  --color-accent: #fb7369;
-  --color-accent-hover: #f2564a;
+  --color-accent: #3f6b45;
+  --color-accent-hover: #325738;
 
-  --color-ink: #4a254b;
-  --color-body: #4a3b2a;
-  --color-muted: #8a7860;
-  --color-border: #ecdcb8;
+  --color-ink: #1f2622;
+  --color-body: #3a423d;
+  --color-muted: #7c867f;
+  --color-border: #d9dbd2;
 
   /* Card/input/dialog/sheet backgrounds — a separate token from Tailwind's
      own `white` (used for e.g. button text on the accent color, which must
@@ -23,12 +23,21 @@
      button text too, since `bg-white` and `text-white` share one variable. */
   --color-card: #ffffff;
 
+  /* Zone colours — used by the site-plan, item cards, and zone badges. */
+  --color-zone-house: #f3f1ea;
+  --color-zone-garden: #dfe8d6;
+  --color-zone-garage: #ecdccd;
+  --color-zone-shed: #e7e1d0;
+  --color-zone-drive: #e2e2dc;
+
   --radius-lg: 20px;
-  --radius-md: 12px;
+  --radius-md: 14px;
 
-  --shadow-card: 0 20px 40px -20px rgba(74, 37, 75, 0.25);
+  --shadow-card: 8px 12px 24px -12px rgba(31, 38, 34, 0.25);
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: var(--font-onest), "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: var(--font-young-serif), "Young Serif", Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-red-hat-mono), "Red Hat Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 /*
@@ -60,29 +69,29 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --color-card: #1a130d;
-  --color-surface: #33261a;
-  --color-surface-soft: #261c13;
-  --color-accent: #fb7369;
-  --color-accent-hover: #ff9088;
-  --color-ink: #f5e6c8;
-  --color-body: #e3d5ba;
-  --color-muted: #9c8b70;
-  --color-border: #4a3a27;
+  --color-card: #232a25;
+  --color-surface: #161b18;
+  --color-surface-soft: #1e2420;
+  --color-accent: #9cc68f;
+  --color-accent-hover: #b5d8aa;
+  --color-ink: #eef1ec;
+  --color-body: #cdd3cc;
+  --color-muted: #8b958d;
+  --color-border: #2c342f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
     color-scheme: dark;
-    --color-card: #1a130d;
-    --color-surface: #33261a;
-    --color-surface-soft: #261c13;
-    --color-accent: #fb7369;
-    --color-accent-hover: #ff9088;
-    --color-ink: #f5e6c8;
-    --color-body: #e3d5ba;
-    --color-muted: #9c8b70;
-    --color-border: #4a3a27;
+    --color-card: #232a25;
+    --color-surface: #161b18;
+    --color-surface-soft: #1e2420;
+    --color-accent: #9cc68f;
+    --color-accent-hover: #b5d8aa;
+    --color-ink: #eef1ec;
+    --color-body: #cdd3cc;
+    --color-muted: #8b958d;
+    --color-border: #2c342f;
   }
 }
 
@@ -157,11 +166,11 @@ body {
      specificity, not just source order. */
   :root {
     --color-card: #ffffff !important;
-    --color-surface: #f7deae !important;
-    --color-surface-soft: #fbf1de !important;
-    --color-ink: #4a254b !important;
-    --color-body: #4a3b2a !important;
-    --color-muted: #8a7860 !important;
-    --color-border: #ecdcb8 !important;
+    --color-surface: #f4f3ee !important;
+    --color-surface-soft: #e9e8e1 !important;
+    --color-ink: #1f2622 !important;
+    --color-body: #3a423d !important;
+    --color-muted: #7c867f !important;
+    --color-border: #d9dbd2 !important;
   }
 }

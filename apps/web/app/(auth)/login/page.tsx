@@ -1,57 +1,22 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import {
-  AnimatedHomeboxIcon,
-  FadeIn,
-  FormField,
-  Input,
-  PasswordInput,
-  Spinner,
-  StaggerItem,
-  StaggerList,
-  TapButton,
-} from "@homebox-ai/ui";
+import { AnimatedHomeboxIcon, FormField, Input, PasswordInput, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
 import { isPasswordValid, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_MESSAGE } from "../../../lib/password-policy";
-import { PasswordRequirementsList } from "../../../lib/password-requirements-list";
+import { PasswordStrengthBar } from "../../../lib/password-strength-bar";
 import { safeRedirect } from "../../../lib/safe-redirect";
 
 const FEATURES = [
-  { icon: "🔍", label: "Ask “where's my passport?” in plain English" },
-  { icon: "📸", label: "Snap a photo and get a ready-made item entry" },
-  { icon: "🧾", label: "Import receipts — items added automatically" },
-  { icon: "🔧", label: "Get maintenance & warranty reminders" },
+  { icon: "photo_camera", label: "Snap a photo to add", bg: "bg-zone-garden", color: "text-accent" },
+  { icon: "forum", label: "Ask where anything is", bg: "bg-card", color: "text-accent" },
+  { icon: "map", label: "A plan of your property", bg: "bg-zone-garage", color: "text-[#b0643f]" },
+  { icon: "yard", label: "Seasonal garden care", bg: "bg-zone-shed", color: "text-[#7a6a3f]" },
 ];
-
-const COPY = {
-  "sign-in": { heading: "Welcome back", subtitle: "Sign in to your inventory" },
-  "sign-up": { heading: "Create your account", subtitle: "Start organizing with AI" },
-};
-
-function GoogleIcon() {
-  return (
-    <svg width={18} height={18} viewBox="0 0 18 18" aria-hidden="true">
-      <path
-        fill="#4285F4"
-        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.56 2.7-3.87 2.7-6.62Z"
-      />
-      <path
-        fill="#34A853"
-        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.94v2.33A9 9 0 0 0 9 18Z"
-      />
-      <path fill="#FBBC05" d="M3.95 10.7a5.4 5.4 0 0 1 0-3.4V4.97H.94a9 9 0 0 0 0 8.06l3.01-2.33Z" />
-      <path
-        fill="#EA4335"
-        d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .94 4.97L3.95 7.3C4.66 5.17 6.65 3.58 9 3.58Z"
-      />
-    </svg>
-  );
-}
 
 function LoginForm() {
   const router = useRouter();
@@ -65,10 +30,10 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [formFocused, setFormFocused] = useState(false);
 
-  function switchMode() {
-    setMode(mode === "sign-in" ? "sign-up" : "sign-in");
+  function switchMode(next: "sign-in" | "sign-up") {
+    if (next === mode) return;
+    setMode(next);
     setError(null);
     setInfo(null);
     setName("");
@@ -90,8 +55,6 @@ function LoginForm() {
         setError(authError.message);
         return;
       }
-      // Left pending — about to navigate away, so resetting it here would just
-      // flash the button back to "Sign in" for a moment before the page changes.
       router.replace(redirectTo);
       router.refresh();
       return;
@@ -119,8 +82,6 @@ function LoginForm() {
       return;
     }
 
-    // The project requires email confirmation, so signUp succeeds without
-    // creating a session — there's nothing to redirect into yet.
     if (!data.session) {
       setPending(false);
       setInfo("Check your email to confirm your account, then sign in.");
@@ -128,7 +89,6 @@ function LoginForm() {
       return;
     }
 
-    // Left pending for the same reason as the sign-in branch above.
     router.replace(redirectTo);
     router.refresh();
   }
@@ -144,96 +104,121 @@ function LoginForm() {
       options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}` },
     });
 
-    // On success the browser is already navigating to Google — nothing left
-    // to do here. Only a request-setup failure (bad config, network) reaches
-    // this line at all.
     if (authError) {
       setPending(false);
       setError(authError.message);
     }
   }
 
-  return (
-    <main className="no-scrollbar mx-auto flex h-dvh w-full max-w-lg flex-col items-center overflow-y-auto px-6 py-12">
-      <div className="m-auto flex w-full flex-col items-center gap-10">
-        <FadeIn className="flex flex-col items-center gap-2 text-center">
-          <div className="flex flex-col items-center gap-2">
-            <motion.div
-              initial={{ scale: 0.5, rotate: -12, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.05 }}
-            >
-              <AnimatedHomeboxIcon size={96} attentive={formFocused} />
-            </motion.div>
-            <h1 className="text-2xl font-bold tracking-tight text-ink">Homebox AI</h1>
-          </div>
-          <p className="max-w-md text-base text-muted">Know what you own, and where it is.</p>
-        </FadeIn>
+  const passwordMatch = confirmPassword.length > 0 && password === confirmPassword;
 
+  return (
+    <main className="no-scrollbar mx-auto flex h-dvh w-full max-w-md flex-col items-center overflow-y-auto px-5 py-10">
+      <div className="m-auto flex w-full flex-col items-center gap-4">
+        {/* Icon + Title */}
+        <motion.div
+          initial={{ scale: 0.6, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.05 }}
+          className="flex flex-col items-center gap-2.5 text-center"
+        >
+          {mode === "sign-in" ? (
+            <AnimatedHomeboxIcon size={96} />
+          ) : (
+            <AnimatedHomeboxIcon size={48} />
+          )}
+          <div>
+            <h1 className="font-serif text-[30px] leading-none text-ink">Homebox</h1>
+            {mode === "sign-in" && (
+              <p className="mt-1.5 max-w-[280px] text-sm leading-snug text-muted">
+                Everything in your house, garden and garage, found in seconds.
+              </p>
+            )}
+            {mode === "sign-up" && (
+              <p className="mt-0.5 text-[13px] text-muted">Map your home, garden &amp; garage.</p>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Form */}
         <motion.form
           onSubmit={handleSubmit}
-          onFocus={() => setFormFocused(true)}
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget as Node)) setFormFocused(false);
-          }}
-          initial={{ opacity: 0, y: 16, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ type: "spring", stiffness: 260, damping: 24, delay: 0.15 }}
-          className="flex w-full max-w-sm flex-col gap-5 rounded-lg bg-surface p-8 shadow-card"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 260, damping: 24, delay: 0.12 }}
+          className="flex w-full flex-col gap-3"
         >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={mode}
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 6 }}
-              transition={{ duration: 0.18 }}
-              className="flex flex-col gap-1"
+          {/* Segmented tab */}
+          <div className="grid grid-cols-2 rounded-xl bg-surface-soft p-[3px] text-sm font-semibold text-center">
+            <button
+              type="button"
+              onClick={() => switchMode("sign-in")}
+              className={`cursor-pointer rounded-[9px] px-3 py-2.5 transition-all ${
+                mode === "sign-in"
+                  ? "bg-card text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]"
+                  : "bg-transparent text-muted"
+              }`}
             >
-              <h2 className="text-lg font-bold text-ink">{COPY[mode].heading}</h2>
-              <p className="text-sm text-muted">{COPY[mode].subtitle}</p>
-            </motion.div>
-          </AnimatePresence>
+              Sign in
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMode("sign-up")}
+              className={`cursor-pointer rounded-[9px] px-3 py-2.5 transition-all ${
+                mode === "sign-up"
+                  ? "bg-card text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]"
+                  : "bg-transparent text-muted"
+              }`}
+            >
+              Create account
+            </button>
+          </div>
 
-          <TapButton
+          {/* Google OAuth */}
+          <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={pending}
-            whileHover={pending ? undefined : { scale: 1.015 }}
-            className="flex cursor-pointer items-center justify-center gap-2.5 rounded-md border border-border bg-card px-3 py-2.5 font-semibold text-ink transition-colors duration-150 hover:bg-surface-soft disabled:cursor-default disabled:opacity-60"
+            className="flex cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-border bg-card px-3 py-3 text-[15px] font-semibold text-ink transition-colors hover:bg-surface-soft disabled:cursor-default disabled:opacity-60"
           >
-            <GoogleIcon />
-            Continue with Google
-          </TapButton>
+            <span className="flex h-5 w-5 items-center justify-center rounded-full border-[1.5px] border-ink text-[11px] font-bold">
+              G
+            </span>
+            {mode === "sign-in" ? "Continue with Google" : "Sign up with Google"}
+          </button>
 
-          <div className="flex items-center gap-3 text-xs font-semibold uppercase text-muted">
+          {/* Divider */}
+          <div className="flex items-center gap-2.5 font-mono text-[10px] tracking-wider text-[#9aa49c]">
             <span className="h-px flex-1 bg-border" />
-            or
+            {mode === "sign-in" ? "OR WITH EMAIL" : "OR"}
             <span className="h-px flex-1 bg-border" />
           </div>
 
+          {/* Name field (sign-up only) */}
           <AnimatePresence initial={false}>
             {mode === "sign-up" && (
-              <motion.label
+              <motion.div
                 key="name"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex flex-col gap-1.5 overflow-hidden text-sm font-semibold text-ink"
+                className="overflow-hidden"
               >
-                Name
-                <Input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoComplete="name"
-                />
-              </motion.label>
+                <FormField label="Your name">
+                  <Input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoComplete="name"
+                  />
+                </FormField>
+              </motion.div>
             )}
           </AnimatePresence>
 
+          {/* Email */}
           <FormField label="Email">
             <Input
               type="email"
@@ -243,7 +228,17 @@ function LoginForm() {
               autoComplete="email"
             />
           </FormField>
-          <FormField label="Password">
+
+          {/* Password */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex justify-between">
+              <span className="text-xs font-semibold text-body">Password</span>
+              {mode === "sign-in" && (
+                <Link href="/forgot-password" className="text-xs font-semibold text-accent no-underline">
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <PasswordInput
               required
               minLength={mode === "sign-up" ? PASSWORD_MIN_LENGTH : undefined}
@@ -251,54 +246,57 @@ function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
             />
-          </FormField>
+          </div>
 
-          {mode === "sign-in" && (
-            <Link
-              href="/forgot-password"
-              className="self-end text-xs font-semibold text-ink underline underline-offset-4"
-            >
-              Forgot password?
-            </Link>
-          )}
-
+          {/* Password strength bar (sign-up only) */}
           <AnimatePresence initial={false}>
             {mode === "sign-up" && (
               <motion.div
-                key="password-requirements"
+                key="strength"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                <PasswordRequirementsList password={password} />
+                <PasswordStrengthBar password={password} />
               </motion.div>
             )}
           </AnimatePresence>
 
+          {/* Confirm password (sign-up only) */}
           <AnimatePresence initial={false}>
             {mode === "sign-up" && (
-              <motion.label
-                key="confirm-password"
+              <motion.div
+                key="confirm"
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex flex-col gap-1.5 overflow-hidden text-sm font-semibold text-ink"
+                className="overflow-hidden"
               >
-                Confirm password
-                <PasswordInput
-                  required
-                  minLength={PASSWORD_MIN_LENGTH}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  autoComplete="new-password"
-                />
-              </motion.label>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-body">Confirm password</span>
+                  <div className="relative">
+                    <PasswordInput
+                      required
+                      minLength={PASSWORD_MIN_LENGTH}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      autoComplete="new-password"
+                    />
+                    {passwordMatch && (
+                      <span className="material-symbols-rounded pointer-events-none absolute right-10 top-1/2 -translate-y-1/2 text-lg text-accent">
+                        check_circle
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
 
+          {/* Error / Info */}
           <AnimatePresence>
             {error && (
               <motion.p
@@ -308,7 +306,7 @@ function LoginForm() {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover"
+                className="overflow-hidden rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]"
               >
                 {error}
               </motion.p>
@@ -321,74 +319,49 @@ function LoginForm() {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden rounded-md bg-surface-soft px-3 py-2 text-sm text-ink"
+                className="overflow-hidden rounded-xl bg-zone-garden px-3 py-2.5 text-sm text-[#2c4d31]"
               >
                 {info}
               </motion.p>
             )}
           </AnimatePresence>
 
+          {/* Submit */}
           <motion.button
             type="submit"
             disabled={pending}
-            whileHover={pending ? undefined : { scale: 1.02 }}
-            whileTap={pending ? undefined : { scale: 0.97 }}
+            whileHover={pending ? undefined : { scale: 1.01 }}
+            whileTap={pending ? undefined : { scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            className="flex cursor-pointer items-center justify-center rounded-md bg-accent px-3 py-3 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
+            className="flex cursor-pointer items-center justify-center rounded-xl bg-accent px-3 py-[15px] text-base font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
           >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.span
-                key={pending ? "pending" : mode}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
-                className="inline-flex items-center gap-2"
-              >
-                {pending ? <Spinner size={16} /> : mode === "sign-in" ? "Sign in" : "Create account"}
-              </motion.span>
-            </AnimatePresence>
+            {pending ? <Spinner size={16} /> : mode === "sign-in" ? "Sign in" : "Create account"}
           </motion.button>
 
-          <TapButton
-            type="button"
-            onClick={switchMode}
-            whileHover={{ scale: 1.03 }}
-            className="cursor-pointer self-center border-none bg-transparent text-sm font-semibold text-ink"
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.span
-                key={mode}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.15 }}
-                className="inline-block underline underline-offset-4"
-              >
-                {mode === "sign-in" ? "Need an account? Sign up" : "Already have an account? Sign in"}
-              </motion.span>
-            </AnimatePresence>
-          </TapButton>
+          {/* Terms (sign-up only) */}
+          {mode === "sign-up" && (
+            <p className="text-center text-[11px] leading-snug text-muted">
+              By continuing you agree to the Terms and Privacy Policy.
+            </p>
+          )}
         </motion.form>
 
-        <StaggerList className="grid w-full max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
-          {FEATURES.map((feature) => (
-            <StaggerItem
-              key={feature.label}
-              className="flex items-start gap-2.5 rounded-md bg-surface-soft px-3.5 py-3"
-            >
-              <span className="text-lg leading-none">{feature.icon}</span>
-              <p className="m-0 text-sm leading-snug text-body">{feature.label}</p>
-            </StaggerItem>
-          ))}
-        </StaggerList>
+        {/* Features (sign-in only) */}
+        {mode === "sign-in" && (
+          <StaggerList className="mt-1 grid w-full grid-cols-2 gap-2">
+            {FEATURES.map((f) => (
+              <StaggerItem key={f.label} className={`flex items-center gap-2 rounded-xl ${f.bg} px-2.5 py-2.5`}>
+                <span className={`material-symbols-rounded text-xl ${f.color}`}>{f.icon}</span>
+                <span className="text-xs font-semibold leading-tight text-ink">{f.label}</span>
+              </StaggerItem>
+            ))}
+          </StaggerList>
+        )}
       </div>
     </main>
   );
 }
 
-// useSearchParams() requires a Suspense boundary — otherwise Next.js can't
-// statically prerender the rest of this page's markup around it.
 export default function LoginPage() {
   return (
     <Suspense>
