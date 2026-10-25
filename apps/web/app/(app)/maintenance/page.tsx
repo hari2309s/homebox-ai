@@ -10,7 +10,7 @@ export default async function MaintenancePage() {
 
   if (!user) {
     return (
-      <div className="flex h-full flex-col p-4 sm:p-6">
+      <div className="flex h-full flex-col p-4">
         <EmptyState>Sign in to see maintenance and warranty suggestions.</EmptyState>
       </div>
     );
@@ -23,8 +23,16 @@ export default async function MaintenancePage() {
 
   if (items.length === 0) {
     return (
-      <div className="flex h-full flex-col p-4 sm:p-6">
-        <EmptyState>Add some items first, then come back here for maintenance and warranty suggestions.</EmptyState>
+      <div data-scroll-container className="flex h-full flex-col overflow-y-auto">
+        <div className="p-4">
+          <div className="font-serif text-[30px] leading-none text-ink">Care &amp; upkeep</div>
+          <div className="mt-1 font-mono text-[11px] tracking-wide text-muted">
+            ADD SOME THINGS FIRST
+          </div>
+        </div>
+        <div className="flex-1 p-4">
+          <EmptyState>Add some items first, then come back here for maintenance and warranty suggestions.</EmptyState>
+        </div>
       </div>
     );
   }

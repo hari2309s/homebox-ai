@@ -1,7 +1,7 @@
 "use client";
 
 import type { MaintenanceSuggestion } from "@homebox-ai/ai";
-import { Button, EmptyState, Select, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import { EmptyState, Select } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { formatDate } from "../../../lib/date";
@@ -14,15 +14,17 @@ interface MaintenancePanelProps {
   currentUserId: string;
 }
 
+const SUGGESTION_STYLES: { icon: string; bg: string; fg: string }[] = [
+  { icon: "build", bg: "#dfe8d6", fg: "#3f6b45" },
+  { icon: "water_drop", bg: "#d6eaea", fg: "#3f8a8a" },
+  { icon: "cleaning_services", bg: "#ecdccd", fg: "#b0643f" },
+];
+
 export function MaintenancePanel({ items, householdUsers, currentUserId }: MaintenancePanelProps) {
   const [itemId, setItemId] = useState("");
   const [suggestions, setSuggestions] = useState<MaintenanceSuggestion | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Keyed by index into `suggestions.suggestions`, not by name — the AI can
-  // return two suggestions with the same name (e.g. two due dates for the
-  // same recurring task), and a name-keyed Map/Set would conflate them:
-  // accepting one would mark both "Added" and silently drop the other.
   const [acceptedIndexes, setAcceptedIndexes] = useState<Set<number>>(new Set());
   const [pendingIndexes, setPendingIndexes] = useState<Set<number>>(new Set());
   const [assignees, setAssignees] = useState<Record<number, string>>({});
@@ -64,87 +66,134 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
     }
   }
 
+  const selectedItem = items.find((i) => i.id === itemId);
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6 md:mx-auto md:w-full md:max-w-2xl">
-        {error && (
-          <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
-            {error}
-          </p>
-        )}
-
-        {suggestions ? (
-          <div className="flex flex-col gap-3">
-            {suggestions.warrantyExpiringSoon && (
-              <p className="rounded-md bg-accent/10 px-3 py-2 text-sm font-semibold text-accent-hover">
-                This item&apos;s warranty is expiring within 60 days.
-              </p>
-            )}
-            {suggestions.suggestions.length === 0 ? (
-              <p className="text-sm text-muted">No maintenance suggested right now.</p>
-            ) : (
-              <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
-                {suggestions.suggestions.map((suggestion, index) => {
-                  const accepted = acceptedIndexes.has(index);
-                  const pending = pendingIndexes.has(index);
-                  return (
-                    <StaggerItem
-                      key={`${suggestion.name}-${index}`}
-                      hover
-                      className="flex flex-col gap-3 rounded-md border border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-medium text-ink">{suggestion.name}</span>
-                        <span className="text-sm text-muted">{suggestion.reason}</span>
-                        <span className="text-xs text-muted">By {formatDate(suggestion.recommendedDate)}</span>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <Select
-                          value={assignees[index] ?? currentUserId}
-                          onChange={(event) => setAssignees((prev) => ({ ...prev, [index]: event.target.value }))}
-                          disabled={accepted || pending}
-                          className="w-36"
-                        >
-                          {householdUsers.map((person) => (
-                            <option key={person.userId} value={person.userId}>
-                              {householdUserLabel(person)}
-                            </option>
-                          ))}
-                        </Select>
-                        <Button
-                          type="button"
-                          onClick={() => handleAccept(suggestion, index)}
-                          disabled={accepted}
-                          loading={pending}
-                        >
-                          {accepted ? "Added" : "Add reminder"}
-                        </Button>
-                      </div>
-                    </StaggerItem>
-                  );
-                })}
-              </StaggerList>
-            )}
+    <div data-scroll-container className="flex h-full flex-col overflow-y-auto">
+      <div className="flex flex-col gap-3 p-4">
+        <div className="px-1">
+          <div className="font-serif text-[30px] leading-none text-ink">Care &amp; upkeep</div>
+          <div className="mt-1 font-mono text-[11px] tracking-wide text-muted">
+            PICK A THING · I&apos;LL SUGGEST A ROUTINE
           </div>
-        ) : (
-          <EmptyState>Choose an item below to get maintenance and warranty suggestions.</EmptyState>
-        )}
-      </div>
-
-      <div className="shrink-0 border-t border-border bg-card p-4 md:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center md:mx-auto md:w-full md:max-w-2xl">
-          <Select value={itemId} onChange={(event) => setItemId(event.target.value)} className="sm:flex-1">
-            <option value="">Choose an item…</option>
-            {items.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </Select>
-          <Button type="button" onClick={handleGetSuggestions} disabled={!itemId} loading={loading}>
-            Get suggestions
-          </Button>
         </div>
+
+        {/* Item picker + suggest button */}
+        <div className="flex gap-2">
+          <div className="relative flex flex-1 items-center gap-[10px] rounded-xl border border-border bg-card px-[10px] py-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[repeating-linear-gradient(135deg,#dfe8d6_0_4px,#eef3e9_4px_8px)]" />
+            <div className="min-w-0 flex-1">
+              {selectedItem ? (
+                <div className="truncate text-[14px] font-semibold text-ink">{selectedItem.name}</div>
+              ) : (
+                <div className="text-[14px] text-muted">Choose an item…</div>
+              )}
+            </div>
+            <select
+              value={itemId}
+              onChange={(e) => setItemId(e.target.value)}
+              className="absolute inset-0 cursor-pointer opacity-0"
+              aria-label="Choose an item"
+            >
+              <option value="">Choose an item…</option>
+              {items.map((item) => (
+                <option key={item.id} value={item.id}>{item.name}</option>
+              ))}
+            </select>
+            <span className="material-symbols-rounded text-muted">expand_more</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleGetSuggestions}
+            disabled={!itemId || loading}
+            className="flex cursor-pointer items-center gap-[6px] rounded-xl border-none bg-accent px-[14px] text-[14px] font-semibold text-white disabled:opacity-50"
+          >
+            <span className="material-symbols-rounded text-[18px]">auto_awesome</span>
+            {loading ? "…" : "Suggest"}
+          </button>
+        </div>
+
+        {error && (
+          <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">{error}</p>
+        )}
+
+        {/* Warranty warning */}
+        {suggestions?.warrantyExpiringSoon && (
+          <div className="flex items-start gap-[10px] rounded-xl bg-[#ecdccd] px-3 py-[11px]">
+            <span className="material-symbols-rounded text-[#7a3f22]">gpp_maybe</span>
+            <p className="flex-1 text-[13px] leading-snug text-[#5a2e18]">
+              <b>Warranty is expiring soon.</b> If something&apos;s wrong, claim it now while the receipt is on file.
+            </p>
+          </div>
+        )}
+
+        {/* Suggestion cards */}
+        {suggestions ? (
+          suggestions.suggestions.length === 0 ? (
+            <p className="text-sm text-muted">No maintenance suggested right now.</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {suggestions.suggestions.map((suggestion, index) => {
+                const accepted = acceptedIndexes.has(index);
+                const pending = pendingIndexes.has(index);
+                const style = SUGGESTION_STYLES[index % SUGGESTION_STYLES.length]!;
+                return (
+                  <div
+                    key={`${suggestion.name}-${index}`}
+                    className="flex flex-col gap-[10px] rounded-[14px] border border-border bg-card p-3 shadow-card"
+                  >
+                    <div className="flex items-start gap-[10px]">
+                      <span
+                        className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg material-symbols-rounded text-[18px]"
+                        style={{ background: style.bg, color: style.fg }}
+                      >
+                        {style.icon}
+                      </span>
+                      <div className="flex-1">
+                        <div className="text-[15px] font-semibold text-ink">{suggestion.name}</div>
+                        <div className="mt-0.5 text-[13px] leading-snug text-muted">{suggestion.reason}</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-[6px]">
+                      <span className="rounded-lg bg-[#e9e8e1] px-[9px] py-[7px] font-mono text-[11px] text-ink">
+                        {formatDate(suggestion.recommendedDate)}
+                      </span>
+                      <Select
+                        value={assignees[index] ?? currentUserId}
+                        onChange={(e) => setAssignees((prev) => ({ ...prev, [index]: e.target.value }))}
+                        disabled={accepted || pending}
+                        className="flex-1 !rounded-lg !py-[5px] !text-[13px]"
+                      >
+                        {householdUsers.map((person) => (
+                          <option key={person.userId} value={person.userId}>
+                            {householdUserLabel(person)}
+                          </option>
+                        ))}
+                      </Select>
+                      <button
+                        type="button"
+                        onClick={() => handleAccept(suggestion, index)}
+                        disabled={accepted || pending}
+                        className={`flex cursor-pointer items-center gap-1 rounded-lg border px-[10px] py-[6px] text-[13px] font-semibold ${
+                          accepted
+                            ? "border-border bg-[#dfe8d6] text-[#2c4d31]"
+                            : "border-none bg-accent text-white"
+                        }`}
+                      >
+                        <span className="material-symbols-rounded text-[16px]">
+                          {accepted ? "check" : "add_alarm"}
+                        </span>
+                        {accepted ? "Added" : pending ? "…" : "Add"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          !loading && <EmptyState>Choose an item above to get maintenance and warranty suggestions.</EmptyState>
+        )}
       </div>
     </div>
   );

@@ -31,9 +31,6 @@ export default function ScanPage() {
         );
       })
       .then((startedControls) => {
-        // The component could have unmounted while the camera was still
-        // starting up (e.g. a quick back-navigation) — stop immediately
-        // instead of leaving the stream running in the background.
         if (cancelled) {
           startedControls.stop();
           return;
@@ -56,17 +53,20 @@ export default function ScanPage() {
   }, [router]);
 
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 bg-black p-4">
-      <div className="relative w-full max-w-sm overflow-hidden rounded-md bg-black">
-        {/* zxing attaches the camera stream to this element itself once decoding starts. */}
-        <video ref={videoRef} muted playsInline className="w-full rounded-md" />
+    <div className="flex h-full flex-col items-center justify-center gap-4 bg-[#1f2622] p-4">
+      <div className="relative w-full max-w-sm overflow-hidden rounded-[14px] bg-black shadow-card">
+        <video ref={videoRef} muted playsInline className="w-full rounded-[14px]" />
         {ready && !error && (
-          <div className="pointer-events-none absolute inset-8 rounded-md border-2 border-white/70" />
+          <div className="pointer-events-none absolute inset-8 rounded-[10px] border-2 border-white/60" />
         )}
       </div>
-      <p className="max-w-sm text-center text-sm text-white/80">
-        {error ?? "Point the camera at a barcode, or one of your printed item QR labels, to look it up."}
-      </p>
+      {error ? (
+        <p className="max-w-sm rounded-xl bg-[#ecdccd] px-3 py-2.5 text-center text-sm text-[#5a2e18]">{error}</p>
+      ) : (
+        <p className="max-w-sm text-center text-sm text-white/70">
+          Point the camera at a barcode or one of your printed QR labels.
+        </p>
+      )}
     </div>
   );
 }

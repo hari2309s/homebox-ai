@@ -1,6 +1,6 @@
 "use client";
 
-import { ConfirmDialog, Input, Select, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { ConfirmDialog, Input, Select, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useMemo, useState } from "react";
 
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
@@ -23,13 +23,10 @@ interface Item {
   name: string;
 }
 
-const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
-// Fixed hues, hashed onto each assignee's user id so the same person always
-// gets the same color across the grid, the day list, and the legend — no
-// per-user color picker needed, unlike labels' user-chosen colors.
-const ASSIGNEE_PALETTE = ["#fb7369", "#4f9ddb", "#5bb98c", "#c98bd9", "#e0a83e", "#4fb8b0"];
-const UNASSIGNED_COLOR = "#8a7860";
+const ASSIGNEE_PALETTE = ["#3f6b45", "#b0643f", "#5b7fa6", "#c98bd9", "#e0a83e", "#4fb8b0"];
+const UNASSIGNED_COLOR = "#7c867f";
 
 function colorForAssignee(userId: string | null): string {
   if (!userId) return UNASSIGNED_COLOR;
@@ -47,7 +44,8 @@ function toDateKey(date: Date): string {
 
 function getMonthGrid(year: number, month: number): Date[] {
   const firstOfMonth = new Date(year, month, 1);
-  const start = new Date(year, month, 1 - firstOfMonth.getDay());
+  const startDay = firstOfMonth.getDay() === 0 ? 6 : firstOfMonth.getDay() - 1;
+  const start = new Date(year, month, 1 - startDay);
   return Array.from({ length: 42 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
 }
 
@@ -56,6 +54,18 @@ function assigneeLabel(userId: string | null, householdUsers: HouseholdUser[]): 
   const match = householdUsers.find((person) => person.userId === userId);
   if (!match) return "Someone";
   return householdUserLabel(match);
+}
+
+function assigneeInitial(userId: string | null, householdUsers: HouseholdUser[]): string {
+  const label = assigneeLabel(userId, householdUsers);
+  return label.charAt(0).toUpperCase();
+}
+
+function seasonLabel(month: number): string {
+  if (month >= 2 && month <= 4) return "SPRING · NEW GROWTH";
+  if (month >= 5 && month <= 7) return "SUMMER · FULL SUN";
+  if (month >= 8 && month <= 10) return "AUTUMN · LEAF FALL";
+  return "WINTER · DORMANT";
 }
 
 export function CalendarView({
@@ -84,9 +94,6 @@ export function CalendarView({
     return map;
   }, [reminders]);
 
-  // Precomputed alongside remindersByDate (not per-render in the grid below)
-  // since it only ever needs to change when `reminders` itself does — a
-  // day-select or form-open/close shouldn't recompute colors for all 42 cells.
   const assigneeColorsByDate = useMemo(() => {
     const map = new Map<string, string[]>();
     for (const [dateKey, dayReminders] of remindersByDate) {
@@ -120,76 +127,132 @@ export function CalendarView({
       formAction={createReminderAction}
       formFields={
         <>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              name="title"
-              placeholder="What needs doing"
-              required
-              // Only on hover-capable/fine-pointer (desktop) input — this form
-              // is reachable on mobile too, where autofocus pops the on-screen
-              // keyboard immediately and covers half the screen unannounced.
-              // Safe to read synchronously: this input only ever mounts after
-              // a client-side "Add reminder" toggle, never during SSR.
-              autoFocus={typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches}
-              className="sm:flex-1"
-            />
-            <Input name="dueDate" type="date" defaultValue={selectedDateKey} required className="sm:w-40" />
+          <div className="flex flex-col gap-[5px]">
+            <span className="text-xs font-semibold text-body">Title</span>
+            <Input name="title" placeholder="What needs doing" required />
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Select name="itemId" className="sm:flex-1" defaultValue="">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex flex-col gap-[5px]">
+              <span className="text-xs font-semibold text-body">Date</span>
+              <Input name="dueDate" type="date" defaultValue={selectedDateKey} required />
+            </div>
+            <div className="flex flex-col gap-[5px]">
+              <span className="text-xs font-semibold text-body">Assignee</span>
+              <Select name="assignedToUserId" defaultValue={currentUserId}>
+                <option value="">Unassigned</option>
+                {householdUsers.map((person) => (
+                  <option key={person.userId} value={person.userId}>
+                    {householdUserLabel(person)}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </div>
+          <div className="flex flex-col gap-[5px]">
+            <span className="text-xs font-semibold text-body">
+              Linked thing <span className="font-normal text-muted">· optional</span>
+            </span>
+            <Select name="itemId" defaultValue="">
               <option value="">No specific item</option>
               {items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </Select>
-            <Select name="assignedToUserId" className="sm:w-48" defaultValue={currentUserId}>
-              <option value="">Unassigned</option>
-              {householdUsers.map((person) => (
-                <option key={person.userId} value={person.userId}>
-                  {householdUserLabel(person)}
-                </option>
+                <option key={item.id} value={item.id}>{item.name}</option>
               ))}
             </Select>
           </div>
-          <Input name="description" placeholder="Notes (optional)" />
-          <SubmitButton className="self-start">Add reminder</SubmitButton>
+          <div className="flex flex-col gap-[5px]">
+            <span className="text-xs font-semibold text-body">Notes</span>
+            <Input name="description" placeholder="Notes (optional)" />
+          </div>
+          <SubmitButton className="w-full">Add reminder</SubmitButton>
         </>
       }
     >
-      <div className="flex items-center justify-between">
+      {/* Page header */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1">
+          <div className="font-mono text-[10px] text-muted">{seasonLabel(visibleMonth.getMonth())}</div>
+          <div className="font-serif text-[28px] leading-none text-ink">{monthLabel}</div>
+        </div>
         <TapButton
           type="button"
           onClick={() => changeMonth(-1)}
           aria-label="Previous month"
-          className="cursor-pointer rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold text-ink"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card"
         >
-          ‹
+          <span className="material-symbols-rounded text-ink">chevron_left</span>
         </TapButton>
-        <span className="text-base font-bold text-ink">{monthLabel}</span>
         <TapButton
           type="button"
           onClick={() => changeMonth(1)}
           aria-label="Next month"
-          className="cursor-pointer rounded-md border border-border bg-card px-3 py-1.5 text-sm font-semibold text-ink"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card"
         >
-          ›
+          <span className="material-symbols-rounded text-ink">chevron_right</span>
         </TapButton>
       </div>
 
+      {/* Calendar grid */}
+      <div className="rounded-[14px] border border-border bg-card p-[10px_8px] shadow-card">
+        <div className="grid grid-cols-7 pb-[6px] text-center font-mono text-[10px] text-muted">
+          {WEEKDAY_LABELS.map((label, i) => (
+            <span key={i}>{label}</span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-y-[2px]">
+          {monthDays.map((date) => {
+            const dateKey = toDateKey(date);
+            const inMonth = date.getMonth() === visibleMonth.getMonth();
+            const isSelected = dateKey === selectedDateKey;
+            const isToday = dateKey === todayKey;
+            const assigneeColors = assigneeColorsByDate.get(dateKey) ?? [];
+
+            return (
+              <button
+                key={dateKey}
+                type="button"
+                onClick={() => setSelectedDateKey(dateKey)}
+                className="flex h-11 cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] border-none bg-transparent transition-colors duration-100"
+                style={{
+                  background: isSelected ? "#3f6b45" : "transparent",
+                  opacity: inMonth ? 1 : 0.35,
+                }}
+              >
+                <span
+                  className="text-[14px]"
+                  style={{
+                    fontWeight: isSelected || isToday ? 700 : 500,
+                    color: isSelected ? "#fff" : isToday ? "#3f6b45" : "#1f2622",
+                  }}
+                >
+                  {date.getDate()}
+                </span>
+                {assigneeColors.length > 0 && (
+                  <span className="flex items-center gap-[2px]">
+                    {assigneeColors.map((color, i) => (
+                      <span
+                        key={i}
+                        className="h-[5px] w-[5px] rounded-full"
+                        style={{ background: isSelected ? "#fff" : color }}
+                      />
+                    ))}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Assignee legend */}
       {reminders.length > 0 && (
-        <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <div className="flex flex-wrap gap-x-[14px] gap-y-1">
           {householdUsers.map((person) => (
-            <span key={person.userId} className="flex items-center gap-1.5 text-xs text-muted">
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: colorForAssignee(person.userId) }}
-              />
+            <span key={person.userId} className="flex items-center gap-[5px] text-xs font-semibold text-body">
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: colorForAssignee(person.userId) }} />
               {householdUserLabel(person)}
             </span>
           ))}
-          <span className="flex items-center gap-1.5 text-xs text-muted">
+          <span className="flex items-center gap-[5px] text-xs font-semibold text-body">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: UNASSIGNED_COLOR }} />
             Unassigned
           </span>
@@ -197,74 +260,41 @@ export function CalendarView({
       )}
 
       {error && (
-        <p role="alert" className="text-sm text-accent-hover">
-          {error}
-        </p>
+        <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">{error}</p>
       )}
 
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-muted">
-        {WEEKDAY_LABELS.map((label) => (
-          <span key={label}>{label}</span>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-7 gap-1">
-        {monthDays.map((date) => {
-          const dateKey = toDateKey(date);
-          const inMonth = date.getMonth() === visibleMonth.getMonth();
-          const isSelected = dateKey === selectedDateKey;
-          const isToday = dateKey === todayKey;
-          const assigneeColors = assigneeColorsByDate.get(dateKey) ?? [];
-
-          return (
-            <button
-              key={dateKey}
-              type="button"
-              onClick={() => setSelectedDateKey(dateKey)}
-              className={`flex h-10 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border text-sm transition-colors duration-150 sm:h-12 ${
-                isSelected
-                  ? "border-accent bg-accent/10"
-                  : isToday
-                    ? "border-accent/40 bg-card hover:border-accent/60 hover:bg-surface-soft"
-                    : "border-border bg-card hover:border-accent/30 hover:bg-surface-soft"
-              } ${inMonth ? "" : "opacity-40"}`}
-            >
-              <span className={isToday ? "font-bold text-accent-hover" : "text-ink"}>{date.getDate()}</span>
-              {assigneeColors.length > 0 && (
-                <span className="flex items-center gap-0.5">
-                  {assigneeColors.map((color, index) => (
-                    <span key={index} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} />
-                  ))}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
+      {/* Day detail */}
       <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-bold text-ink">
-          {new Date(`${selectedDateKey}T00:00:00`).toLocaleDateString(undefined, {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
-        </h2>
+        <div className="flex items-baseline justify-between">
+          <span className="text-[15px] font-semibold text-ink">
+            {new Date(`${selectedDateKey}T00:00:00`).toLocaleDateString(undefined, {
+              weekday: "short",
+              day: "numeric",
+            })}
+            {selectedDateKey === todayKey && " · today"}
+          </span>
+          <span className="font-mono text-[11px] text-muted">
+            {selectedReminders.length} REMINDER{selectedReminders.length === 1 ? "" : "S"}
+          </span>
+        </div>
+
         {selectedReminders.length === 0 ? (
           <p className="text-sm text-muted">No reminders for this day.</p>
         ) : (
-          <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
+          <div className="rounded-[14px] border border-border bg-card px-3 py-[2px]">
             {selectedReminders.map((reminder) => (
               <ReminderRow
                 key={reminder.id}
                 reminder={reminder}
                 assignee={assigneeLabel(reminder.assignedToUserId, householdUsers)}
+                assigneeInitial={assigneeInitial(reminder.assignedToUserId, householdUsers)}
+                assigneeColor={colorForAssignee(reminder.assignedToUserId)}
                 onComplete={(formData) => runAction(completeReminderAction, formData, "Couldn't update this reminder")}
                 onReopen={(formData) => runAction(reopenReminderAction, formData, "Couldn't update this reminder")}
                 onDelete={(formData) => runAction(deleteReminderAction, formData, "Couldn't delete this reminder")}
               />
             ))}
-          </StaggerList>
+          </div>
         )}
       </div>
     </CrudShell>
@@ -274,12 +304,16 @@ export function CalendarView({
 function ReminderRow({
   reminder,
   assignee,
+  assigneeInitial,
+  assigneeColor,
   onComplete,
   onReopen,
   onDelete,
 }: {
   reminder: Reminder;
   assignee: string;
+  assigneeInitial: string;
+  assigneeColor: string;
   onComplete: (formData: FormData) => Promise<void>;
   onReopen: (formData: FormData) => Promise<void>;
   onDelete: (formData: FormData) => Promise<void>;
@@ -315,39 +349,38 @@ function ReminderRow({
   }
 
   return (
-    <StaggerItem hover className="flex flex-col gap-1 rounded-md border border-border bg-card px-3 py-2.5">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <span className="flex items-center gap-1.5">
-            <span
-              className="h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: colorForAssignee(reminder.assignedToUserId) }}
-            />
-            <span className={`font-medium ${done ? "text-muted line-through" : "text-ink"}`}>{reminder.title}</span>
-          </span>
-          <span className="text-xs text-muted">
-            {reminder.itemName ? `${reminder.itemName} · ` : ""}Assigned to {assignee}
-          </span>
-          {reminder.description && <span className="text-sm text-body">{reminder.description}</span>}
-        </div>
-        <div className="flex shrink-0 items-center gap-2 text-sm">
-          <TapButton
-            type="button"
-            onClick={handleToggleStatus}
-            loading={togglingStatus}
-            className="cursor-pointer border-none bg-transparent font-semibold text-ink"
-          >
-            {done ? "Reopen" : "Done"}
-          </TapButton>
-          <TapButton
-            type="button"
-            onClick={() => setConfirmOpen(true)}
-            className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
-          >
-            Delete
-          </TapButton>
+    <div className="flex items-center gap-[10px] border-b border-border/40 py-[10px] last:border-b-0">
+      <span
+        className="w-[3px] self-stretch rounded-sm"
+        style={{ background: assigneeColor }}
+      />
+      <div className="min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={handleToggleStatus}
+          disabled={togglingStatus}
+          className={`cursor-pointer border-none bg-transparent p-0 text-left text-[14px] font-medium ${done ? "text-muted line-through" : "text-ink"}`}
+        >
+          {reminder.title}
+        </button>
+        <div className="font-mono text-[10px] text-muted">
+          {reminder.itemName ? `${reminder.itemName} · ` : ""}{assignee}
         </div>
       </div>
+      <span
+        className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+        style={{ background: assigneeColor }}
+      >
+        {assigneeInitial}
+      </span>
+      <TapButton
+        type="button"
+        onClick={() => setConfirmOpen(true)}
+        className="cursor-pointer border-none bg-transparent p-0"
+        aria-label={`Delete ${reminder.title}`}
+      >
+        <span className="material-symbols-rounded text-[18px] text-muted">close</span>
+      </TapButton>
       <ConfirmDialog
         open={confirmOpen}
         title={`Delete "${reminder.title}"?`}
@@ -356,6 +389,6 @@ function ReminderRow({
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />
-    </StaggerItem>
+    </div>
   );
 }

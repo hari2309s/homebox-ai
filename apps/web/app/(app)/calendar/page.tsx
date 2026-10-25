@@ -10,7 +10,7 @@ export default async function CalendarPage() {
 
   if (!user) {
     return (
-      <div className="flex h-full flex-col p-4 sm:p-6">
+      <div className="flex h-full flex-col p-4">
         <EmptyState>Sign in to see your maintenance calendar.</EmptyState>
       </div>
     );
