@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
 
@@ -10,6 +11,14 @@ import { ItemList } from "./item-list";
 
 type View = "list" | "grid";
 const STORAGE_KEY = "items-view";
+
+const ZONE_CHIP_COLORS: Record<number, { bg: string; dot: string; text: string }> = {
+  0: { bg: "#f3f1ea", dot: "#c5c9bf", text: "#1f2622" },
+  1: { bg: "#dfe8d6", dot: "#3f6b45", text: "#2c4d31" },
+  2: { bg: "#ecdccd", dot: "#b0643f", text: "#7a3f22" },
+  3: { bg: "#e7e1d0", dot: "#8a7a4f", text: "#5a4f33" },
+  4: { bg: "#e2e2dc", dot: "#7c867f", text: "#3a423d" },
+};
 
 interface Item {
   id: string;
@@ -22,75 +31,47 @@ interface Item {
   primaryPhotoPath: string | null;
 }
 
+interface Location {
+  id: string;
+  name: string;
+  parentId: string | null;
+}
+
 interface ItemViewClientProps {
   items: Item[];
+  locations: Location[];
   locationNameById: Map<string, string>;
+  activeLocationId: string | null;
+  topLocations: Location[];
+  locationTotal: Record<string, number>;
 }
 
-function ListViewIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-      aria-hidden="true"
-    >
-      <line x1="8" y1="6" x2="21" y2="6" />
-      <line x1="8" y1="12" x2="21" y2="12" />
-      <line x1="8" y1="18" x2="21" y2="18" />
-      <line x1="3" y1="6" x2="3.01" y2="6" />
-      <line x1="3" y1="12" x2="3.01" y2="12" />
-      <line x1="3" y1="18" x2="3.01" y2="18" />
-    </svg>
-  );
-}
-
-function GridViewIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="h-4 w-4"
-      aria-hidden="true"
-    >
-      <rect x="3" y="3" width="7" height="7" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" />
-    </svg>
-  );
-}
-
-export function ItemViewClient({ items, locationNameById }: ItemViewClientProps) {
+export function ItemViewClient({
+  items,
+  locations,
+  locationNameById,
+  activeLocationId,
+  topLocations,
+  locationTotal: _locationTotal,
+}: ItemViewClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [view, setView] = useState<View>("list");
   const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
   const [loadingPhotos, setLoadingPhotos] = useState(false);
-  // Track which set of items we last fetched URLs for to avoid redundant fetches.
   const fetchedForRef = useRef<Item[]>([]);
 
-  // Restore preference from localStorage after hydration.
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "grid" || saved === "list") setView(saved);
   }, []);
 
-  // Fetch signed URLs from the Supabase browser client whenever we enter grid
-  // view or items change. Runs entirely client-side — no server round-trip.
   useEffect(() => {
     if (view !== "grid") return;
-    if (fetchedForRef.current === items) return; // Same reference, already fetched.
+    if (fetchedForRef.current === items) return;
 
     const paths = items.flatMap((item) => (item.primaryPhotoPath ? [item.primaryPhotoPath] : []));
     fetchedForRef.current = items;
-
     if (!paths.length) return;
 
     let cancelled = false;
@@ -108,21 +89,28 @@ export function ItemViewClient({ items, locationNameById }: ItemViewClientProps)
         }
         setPhotoUrls(map);
       })
-      .catch(() => {
-        // Photos fail gracefully — grid shows the placeholder icon instead.
-      })
+      .catch(() => {})
       .finally(() => {
         if (!cancelled) setLoadingPhotos(false);
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [view, items]);
 
   function switchView(next: View) {
     setView(next);
     localStorage.setItem(STORAGE_KEY, next);
+  }
+
+  function filterByLocation(locId: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (locId) {
+      params.set("locationId", locId);
+    } else {
+      params.delete("locationId");
+      params.delete("location");
+    }
+    router.push(`/items?${params.toString()}`);
   }
 
   const gridItems = items.map((item) => ({
@@ -134,10 +122,45 @@ export function ItemViewClient({ items, locationNameById }: ItemViewClientProps)
     isLoadingPhoto: loadingPhotos && !!item.primaryPhotoPath,
   }));
 
+  const groupedByZone = view === "list" ? groupItemsByZone(items, locations, topLocations) : [];
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex shrink-0 justify-end">
-        <div className="relative flex items-center rounded-md bg-surface-soft p-0.5">
+    <div className="flex flex-col gap-[14px] px-4">
+      {/* Zone chips + view toggle */}
+      <div className="flex items-center gap-2">
+        <div className="no-scrollbar flex flex-1 gap-[6px] overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => filterByLocation(null)}
+            className={`flex-none cursor-pointer rounded-full px-3 py-[7px] text-[13px] font-semibold ${
+              !activeLocationId
+                ? "border-none bg-[#1f2622] text-[#fbfaf6]"
+                : "border border-border bg-[#fbfaf6] text-[#1f2622] dark:bg-card"
+            }`}
+          >
+            All
+          </button>
+          {topLocations.map((loc, i) => {
+            const colors = ZONE_CHIP_COLORS[i % 5]!;
+            const isActive = activeLocationId === loc.id;
+            return (
+              <button
+                key={loc.id}
+                type="button"
+                onClick={() => filterByLocation(loc.id)}
+                className={`flex flex-none cursor-pointer items-center gap-[6px] rounded-full px-3 py-[7px] text-[13px] font-semibold ${
+                  isActive ? "border-none" : "border border-border"
+                }`}
+                style={isActive ? { background: colors.bg, color: colors.text } : undefined}
+              >
+                <span className="h-2 w-2 rounded-[2px]" style={{ background: colors.dot }} />
+                {loc.name}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex shrink-0 rounded-[10px] bg-[#e9e8e1] p-[3px] dark:bg-[#1e2420]">
           {(["list", "grid"] as const).map((v) => (
             <button
               key={v}
@@ -145,33 +168,82 @@ export function ItemViewClient({ items, locationNameById }: ItemViewClientProps)
               onClick={() => switchView(v)}
               aria-label={v === "list" ? "List view" : "Grid view"}
               aria-pressed={view === v}
-              className="relative cursor-pointer rounded-[5px] border-none bg-transparent p-2"
+              className="relative cursor-pointer rounded-[8px] border-none bg-transparent px-[9px] py-[5px]"
             >
               {view === v && (
                 <motion.span
                   layoutId="items-view-toggle"
-                  className="absolute inset-0 rounded-[5px] bg-surface shadow-sm"
+                  className="absolute inset-0 rounded-[8px] bg-white shadow-sm dark:bg-card"
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                 />
               )}
-              <motion.span
-                className={`relative flex ${view === v ? "text-ink" : "text-muted"}`}
-                whileHover={{ scale: 1.06 }}
-                whileTap={{ scale: 0.94 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                {v === "list" ? <ListViewIcon /> : <GridViewIcon />}
-              </motion.span>
+              <span className={`material-symbols-rounded relative text-[20px] ${view === v ? "text-ink" : "text-muted"}`}>
+                {v === "list" ? "view_list" : "grid_view"}
+              </span>
             </button>
           ))}
         </div>
       </div>
 
+      {/* Content */}
       {view === "list" ? (
-        <ItemList items={items} locationNameById={locationNameById} />
+        <ItemList groups={groupedByZone} locationNameById={locationNameById} />
       ) : (
         <ItemGrid items={gridItems} locationNameById={locationNameById} />
       )}
     </div>
   );
+}
+
+interface ZoneGroup {
+  zoneId: string | null;
+  zoneName: string;
+  color: string;
+  items: Item[];
+}
+
+function groupItemsByZone(items: Item[], locations: Location[], topLocations: Location[]): ZoneGroup[] {
+  const topLocationIds = new Set(topLocations.map((l) => l.id));
+  const parentMap = new Map(locations.map((l) => [l.id, l.parentId]));
+
+  function findTopZone(locationId: string | null): string | null {
+    if (!locationId) return null;
+    if (topLocationIds.has(locationId)) return locationId;
+    const parent = parentMap.get(locationId);
+    return parent ? findTopZone(parent) : locationId;
+  }
+
+  const groups = new Map<string | null, Item[]>();
+  for (const item of items) {
+    const zone = findTopZone(item.locationId);
+    const list = groups.get(zone) ?? [];
+    list.push(item);
+    groups.set(zone, list);
+  }
+
+  const locationNameById = new Map(locations.map((l) => [l.id, l.name]));
+
+  const COLORS = ["#c5c9bf", "#3f6b45", "#b0643f", "#8a7a4f", "#7c867f"];
+  const colorByZone = new Map(topLocations.map((l, i) => [l.id, COLORS[i % COLORS.length]!]));
+
+  const result: ZoneGroup[] = [];
+  for (const loc of topLocations) {
+    const list = groups.get(loc.id);
+    if (list?.length) {
+      result.push({ zoneId: loc.id, zoneName: loc.name, color: colorByZone.get(loc.id)!, items: list });
+    }
+  }
+
+  for (const [zoneId, list] of groups) {
+    if (zoneId && !topLocationIds.has(zoneId) && list.length) {
+      result.push({ zoneId, zoneName: locationNameById.get(zoneId) ?? "Unknown", color: "#7c867f", items: list });
+    }
+  }
+
+  const unassigned = groups.get(null);
+  if (unassigned?.length) {
+    result.push({ zoneId: null, zoneName: "Unassigned", color: "#7c867f", items: unassigned });
+  }
+
+  return result;
 }

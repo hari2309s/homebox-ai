@@ -1,15 +1,12 @@
 "use client";
 
-import { AnimatedHomeboxIcon, Button, FadeIn, Input, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
+import { AnimatedHomeboxIcon, TapButton } from "@homebox-ai/ui";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import type { ComponentProps, FormEvent } from "react";
+import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
 import type { PendingAction } from "@homebox-ai/ai";
-
-import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
 
 import { confirmChatActionAction, listChatSessionsAction, loadChatSessionAction } from "./actions";
 import { ActionCard } from "./action-card";
@@ -27,20 +24,10 @@ interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   pendingAction?: PendingAction;
-  /** Set on the confirmation-result message after a pending action succeeds — where the confirmed thing now lives, so the user can jump straight to it. */
   viewHref?: string;
   viewHrefLabel?: string;
-  /** Items with cover photos that the AI referenced this turn — shown as clickable thumbnails below the text. Ephemeral (not persisted to DB). */
   referencedItems?: ReferencedItem[];
-  /** ISO timestamp — from DB on history load, set client-side for new messages. */
   createdAt?: string;
-}
-
-function formatTime(iso: string): string {
-  const d = new Date(iso);
-  const isToday = d.toDateString() === new Date().toDateString();
-  const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  return isToday ? time : `${d.toLocaleDateString([], { month: "short", day: "numeric" })} · ${time}`;
 }
 
 interface ChatSession {
@@ -50,41 +37,7 @@ interface ChatSession {
   hasUnread: boolean;
 }
 
-const SUGGESTIONS = ["Where's my passport?", "What's in the garage?", "Anything with a warranty expiring soon?"];
-
-function HistoryIcon(props: ComponentProps<"svg">) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M3 12a9 9 0 1 0 2.6-6.36" />
-      <path d="M3 4v5h5" />
-      <path d="M12 8v4l3 2" />
-    </svg>
-  );
-}
-
-function NewChatIcon(props: ComponentProps<"svg">) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}
+const SUGGESTIONS = ["Where's my passport?", "What's in the garage?", "Anything expiring soon?"];
 
 function TypingDots() {
   return (
@@ -92,7 +45,8 @@ function TypingDots() {
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
-          className="h-1.5 w-1.5 rounded-full bg-muted"
+          className="h-2 w-2 rounded-[2px]"
+          style={{ background: ["#3f6b45", "#b0643f", "#8a7a4f"][i] }}
           animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
           transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
         />
@@ -109,52 +63,21 @@ export default function ChatPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [headerActionsEl, setHeaderActionsEl] = useState<HTMLElement | null>(null);
-  // Which pending-action cards have already been acted on, keyed by the
-  // assistant message id that carried them — a card only ever renders once
-  // per message, so this is enough to hide it after confirm/cancel without
-  // needing to mutate the message list itself.
   const [resolvedActions, setResolvedActions] = useState<Record<string, "confirmed" | "cancelled">>({});
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
-  const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef(sessionId);
 
-  // Scrolls the actual scrolling element to its true bottom (so the
-  // container's own bottom padding is part of what ends up visible) —
-  // scrollIntoView() on a small anchor element instead would align just that
-  // element's own edge into view, which left barely any breathing room
-  // above the input bar.
   function scrollToBottom() {
     scrollContainerRef.current?.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: "smooth" });
   }
 
   useEffect(() => {
-    listChatSessionsAction()
-      .then(setSessions)
-      .catch(() => {});
-    setHeaderActionsEl(document.getElementById("header-actions"));
-    // Fetch avatar URL from the current session's user metadata.
-    createSupabaseBrowserClient()
-      .auth.getUser()
-      .then(({ data }) => {
-        const url = data.user?.user_metadata?.avatar_url;
-        if (typeof url === "string") setMyAvatarUrl(url);
-      })
-      .catch(() => {});
+    listChatSessionsAction().then(setSessions).catch(() => {});
   }, []);
 
-  useEffect(() => {
-    sessionIdRef.current = sessionId;
-  }, [sessionId]);
-
-  // Scroll to the bottom whenever a new message lands or the typing indicator
-  // appears/disappears. useEffect fires after React commits the DOM, so
-  // scrollHeight is already correct — unlike requestAnimationFrame which can
-  // fire before the new nodes are painted.
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, pending]);
+  useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
+  useEffect(() => { scrollToBottom(); }, [messages, pending]);
 
   function startNewChat() {
     setSessionId(crypto.randomUUID());
@@ -185,11 +108,6 @@ export default function ChatPage() {
   async function sendMessage(text: string) {
     const trimmed = text.trim();
     if (!trimmed || pending) return;
-
-    // Capture which session this request belongs to. The user can start a new
-    // chat or switch conversations while this request is still in flight (the
-    // header's "New chat" / history controls are always reachable), so the
-    // response must only be applied if that session is still the active one.
     const requestSessionId = sessionId;
 
     setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "user", content: trimmed, createdAt: new Date().toISOString() }]);
@@ -203,17 +121,8 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: trimmed, sessionId: requestSessionId }),
       });
-
-      // A crashed/timed-out function can return an empty or non-JSON body —
-      // parse defensively instead of letting `.json()` throw a raw parse error.
-      let data: { reply?: string; error?: string; pendingAction?: PendingAction; referencedItems?: ReferencedItem[] } =
-        {};
-      try {
-        data = await response.json();
-      } catch {
-        // handled by the `!response.ok` / missing-reply checks below
-      }
-
+      let data: { reply?: string; error?: string; pendingAction?: PendingAction; referencedItems?: ReferencedItem[] } = {};
+      try { data = await response.json(); } catch { /* non-JSON body */ }
       if (!response.ok) throw new Error(data.error ?? "Something went wrong");
       if (!data.reply) throw new Error("Something went wrong");
       if (sessionIdRef.current === requestSessionId) {
@@ -229,9 +138,7 @@ export default function ChatPage() {
           },
         ]);
       }
-      listChatSessionsAction()
-        .then(setSessions)
-        .catch(() => {});
+      listChatSessionsAction().then(setSessions).catch(() => {});
     } catch (err) {
       if (sessionIdRef.current === requestSessionId) {
         setError(err instanceof Error ? err.message : "Something went wrong");
@@ -249,21 +156,9 @@ export default function ChatPage() {
       setResolvedActions((prev) => ({ ...prev, [messageId]: "confirmed" }));
       setMessages((prev) => [
         ...prev,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: result.message,
-          viewHref: result.href,
-          viewHrefLabel: result.hrefLabel,
-          createdAt: new Date().toISOString(),
-        },
+        { id: crypto.randomUUID(), role: "assistant", content: result.message, viewHref: result.href, viewHrefLabel: result.hrefLabel, createdAt: new Date().toISOString() },
       ]);
 
-      // Auto-continue: re-invoke the agent so it can propose the next step of
-      // the original request (e.g. "add item to Backyard" after Backyard was just
-      // confirmed-created) without forcing the user to re-state the request.
-      // isContinuation=true keeps the synthetic "Continue." prompt out of the
-      // saved history so the conversation stays coherent on reload.
       setPending(true);
       setError(null);
       try {
@@ -272,31 +167,15 @@ export default function ChatPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: "Continue.", sessionId: requestSessionId, isContinuation: true }),
         });
-        let data: { reply?: string; error?: string; pendingAction?: PendingAction; referencedItems?: ReferencedItem[] } =
-          {};
-        try {
-          data = await response.json();
-        } catch {
-          // handled below
-        }
+        let data: { reply?: string; error?: string; pendingAction?: PendingAction; referencedItems?: ReferencedItem[] } = {};
+        try { data = await response.json(); } catch { /* non-JSON body */ }
         if (response.ok && data.reply && sessionIdRef.current === requestSessionId) {
           setMessages((prev) => [
             ...prev,
-            {
-              id: crypto.randomUUID(),
-              role: "assistant",
-              content: data.reply!,
-              pendingAction: data.pendingAction,
-              referencedItems: data.referencedItems?.length ? data.referencedItems : undefined,
-              createdAt: new Date().toISOString(),
-            },
+            { id: crypto.randomUUID(), role: "assistant", content: data.reply!, pendingAction: data.pendingAction, referencedItems: data.referencedItems?.length ? data.referencedItems : undefined, createdAt: new Date().toISOString() },
           ]);
         }
-      } catch {
-        // Swallow continuation errors — the primary action already succeeded and
-        // was shown; losing the auto-follow-up is acceptable, the user can still
-        // type a follow-up themselves.
-      } finally {
+      } catch { /* continuation errors are swallowed — primary action already succeeded */ } finally {
         if (sessionIdRef.current === requestSessionId) setPending(false);
       }
     } catch (err) {
@@ -316,180 +195,156 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-full flex-col bg-card">
-      {headerActionsEl &&
-        createPortal(
-          <>
-            <TapButton
-              type="button"
-              onClick={startNewChat}
-              aria-label="New chat"
-              className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent"
-            >
-              <NewChatIcon className="h-5 w-5 md:h-6 md:w-6" />
-            </TapButton>
-            <TapButton
-              type="button"
-              onClick={() => setHistoryOpen(true)}
-              aria-label="Conversation history"
-              className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent"
-            >
-              <HistoryIcon className="h-5 w-5 md:h-6 md:w-6" />
-            </TapButton>
-          </>,
-          headerActionsEl,
-        )}
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col">
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-border px-5 py-3">
+        <AnimatedHomeboxIcon size={44} />
+        <div className="flex-1">
+          <div className="font-serif text-[19px] text-ink">Ask the house</div>
+          <div className="font-mono text-[10px] tracking-wide text-accent">
+            {sessions.length > 0 ? `${sessions.length} CONVERSATIONS` : "NEW CONVERSATION"}
+          </div>
+        </div>
+        <TapButton
+          type="button"
+          onClick={startNewChat}
+          aria-label="New chat"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card text-ink"
+        >
+          <span className="material-symbols-rounded text-[18px]">add</span>
+        </TapButton>
+        <TapButton
+          type="button"
+          onClick={() => setHistoryOpen(true)}
+          aria-label="History"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card text-ink"
+        >
+          <span className="material-symbols-rounded text-[18px]">history</span>
+        </TapButton>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-5 py-[18px]">
+        <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-[14px]">
           {messages.length === 0 ? (
-            <FadeIn className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-              <p className="text-sm text-muted">Ask about your inventory in plain English.</p>
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+              <AnimatedHomeboxIcon size={64} />
+              <p className="text-sm text-muted">Ask about any room or the yard…</p>
               <div className="flex flex-wrap justify-center gap-2">
-                {SUGGESTIONS.map((suggestion) => (
+                {SUGGESTIONS.map((s) => (
                   <TapButton
-                    key={suggestion}
+                    key={s}
                     type="button"
-                    onClick={() => sendMessage(suggestion)}
-                    className="cursor-pointer rounded-full border border-border bg-surface-soft px-3 py-1.5 text-sm text-body transition-colors duration-150 hover:border-accent"
+                    onClick={() => sendMessage(s)}
+                    className="cursor-pointer rounded-full bg-[#dfe8d6] px-[13px] py-[7px] text-[13px] font-semibold text-[#2c4d31] dark:bg-[#2c3e2e] dark:text-[#9cc68f]"
                   >
-                    {suggestion}
+                    {s}
                   </TapButton>
                 ))}
               </div>
-            </FadeIn>
+            </div>
           ) : (
-            <StaggerList
-              className="m-0 flex list-none flex-col gap-3 p-0"
-              aria-live="polite"
-              aria-relevant="additions"
-            >
-              {messages.map((message) => {
-                const resolution = resolvedActions[message.id];
-                const isUser = message.role === "user";
-                return (
-                  <StaggerItem
-                    key={message.id}
-                    className={`flex flex-col gap-0.5 ${
-                      message.pendingAction
-                        ? "max-w-[85%] self-start items-start"
-                        : isUser
-                          ? "max-w-[80%] self-end items-end"
-                          : "max-w-[80%] self-start items-start"
-                    }`}
-                  >
-                    {message.pendingAction ? (
-                      <div className="flex items-start gap-2">
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-border bg-card mt-0.5">
-                          <AnimatedHomeboxIcon size={22} className="h-full w-full" />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                        <div className="rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-2.5 text-sm text-body">
-                          <MessageContent content={message.content} />
-                        </div>
-                        {resolution === "cancelled" ? (
-                          <p className="m-0 text-xs text-muted">Cancelled — no changes made.</p>
-                        ) : resolution === "confirmed" ? null : (
-                          <ActionCard
-                            action={message.pendingAction}
-                            onConfirm={() => handleConfirmAction(message.id, message.pendingAction!)}
-                            onCancel={() => handleCancelAction(message.id)}
-                          />
-                        )}
-                        </div>
+            messages.map((message) => {
+              const resolution = resolvedActions[message.id];
+              const isUser = message.role === "user";
+              return (
+                <div
+                  key={message.id}
+                  className={`flex flex-col gap-1 ${isUser ? "max-w-[80%] items-end self-end" : "max-w-[85%] items-start self-start"}`}
+                >
+                  {message.pendingAction ? (
+                    <div className="flex flex-col gap-2">
+                      <div className="text-[15px] leading-relaxed text-body">
+                        <MessageContent content={message.content} />
                       </div>
-                    ) : isUser ? (
-                      <div className="flex items-end gap-2">
-                        <div className="rounded-2xl rounded-br-sm bg-accent px-4 py-2.5 text-sm text-white whitespace-pre-wrap">
-                          {message.content}
-                        </div>
-                        {myAvatarUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL
-                          <img src={myAvatarUrl} alt="You" className="h-6 w-6 shrink-0 rounded-[6px] border border-border object-cover" />
-                        ) : (
-                          <div className="h-6 w-6 shrink-0 rounded-[6px] border border-border bg-accent/40" />
-                        )}
+                      {resolution === "cancelled" ? (
+                        <p className="text-xs text-muted">Cancelled — no changes made.</p>
+                      ) : resolution === "confirmed" ? null : (
+                        <ActionCard
+                          action={message.pendingAction}
+                          onConfirm={() => handleConfirmAction(message.id, message.pendingAction!)}
+                          onCancel={() => handleCancelAction(message.id)}
+                        />
+                      )}
+                    </div>
+                  ) : isUser ? (
+                    <div className="rounded-2xl rounded-br-sm bg-[#1f2622] px-[15px] py-[11px] text-[15px] text-[#fbfaf6] dark:bg-[#2c342f]">
+                      {message.content}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <div className="text-[15px] leading-relaxed text-body">
+                        <MessageContent content={message.content} />
                       </div>
-                    ) : (
-                      <div className="flex items-end gap-2">
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border border-border bg-card">
-                          <AnimatedHomeboxIcon size={22} className="h-full w-full" />
-                        </div>
-                        <div className="rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-2.5 text-sm text-body">
-                        <div className="flex flex-col gap-1.5">
-                          <MessageContent content={message.content} />
-                          {message.referencedItems && message.referencedItems.length > 0 && (
-                            <div className="flex flex-wrap gap-2 pt-1">
-                              {message.referencedItems.map((item) => (
-                                <Link
-                                  key={item.id}
-                                  href={`/items/${item.id}`}
-                                  className="group flex flex-col overflow-hidden rounded-xl border border-border transition-opacity duration-150 hover:opacity-80"
-                                  style={{ width: message.referencedItems!.length === 1 ? "100%" : "calc(50% - 4px)" }}
-                                >
-                                  {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL, not a static asset */}
-                                  <img
-                                    src={item.photoUrl}
-                                    alt={item.name}
-                                    className="aspect-video w-full object-cover"
-                                  />
-                                  <div className="bg-surface-soft px-2.5 py-1.5 text-xs font-medium text-body">
-                                    {item.name}
-                                  </div>
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                          {message.viewHref && (
+                      {message.referencedItems && message.referencedItems.length > 0 && (
+                        <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-card">
+                          {message.referencedItems.map((item) => (
                             <Link
-                              href={message.viewHref}
-                              className="self-start text-xs font-semibold text-accent-hover underline underline-offset-4"
+                              key={item.id}
+                              href={`/items/${item.id}`}
+                              className="flex items-center gap-3 px-3 py-[10px] no-underline"
                             >
-                              {message.viewHrefLabel ?? "View"} →
+                              {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL */}
+                              <img src={item.photoUrl} alt={item.name} className="h-10 w-10 rounded-[10px] object-cover" />
+                              <div className="flex-1">
+                                <div className="text-sm font-semibold text-ink">{item.name}</div>
+                              </div>
+                              <span className="material-symbols-rounded text-accent">near_me</span>
                             </Link>
-                          )}
+                          ))}
                         </div>
-                      </div>
-                      </div>
-                    )}
-                    {message.createdAt && (
-                      <span className="px-1 text-[10px] text-muted">{formatTime(message.createdAt)}</span>
-                    )}
-                  </StaggerItem>
-                );
-              })}
-            </StaggerList>
+                      )}
+                      {message.viewHref && (
+                        <Link href={message.viewHref} className="text-xs font-semibold text-accent no-underline">
+                          {message.viewHrefLabel ?? "View"} →
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
 
           {pending && (
-            <div className="mt-3 flex w-fit items-center self-start rounded-2xl rounded-bl-sm border border-border bg-surface-soft px-4 py-3">
+            <div className="mt-1 flex items-center gap-2 self-start text-sm text-muted">
               <TypingDots />
+              <span>Thinking…</span>
             </div>
           )}
 
           {error && (
-            <p role="alert" className="mt-3 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
+            <p role="alert" className="mt-1 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
               {error}
             </p>
           )}
         </div>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="flex shrink-0 justify-center gap-2 border-t border-border bg-card p-4 sm:p-6"
-      >
-        <div className="mx-auto flex w-full max-w-2xl gap-2">
-          <Input
+      {/* Input bar */}
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 px-4 pb-[10px] pt-[6px]">
+        <Link
+          href="/capture"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-ink no-underline"
+        >
+          <span className="material-symbols-rounded">photo_camera</span>
+        </Link>
+        <div className="flex h-12 flex-1 items-center rounded-xl border border-border bg-card px-[14px]">
+          <input
             value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder="Ask about your inventory…"
-            className="flex-1"
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask about any room or the yard…"
             disabled={pending}
+            className="w-full border-none bg-transparent text-[15px] text-body outline-none placeholder:text-muted"
           />
-          <Button type="submit" disabled={pending || !input.trim()}>
-            {pending ? <Spinner size={16} /> : "Send"}
-          </Button>
         </div>
+        <button
+          type="submit"
+          disabled={pending || !input.trim()}
+          className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl border-none bg-accent text-white disabled:opacity-50"
+        >
+          <span className="material-symbols-rounded">arrow_upward</span>
+        </button>
       </form>
 
       <HistorySheet

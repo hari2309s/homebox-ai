@@ -19,9 +19,6 @@ export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemNam
     try {
       await deleteItemAction(formData);
     } catch (err) {
-      // deleteItemAction redirects on success, which Next.js implements by
-      // throwing a special control-flow error — let that one keep propagating
-      // instead of treating it as a failed delete.
       unstable_rethrow(err);
       setError(err instanceof Error ? err.message : "Couldn't delete this item");
       setDeleting(false);
@@ -30,16 +27,16 @@ export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemNam
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <>
       <TapButton
         type="button"
         onClick={() => setConfirmOpen(true)}
-        className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent-hover"
+        className="absolute right-4 top-[52px] flex h-[42px] w-[42px] cursor-pointer items-center justify-center rounded-xl border-none bg-[#fbfaf6] text-ink shadow-card dark:bg-card"
       >
-        Delete
+        <span className="material-symbols-rounded">more_horiz</span>
       </TapButton>
       {error && (
-        <p role="alert" className="text-sm text-accent-hover">
+        <p role="alert" className="absolute right-4 top-[98px] rounded-xl bg-[#ecdccd] px-3 py-2 text-sm text-[#5a2e18]">
           {error}
         </p>
       )}
@@ -52,6 +49,6 @@ export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemNam
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />
-    </div>
+    </>
   );
 }

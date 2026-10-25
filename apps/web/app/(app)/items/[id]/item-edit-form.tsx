@@ -55,7 +55,7 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
   }
 
   return (
-    <form action={handleSubmit} className="flex flex-col gap-4 rounded-md border border-border bg-surface-soft p-4">
+    <form action={handleSubmit} className="flex flex-col gap-4">
       <input type="hidden" name="itemId" value={item.id} />
 
       {item.assetId != null && (
