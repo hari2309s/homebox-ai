@@ -304,3 +304,19 @@ export function listUpcomingWarrantyExpirations(userId: string, daysAhead = 60):
       .orderBy(items.warrantyExpires);
   });
 }
+
+export interface LocationItemCount {
+  locationId: string | null;
+  count: number;
+}
+
+export function countItemsByLocation(userId: string): Promise<LocationItemCount[]> {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    return tx
+      .select({ locationId: items.locationId, count: count() })
+      .from(items)
+      .where(and(eq(items.ownerId, ownerId), eq(items.archived, false)))
+      .groupBy(items.locationId);
+  });
+}

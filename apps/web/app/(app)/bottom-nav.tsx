@@ -3,154 +3,38 @@
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ComponentProps } from "react";
 import { useState } from "react";
 
-function Icon(props: ComponentProps<"svg">) {
+function NavIcon({ name, filled, className }: { name: string; filled?: boolean; className?: string }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.75}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    />
+    <span
+      className={className}
+      style={{ fontFamily: "'Material Symbols Rounded'", fontSize: 24, fontVariationSettings: filled ? "'FILL' 1" : undefined }}
+    >
+      {name}
+    </span>
   );
 }
 
-function HomeIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <path d="m3 11 9-7 9 7" />
-      <path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9" />
-    </Icon>
-  );
-}
+const HOME_LINK = { href: "/", label: "Plan", icon: "map" };
+const ITEMS_LINK = { href: "/items", label: "Things", icon: "inventory_2" };
+const CHAT_LINK = { href: "/chat", label: "Ask", icon: "forum" };
+const SEASONS_LINK = { href: "/calendar", label: "Seasons", icon: "yard" };
 
-function ScanIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <path d="M4 8V6a2 2 0 0 1 2-2h2" />
-      <path d="M16 4h2a2 2 0 0 1 2 2v2" />
-      <path d="M20 16v2a2 2 0 0 1-2 2h-2" />
-      <path d="M8 20H6a2 2 0 0 1-2-2v-2" />
-      <path d="M4 12h16" />
-    </Icon>
-  );
-}
-
-function ItemsIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <path d="M3 8l9-5 9 5-9 5-9-5Z" />
-      <path d="M3 8v8l9 5 9-5V8" />
-      <path d="M12 13v8" />
-    </Icon>
-  );
-}
-
-function LocationsIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <path d="M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11Z" />
-      <circle cx="12" cy="10" r="2.5" />
-    </Icon>
-  );
-}
-
-function LabelsIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <path d="M20.6 13.4 11 3.8a2 2 0 0 0-1.4-.6L3.5 3l-.2 6.1a2 2 0 0 0 .6 1.4l9.6 9.6a2 2 0 0 0 2.8 0l4.3-4.3a2 2 0 0 0 0-2.8Z" />
-      <circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none" />
-    </Icon>
-  );
-}
-
-function ChatIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <path d="M4 5h16v10H9l-4 4V5Z" />
-    </Icon>
-  );
-}
-
-function CaptureIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
-      <circle cx="12" cy="13.5" r="3.25" />
-    </Icon>
-  );
-}
-
-function ReceiptsIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <rect x="5" y="3" width="14" height="18" rx="2" />
-      <path d="M9 8h6M9 12h6M9 16h4" />
-    </Icon>
-  );
-}
-
-function CalendarIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M8 3v4M16 3v4M3 10h18" />
-    </Icon>
-  );
-}
-
-function MaintenanceIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <circle cx="6" cy="18" r="2.75" />
-      <circle cx="18" cy="6" r="2.75" />
-      <path d="m8 16 8-8" />
-    </Icon>
-  );
-}
-
-function MoreIcon(props: ComponentProps<"svg">) {
-  return (
-    <Icon {...props}>
-      <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" />
-      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
-      <circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
-    </Icon>
-  );
-}
-
-const HOME_LINK = { href: "/", label: "Home", icon: HomeIcon };
-const ITEMS_LINK = { href: "/items", label: "Items", icon: ItemsIcon };
-const CHAT_LINK = { href: "/chat", label: "Chat", icon: ChatIcon };
-
-// Kept to 3 so the collapsed mobile bar always fits one row without
-// scrolling — everything else lives behind "More", which opens a small grid
-// popover above the bar (see `expanded` below) instead of extending the same
-// row, which would need horizontal scrolling to reach.
-const PRIMARY_LINKS = [HOME_LINK, ITEMS_LINK, CHAT_LINK];
+const PRIMARY_LINKS = [HOME_LINK, ITEMS_LINK, CHAT_LINK, SEASONS_LINK];
 
 const MORE_LINKS = [
-  { href: "/locations", label: "Locations", icon: LocationsIcon },
-  { href: "/labels", label: "Labels", icon: LabelsIcon },
-  { href: "/capture", label: "Capture", icon: CaptureIcon },
-  { href: "/receipts", label: "Receipts", icon: ReceiptsIcon },
-  { href: "/scan", label: "Scan", icon: ScanIcon },
-  { href: "/maintenance", label: "Maintenance", icon: MaintenanceIcon },
-  { href: "/calendar", label: "Calendar", icon: CalendarIcon },
+  { href: "/locations", label: "Locations", icon: "location_on" },
+  { href: "/labels", label: "Labels", icon: "sell" },
+  { href: "/capture", label: "Capture", icon: "photo_camera" },
+  { href: "/receipts", label: "Receipts", icon: "receipt_long" },
+  { href: "/scan", label: "Scan", icon: "qr_code_scanner" },
+  { href: "/maintenance", label: "Maintain", icon: "build" },
+  { href: "/settings", label: "Settings", icon: "settings" },
 ];
 
-// Desktop has room to show every tab in one row (unchanged from before the
-// "More" button existed).
 const ALL_LINKS = [...PRIMARY_LINKS, ...MORE_LINKS];
 
-// A link is "active" for any page nested under it (e.g. `/items/[id]`), not
-// just its exact path, so a tab stays highlighted while drilled into detail
-// pages instead of going dark the moment the URL grows past the tab's root.
 function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -159,25 +43,16 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
 
-  // If the current page is one of the hidden "More" links, surface it as a
-  // primary tab (in the last slot) in place of Items, so a single tap
-  // reaches it again instead of reopening the More panel every time. Items
-  // moves into the More panel in its place while that's the case.
   const activeMoreLink = MORE_LINKS.find((link) => isActive(pathname, link.href));
-  const mobilePrimaryLinks = activeMoreLink ? [HOME_LINK, CHAT_LINK, activeMoreLink] : PRIMARY_LINKS;
+  const mobilePrimaryLinks = activeMoreLink
+    ? [HOME_LINK, ITEMS_LINK, CHAT_LINK, activeMoreLink]
+    : PRIMARY_LINKS;
   const mobileMoreLinks = activeMoreLink
-    ? MORE_LINKS.map((link) => (link.href === activeMoreLink.href ? ITEMS_LINK : link))
+    ? [SEASONS_LINK, ...MORE_LINKS.filter((l) => l.href !== activeMoreLink.href)]
     : MORE_LINKS;
 
-  // Mobile and desktop rows are both always mounted (CSS just hides
-  // whichever doesn't match the current breakpoint), so on shared routes
-  // like "/items" both would otherwise render an active pill with the same
-  // layoutId at once — Framer Motion only expects one live match per id, and
-  // with two the shared-layout transition breaks until a full reload cold-
-  // mounts it with nothing to reconcile against. Scoping the id per row
-  // keeps each row's shared-element animation independent of the other.
   function renderLink(
-    { href, label, icon: LinkIcon }: (typeof ALL_LINKS)[number],
+    { href, label, icon }: (typeof ALL_LINKS)[number],
     group: "mobile" | "desktop",
     onNavigate?: () => void,
   ) {
@@ -187,12 +62,12 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
         key={href}
         href={href}
         onClick={onNavigate}
-        className="relative flex min-w-16 flex-1 flex-col items-center gap-1 py-2.5 md:gap-1.5 md:py-4"
+        className="relative flex min-w-16 flex-1 flex-col items-center gap-[3px] py-[10px]"
       >
         {active && (
           <motion.span
             layoutId={`bottom-nav-active-${group}`}
-            className="absolute inset-x-2 inset-y-1 rounded-md bg-surface"
+            className="absolute inset-x-2 inset-y-1 rounded-[10px] bg-surface"
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
           />
         )}
@@ -202,13 +77,13 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
           whileTap={{ scale: 0.94 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          <LinkIcon className={`h-5 w-5 md:h-6 md:w-6 ${active ? "text-ink" : "text-muted"}`} />
+          <NavIcon name={icon} filled={active} className={active ? "text-accent" : "text-muted"} />
           {href === "/chat" && unreadChatCount > 0 && (
             <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent" />
           )}
         </motion.span>
         <span
-          className={`relative text-[10px] font-semibold transition-colors duration-150 md:text-xs ${active ? "text-ink" : "text-muted"}`}
+          className={`relative text-[11px] font-semibold transition-colors duration-150 ${active ? "text-accent" : "text-muted"}`}
         >
           {label}
         </span>
@@ -217,10 +92,7 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
   }
 
   return (
-    <nav id="app-bottom-nav" className="relative shrink-0 rounded-t-lg border-t border-border bg-surface-soft">
-      {/* Mobile-only popover, positioned above the bar itself rather than
-          extending its row — a 3-column grid so all 6 extra destinations are
-          reachable with a glance and a tap, not a horizontal scroll. */}
+    <nav id="app-bottom-nav" className="relative shrink-0 border-t border-border bg-[#fbfaf6] dark:bg-card">
       <AnimatePresence>
         {expanded && (
           <>
@@ -238,7 +110,7 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 12 }}
               transition={{ type: "spring", stiffness: 380, damping: 32 }}
-              className="absolute inset-x-0 bottom-full z-50 grid grid-cols-3 gap-1 rounded-t-lg border border-b-0 border-border bg-surface-soft p-2 md:hidden"
+              className="absolute inset-x-0 bottom-full z-50 grid grid-cols-4 gap-1 border border-b-0 border-border bg-[#fbfaf6] p-2 dark:bg-card md:hidden"
             >
               {mobileMoreLinks.map((link) => renderLink(link, "mobile", () => setExpanded(false)))}
             </motion.div>
@@ -253,24 +125,26 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
           onClick={() => setExpanded((current) => !current)}
           aria-label={expanded ? "Show fewer tabs" : "Show more tabs"}
           aria-expanded={expanded}
-          className="flex min-w-16 flex-1 cursor-pointer flex-col items-center gap-1 border-none bg-transparent py-2.5"
+          className="flex min-w-16 flex-1 cursor-pointer flex-col items-center gap-[3px] border-none bg-transparent py-[10px]"
         >
           <motion.span
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.94 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <MoreIcon className={`h-5 w-5 ${expanded ? "text-ink" : "text-muted"}`} />
+            <NavIcon name="more_horiz" className={expanded ? "text-accent" : "text-muted"} />
           </motion.span>
           <span
-            className={`text-[10px] font-semibold transition-colors duration-150 ${expanded ? "text-ink" : "text-muted"}`}
+            className={`text-[11px] font-semibold transition-colors duration-150 ${expanded ? "text-accent" : "text-muted"}`}
           >
-            {expanded ? "Less" : "More"}
+            More
           </span>
         </button>
       </div>
 
-      <div className="no-scrollbar hidden md:flex">{ALL_LINKS.map((link) => renderLink(link, "desktop"))}</div>
+      <div className="no-scrollbar hidden md:flex">
+        {ALL_LINKS.map((link) => renderLink(link, "desktop"))}
+      </div>
     </nav>
   );
 }
