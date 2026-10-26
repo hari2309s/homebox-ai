@@ -79,6 +79,11 @@ type Gesture =
 const MIN_SCALE = 0.15;
 const MAX_SCALE = 6;
 const FRONT_H = 56;
+const FIT_MAX_SCALE = 2.5;
+
+function centredAt(rect: Rect, size: { w: number; h: number }, scale: number): View {
+  return { scale, tx: size.w / 2 - (rect.x + rect.w / 2) * scale, ty: size.h / 2 - (rect.y + rect.h / 2) * scale };
+}
 
 const KIND_STYLE: Record<
   PlanKind,
@@ -165,14 +170,20 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
   const contentBounds = useCallback(() => {
     const drawn = boundsOf(places.map((p) => p.rect));
     if (!drawn) return { x: 0, y: 0, w: PLOT_W, h: PLOT_H + FRONT_H };
-    const margin = 60;
-    const w = Math.max(drawn.w + margin * 2, 480);
-    const h = Math.max(drawn.h + margin * 2, 320);
+    const margin = 40;
+    const w = Math.max(drawn.w + margin * 2, 240);
+    const h = Math.max(drawn.h + margin * 2, 160);
     return { x: drawn.x + drawn.w / 2 - w / 2, y: drawn.y + drawn.h / 2 - h / 2, w, h };
   }, [places]);
 
+  // Until the user pans or zooms, the view keeps re-fitting so the drawing fills the canvas at any window size.
+  const viewTouchedRef = useRef(false);
+
   const fitAll = useCallback(() => {
-    if (size.w && size.h) setView(fitView(contentBounds(), size.w, size.h, 16));
+    if (!size.w || !size.h) return;
+    viewTouchedRef.current = false;
+    const v = fitView(contentBounds(), size.w, size.h, 16);
+    setView(v.scale > FIT_MAX_SCALE ? centredAt(contentBounds(), size, FIT_MAX_SCALE) : v);
   }, [contentBounds, size]);
 
   useLayoutEffect(() => {
@@ -187,8 +198,8 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
   }, []);
 
   useEffect(() => {
-    if (!view && size.w && size.h) fitAll();
-  }, [view, size, fitAll]);
+    if (size.w && size.h && (!viewRef.current || !viewTouchedRef.current)) fitAll();
+  }, [size, fitAll]);
 
   const toWorld = useCallback((clientX: number, clientY: number) => {
     const box = containerRef.current!.getBoundingClientRect();
@@ -197,6 +208,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
   }, []);
 
   const zoomAt = useCallback((factor: number, sx: number, sy: number, base?: View) => {
+    viewTouchedRef.current = true;
     setView((current) => {
       const v = base ?? current;
       if (!v) return v;
@@ -221,6 +233,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
 
   function zoomTo(rect: Rect) {
     if (!size.w) return;
+    viewTouchedRef.current = true;
     const v = fitView(rect, size.w, size.h, 48);
     setView(v.scale > 4 ? fitView(rect, size.w, size.h, Math.max(48, (size.w - rect.w * 4) / 2)) : v);
   }
@@ -360,6 +373,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
     if (g.type === "pan") {
       if (!movedEnough && !g.moved) return;
       g.moved = true;
+      viewTouchedRef.current = true;
       setView({ ...g.view, tx: g.view.tx + dx, ty: g.view.ty + dy });
     } else if (g.type === "move") {
       if (!movedEnough && !g.moved) return;

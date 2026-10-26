@@ -124,7 +124,10 @@ export default async function DashboardPage() {
   const firstDue = dueSoon[0];
 
   return (
-    <div className="flex flex-col gap-[14px] p-4 pb-2 lg:h-full lg:min-h-[640px] lg:gap-5 lg:px-8 lg:py-7">
+    <div
+      data-full-bleed
+      className="flex flex-col gap-[14px] p-4 pb-2 lg:h-full lg:min-h-[640px] lg:gap-5 lg:px-8 lg:py-7"
+    >
       {/* Desktop header */}
       <div className="hidden items-end gap-4 lg:flex">
         <div className="min-w-0 flex-1">

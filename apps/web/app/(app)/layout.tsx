@@ -42,10 +42,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const householdLabel = householdUsers.length > 1 ? "Shared household" : `${userName.split(" ")[0]}'s home`;
 
   return (
-    <div
-      id="app-shell"
-      className="mx-auto flex h-dvh w-full max-w-lg bg-surface md:max-w-[672px] lg:max-w-none"
-    >
+    <div id="app-shell" className="mx-auto flex h-dvh w-full max-w-lg bg-surface md:max-w-[672px] lg:max-w-none">
       <Sidebar
         itemCount={itemCount}
         dueCount={dueCount}
@@ -55,7 +52,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         members={members}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="app-content flex-1 overflow-y-auto lg:px-[max(0px,calc((100%-1048px)/2))]">{children}</div>
+        <div className="app-content flex-1 overflow-y-auto lg:px-[max(0px,calc((100%-1048px)/2))] lg:has-[[data-full-bleed]]:px-0">
+          {children}
+        </div>
         <BottomNav unreadChatCount={unreadChatCount} />
       </div>
     </div>
