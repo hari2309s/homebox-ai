@@ -54,6 +54,13 @@ export default [
       "no-undef": "off",
     },
   },
+  // Plain JS/ESM files are Node scripts and config (e.g. apps/web/scripts/*.mjs).
+  {
+    files: ["**/*.{js,mjs,cjs}"],
+    languageOptions: {
+      globals: { console: "readonly", process: "readonly", URL: "readonly" },
+    },
+  },
   // apps/web additionally gets Next.js's recommended + Core Web Vitals rules
   // (react-hooks correctness, accessibility, performance footguns like
   // next/image, next/link usage).
