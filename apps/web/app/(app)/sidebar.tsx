@@ -113,10 +113,7 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
 
       <div className="flex-1" />
 
-      <Link
-        href="/settings"
-        className="flex items-center gap-2 border-t border-border p-[10px] no-underline"
-      >
+      <Link href="/settings/household" className="flex items-center gap-2 border-t border-border p-[10px] no-underline">
         <span className="flex">
           {members.slice(0, 3).map((member, i) => (
             <span

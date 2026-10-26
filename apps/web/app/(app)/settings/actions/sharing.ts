@@ -26,7 +26,7 @@ export async function revokeInviteAction(formData: FormData) {
   if (!inviteId) throw new Error("Missing invite id");
 
   await sharingQueries.revokeInvite(user.id, inviteId);
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
 }
 
 export async function removeMemberAction(formData: FormData) {
@@ -36,12 +36,12 @@ export async function removeMemberAction(formData: FormData) {
   if (!memberUserId) throw new Error("Missing member id");
 
   await sharingQueries.removeMember(user.id, memberUserId);
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
 }
 
 export async function leaveHouseholdAction() {
   const user = await requireSessionUser();
 
   await sharingQueries.leaveSharedHousehold(user.id);
-  revalidatePath("/settings");
+  revalidatePath("/settings", "layout");
 }
