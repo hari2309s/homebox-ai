@@ -9,7 +9,7 @@ import { CrudShell } from "../crud-shell";
 import { LocationList } from "./location-list";
 import { PlaceHeader } from "./place-header";
 import { PlaceTree } from "./place-tree";
-import { layoutPlan } from "../../../lib/plan-layout";
+import { descendantIds, layoutPlan } from "../../../lib/plan-layout";
 import { ZONE_DOTS } from "../items/item-summary";
 import { PlanPreview } from "../plan-preview";
 import Link from "next/link";
@@ -96,8 +96,16 @@ export default async function LocationsPage({ searchParams }: { searchParams: Pr
                 breadcrumb={pathFor(selectedPlace.id).replaceAll(" / ", " › ").toUpperCase()}
                 childCount={children.length}
                 thingCount={directThings.length}
+                moveOptions={treePlaces
+                  .filter((p) => !descendantIds(placed, selectedPlace.id).has(p.id) && p.id !== selectedPlace.id)
+                  .map((p) => ({ id: p.id, path: p.path }))}
               />
-              <PlanPreview places={placed} things={items} focusId={selectedPlace.id} className="h-[clamp(300px,42vh,520px)] shrink-0" />
+              <PlanPreview
+                places={placed}
+                things={items}
+                focusId={selectedPlace.id}
+                className="h-[clamp(300px,42vh,520px)] shrink-0"
+              />
               {children.length > 0 ? (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[10px]">
                   {children.map((child) => {

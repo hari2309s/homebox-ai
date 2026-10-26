@@ -6,6 +6,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { requireSessionUser } from "@homebox-ai/supabase/server";
 
 import { locationTag } from "../../lib/cached-queries";
+import { fitPlaceIntoParent } from "../../lib/plan-fit-server";
 import { clampToPlot, isPlanKind, PLOT_H, PLOT_W, type Rect } from "../../lib/plan-layout";
 
 function finite(value: unknown, label: string): number {
@@ -37,9 +38,11 @@ function cleanName(name: unknown): string {
   return trimmed.slice(0, 120);
 }
 
+// Places feed the plan, Places, Things grouping, item breadcrumbs and sidebar counts, so a change
+// refreshes the whole app layout rather than one page.
 function afterPlaceChange(userId: string) {
   revalidateTag(locationTag(userId));
-  revalidatePath("/locations");
+  revalidatePath("/", "layout");
 }
 
 export interface PlaceGeometryUpdate {
@@ -52,6 +55,7 @@ export interface PlaceGeometryUpdate {
 export async function savePlacesAction(
   updates: PlaceGeometryUpdate[],
   pins: { id: string; x: number; y: number }[] = [],
+  reparent?: { id: string; parentId: string | null },
 ) {
   const user = await requireSessionUser();
   if (
@@ -79,6 +83,15 @@ export async function savePlacesAction(
       };
     }),
   );
+  if (reparent) await locationQueries.setLocationParent(user.id, String(reparent.id), reparent.parentId || null);
+  afterPlaceChange(user.id);
+}
+
+/** Re-parents a place from the Places tree, then keeps its drawing inside the new parent on the plan. */
+export async function reparentPlaceAction(id: string, parentId: string | null) {
+  const user = await requireSessionUser();
+  await locationQueries.setLocationParent(user.id, String(id), parentId || null);
+  if (parentId) await fitPlaceIntoParent(user.id, String(id));
   afterPlaceChange(user.id);
 }
 
@@ -115,7 +128,6 @@ export async function deletePlaceAction(id: string) {
   const user = await requireSessionUser();
   await locationQueries.deleteLocation(user.id, String(id));
   afterPlaceChange(user.id);
-  revalidatePath("/items");
 }
 
 export async function createThingAction(input: { name: string; locationId: string | null; x: number; y: number }) {
@@ -138,10 +150,11 @@ export async function moveThingAction(input: { id: string; locationId: string | 
     locationId: input.locationId || null,
     ...validPoint(input.x, input.y),
   });
-  revalidatePath("/items");
+  revalidatePath("/", "layout");
 }
 
 export async function unpinThingAction(id: string) {
   const user = await requireSessionUser();
   await itemQueries.updateItem(user.id, String(id), { planX: null, planY: null });
+  revalidatePath("/", "layout");
 }

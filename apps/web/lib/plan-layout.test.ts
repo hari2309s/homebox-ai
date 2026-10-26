@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   containerFor,
   descendantIds,
+  fitSubtreeInto,
   fitView,
   inferKind,
   innermostAt,
@@ -133,5 +134,38 @@ describe("fitView", () => {
     expect(v.scale).toBe(2);
     expect(v.tx).toBe(10);
     expect(v.ty).toBe(60);
+  });
+});
+
+describe("fitSubtreeInto", () => {
+  const places = layoutPlan([
+    loc("house", "House", null, [0, 0, 400, 300], "house"),
+    loc("garage", "Garage", null, [500, 0, 200, 300], "garage"),
+    loc("bench", "Bench", "garage", [520, 40, 160, 100], "area"),
+    loc("vice", "Vice", "bench", [530, 80, 40, 40], "area"),
+  ]);
+
+  it("leaves a place alone when it already sits inside the new parent", () => {
+    expect(fitSubtreeInto(places, "vice", { x: 0, y: 0, w: 1000, h: 1000 })).toBeNull();
+  });
+
+  it("moves the whole subtree inside the new parent without overlapping its contents", () => {
+    const fit = fitSubtreeInto(places, "bench", places.find((p) => p.id === "house")!.rect)!;
+    const bench = fit.rects.get("bench")!;
+    const vice = fit.rects.get("vice")!;
+    expect(bench.x).toBeGreaterThanOrEqual(0);
+    expect(bench.x + bench.w).toBeLessThanOrEqual(400);
+    expect(bench.y + bench.h).toBeLessThanOrEqual(300);
+    expect(vice.x - bench.x).toBeCloseTo(10);
+    expect(vice.y - bench.y).toBeCloseTo(40);
+    expect(fit.movePoint(530, 80)).toEqual({ x: vice.x, y: vice.y });
+  });
+
+  it("shrinks a subtree that is bigger than the new parent", () => {
+    const fit = fitSubtreeInto(places, "garage", { x: 0, y: 0, w: 124, h: 142 })!;
+    const garage = fit.rects.get("garage")!;
+    expect(garage.w).toBeLessThanOrEqual(100);
+    expect(garage.h).toBeLessThanOrEqual(100);
+    expect(fit.rects.get("bench")!.w).toBeCloseTo(160 * (garage.w / 200));
   });
 });

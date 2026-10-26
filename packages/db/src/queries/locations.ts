@@ -77,3 +77,18 @@ export function deleteLocation(userId: string, locationId: string) {
     return tx.delete(locations).where(and(eq(locations.id, locationId), eq(locations.ownerId, ownerId)));
   });
 }
+
+/** Moves a place under a new parent (or to the top level) without touching its name. */
+export function setLocationParent(userId: string, locationId: string, parentId: string | null) {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    if (parentId && (await wouldFormCycle(locationId, parentId, (id) => getParentId(tx, ownerId, id)))) {
+      throw new Error("Can't move a place inside itself or one of its own spots.");
+    }
+    return tx
+      .update(locations)
+      .set({ parentId })
+      .where(and(eq(locations.id, locationId), eq(locations.ownerId, ownerId)))
+      .returning();
+  });
+}

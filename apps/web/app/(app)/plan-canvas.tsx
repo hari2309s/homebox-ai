@@ -85,6 +85,21 @@ function centredAt(rect: Rect, size: { w: number; h: number }, scale: number): V
   return { scale, tx: size.w / 2 - (rect.x + rect.w / 2) * scale, ty: size.h / 2 - (rect.y + rect.h / 2) * scale };
 }
 
+/** Recomputes each place's nesting depth (drawing order) after a re-parent. */
+function withDepths(list: PlacedPlace[]): PlacedPlace[] {
+  const byId = new Map(list.map((p) => [p.id, p]));
+  const depthOf = (p: PlacedPlace): number => {
+    let depth = 0;
+    let current = p.parentId ? byId.get(p.parentId) : undefined;
+    for (let guard = 0; current && guard < 20; guard++) {
+      depth++;
+      current = current.parentId ? byId.get(current.parentId) : undefined;
+    }
+    return depth;
+  };
+  return list.map((p) => ({ ...p, depth: depthOf(p) }));
+}
+
 interface PlanCanvasProps {
   locations: PlanLocationInput[];
   things: PlanThing[];
@@ -105,6 +120,13 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [drawRect, setDrawRect] = useState<Rect | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 3500);
+    return () => clearTimeout(timer);
+  }, [notice]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const gestureRef = useRef<Gesture | null>(null);
@@ -406,10 +428,50 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
       }
     } else if (g.type === "move" && g.moved) {
       const moved = places.filter((p) => g.ids.has(p.id));
-      const updates = moved.map((p) => ({ id: p.id, rect: clampToPlot(p.rect), kind: p.kind }));
-      setPlaces((prev) => prev.map((p) => (g.ids.has(p.id) ? { ...p, rect: clampToPlot(p.rect), stored: true } : p)));
-      const pins = things.filter((t) => g.pins.has(t.id)).map((t) => ({ id: t.id, x: t.planX!, y: t.planY! }));
-      void run(() => savePlacesAction(updates, pins), "Couldn't save that move");
+      const root = moved.find((p) => !p.parentId || !g.ids.has(p.parentId));
+      // Pulling a place back inside the plot shifts its spots and pins by the same amount, so they keep
+      // their positions relative to it.
+      const clampedRoot = root ? clampToPlot(root.rect) : null;
+      const shiftX = root && clampedRoot ? clampedRoot.x - root.rect.x : 0;
+      const shiftY = root && clampedRoot ? clampedRoot.y - root.rect.y : 0;
+      const shifted = (r: Rect) => clampToPlot({ ...r, x: r.x + shiftX, y: r.y + shiftY });
+      const updates = moved.map((p) => ({ id: p.id, rect: shifted(p.rect), kind: p.kind }));
+      const pins = things
+        .filter((t) => g.pins.has(t.id))
+        .map((t) => ({
+          id: t.id,
+          x: Math.max(0, Math.min(PLOT_W, t.planX! + shiftX)),
+          y: Math.max(0, Math.min(PLOT_H, t.planY! + shiftY)),
+        }));
+      setThings((prev) =>
+        prev.map((t) => {
+          const pin = pins.find((p) => p.id === t.id);
+          return pin ? { ...t, planX: pin.x, planY: pin.y } : t;
+        }),
+      );
+      // Dropping a place inside another one nests it there (and dropping it out on the plot un-nests it),
+      // so the inventory's place hierarchy always matches what the plan shows.
+      const container = clampedRoot ? containerFor(places, clampedRoot, g.ids) : null;
+      const newParentId = container?.id ?? null;
+      const reparent = root && newParentId !== root.parentId ? { id: root.id, parentId: newParentId } : undefined;
+      setPlaces((prev) =>
+        withDepths(
+          prev.map((p) =>
+            g.ids.has(p.id)
+              ? {
+                  ...p,
+                  rect: shifted(p.rect),
+                  stored: true,
+                  parentId: reparent && p.id === reparent.id ? reparent.parentId : p.parentId,
+                }
+              : p,
+          ),
+        ),
+      );
+      if (reparent && root) {
+        setNotice(container ? `Moved ${root.name} into ${container.name}` : `Moved ${root.name} out onto the plot`);
+      }
+      void run(() => savePlacesAction(updates, pins, reparent), "Couldn't save that move");
     } else if (g.type === "resize") {
       const place = placeById.get(g.id);
       if (place) {
@@ -808,6 +870,16 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
               : tool === "thing"
                 ? "Click where it lives. It joins your inventory in that place."
                 : "Pick Place and drag out your house, garden or garage to start the plan."}
+          </div>
+        )}
+
+        {notice && !error && (
+          <div
+            data-plan-ui
+            role="status"
+            className="pointer-events-none absolute bottom-3 left-3 z-[85] rounded-[10px] bg-ink px-3 py-2 text-[12px] text-surface"
+          >
+            {notice}
           </div>
         )}
 

@@ -314,3 +314,44 @@ export function suggestedKinds(parentKind: PlanKind | null): PlanKind[] {
       return ["area", "bed", "room"];
   }
 }
+
+export interface SubtreeFit {
+  rects: Map<string, Rect>;
+  /** Maps an old plot point inside the subtree to its new position (for pins). */
+  movePoint: (x: number, y: number) => { x: number; y: number };
+}
+
+/**
+ * When a place is re-parented, keeps it drawn inside its new parent: if its rect already sits inside,
+ * nothing moves; otherwise the whole subtree (and anything pinned in it) is shrunk to fit if needed and
+ * moved to the first spot in the parent that doesn't overlap a sibling.
+ */
+export function fitSubtreeInto(places: PlacedPlace[], id: string, parentRect: Rect): SubtreeFit | null {
+  const place = places.find((p) => p.id === id);
+  if (!place) return null;
+  if (containsRect(parentRect, place.rect)) return null;
+
+  const inner = {
+    x: parentRect.x + 12,
+    y: parentRect.y + 30,
+    w: Math.max(24, parentRect.w - 24),
+    h: Math.max(24, parentRect.h - 42),
+  };
+  const scale = Math.min(1, inner.w / place.rect.w, inner.h / place.rect.h);
+  const size = { w: place.rect.w * scale, h: place.rect.h * scale };
+  const subtree = new Set([id, ...descendantIds(places, id)]);
+  const siblings = places.filter((p) => !subtree.has(p.id) && containsRect(inner, p.rect)).map((p) => p.rect);
+  const spot = findFreeSpot(size, siblings, inner, 8) ?? { x: inner.x, y: inner.y, ...size };
+
+  const movePoint = (x: number, y: number) => ({
+    x: spot.x + (x - place.rect.x) * scale,
+    y: spot.y + (y - place.rect.y) * scale,
+  });
+  const rects = new Map<string, Rect>();
+  for (const p of places) {
+    if (!subtree.has(p.id)) continue;
+    const topLeft = movePoint(p.rect.x, p.rect.y);
+    rects.set(p.id, { x: topLeft.x, y: topLeft.y, w: p.rect.w * scale, h: p.rect.h * scale });
+  }
+  return { rects, movePoint };
+}

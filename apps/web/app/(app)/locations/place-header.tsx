@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { reparentPlaceAction } from "../plan-actions";
 import { deleteLocationAction, updateLocationAction } from "./actions";
 
 const BAR =
@@ -15,6 +16,7 @@ export function PlaceHeader({
   breadcrumb,
   childCount,
   thingCount,
+  moveOptions,
 }: {
   id: string;
   name: string;
@@ -22,6 +24,8 @@ export function PlaceHeader({
   breadcrumb: string;
   childCount: number;
   thingCount: number;
+  /** Places this one can move under — excludes itself and its own spots. */
+  moveOptions: { id: string; path: string }[];
 }) {
   const router = useRouter();
   const [mode, setMode] = useState<"view" | "rename" | "delete">("view");
@@ -56,6 +60,36 @@ export function PlaceHeader({
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
         <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-accent">{breadcrumb}</span>
+        <label className={`${BAR} relative text-ink`}>
+          <span aria-hidden className="material-symbols-rounded text-[16px]">
+            drive_file_move
+          </span>
+          Move to
+          <select
+            aria-label={`Move ${name} to`}
+            value={parentId ?? ""}
+            disabled={busy}
+            onChange={async (event) => {
+              setBusy(true);
+              setError(null);
+              try {
+                await reparentPlaceAction(id, event.target.value || null);
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Couldn't move this place");
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className="absolute inset-0 cursor-pointer opacity-0"
+          >
+            <option value="">On the plot (top level)</option>
+            {moveOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.path}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           type="button"
           onClick={() => setMode(mode === "rename" ? "view" : "rename")}
