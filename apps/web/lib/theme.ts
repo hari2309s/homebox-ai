@@ -37,12 +37,11 @@ export function resolveTheme(theme: Theme): "light" | "dark" {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-// The app header/bottom-nav's actual background color (--color-surface-soft
-// in globals.css, light and dark values) — kept in sync by hand since the
-// browser's own chrome (tab bar, PWA title bar) reads this meta tag, not CSS.
+// The browser chrome colour (tab bar, PWA title bar) for each theme — must match the inline
+// pre-paint script in app/layout.tsx, which can't import this module.
 const THEME_COLOR: Record<"light" | "dark", string> = {
-  light: "#fbf1de",
-  dark: "#261c13",
+  light: "#e9e8e1",
+  dark: "#1e2420",
 };
 
 function setThemeColorMeta(resolved: "light" | "dark"): void {

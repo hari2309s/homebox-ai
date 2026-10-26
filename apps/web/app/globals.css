@@ -297,3 +297,11 @@ body {
     animation: none;
   }
 }
+
+/* Theme switcher: the new theme is revealed with a growing circle (clip-path set from JS), so the
+   default cross-fade of the page snapshot is turned off. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}

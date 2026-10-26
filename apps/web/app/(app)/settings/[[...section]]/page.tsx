@@ -9,6 +9,7 @@ import { DeleteAccountForm } from "../delete-account-form";
 import { DisplayNameForm } from "../display-name-form";
 import { HouseholdSection } from "../household-section";
 import { PasswordForm } from "../password-form";
+import { ThemeSwitcher } from "../../theme-switcher";
 import { ZipImportForm } from "../zip-import-form";
 
 const SECTIONS = [
@@ -29,6 +30,15 @@ const SECTIONS = [
     title: "Your sign-in",
     noteTitle: "Signing in",
     note: "This email is how you sign in and where invites and receipts go. Changing it isn't supported yet.",
+  },
+  {
+    slug: "appearance",
+    label: "Appearance",
+    icon: "contrast",
+    eyebrow: "APPEARANCE",
+    title: "Day or night",
+    noteTitle: "Following your device",
+    note: "System switches with your phone or computer's light and dark mode. Your choice is remembered on this device.",
   },
   {
     slug: "password",
@@ -184,6 +194,11 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
             </span>
           </div>
           <span className="text-xs text-muted">Used for invites and receipts.</span>
+        </SettingsSection>
+
+        <SettingsSection slug="appearance" active={active}>
+          <span className="text-[12px] font-semibold text-body">Theme</span>
+          <ThemeSwitcher />
         </SettingsSection>
 
         <SettingsSection slug="password" active={active}>

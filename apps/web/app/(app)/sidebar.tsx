@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { isActive, PRIMARY_LINKS, TOOL_LINKS, type NavLink } from "./nav-links";
+import { ThemeSwitcher } from "./theme-switcher";
 
 // Loaded on demand so the barcode library stays out of every page's bundle.
 const ScanModal = dynamic(() => import("./scan/scan-modal"), { ssr: false });
@@ -127,6 +128,12 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
 
       <div className="flex-1" />
 
+      <div className="flex items-center gap-2 px-[10px] pb-2">
+        <span className="font-mono text-[9px] text-[#9aa49c]">THEME</span>
+        <div className="flex-1">
+          <ThemeSwitcher variant="compact" />
+        </div>
+      </div>
       <Link href="/settings/household" className="flex items-center gap-2 border-t border-border p-[10px] no-underline">
         <span className="flex">
           {members.slice(0, 3).map((member, i) => (
