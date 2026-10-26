@@ -265,7 +265,7 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
   return (
     <div data-full-bleed className="flex h-full">
       {/* Desktop conversations rail */}
-      <aside className="hidden w-[300px] flex-none flex-col gap-3 overflow-y-auto border-r border-border px-4 py-[22px] lg:flex">
+      <aside className="hidden w-[clamp(440px,34vw,560px)] flex-none flex-col gap-3 overflow-y-auto border-r border-border px-4 py-[22px] lg:flex">
         <div className="flex items-center justify-between">
           <h1 className="m-0 font-serif text-[22px] font-normal text-ink">Conversations</h1>
           <TapButton
@@ -467,7 +467,7 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
         {/* Input bar */}
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 px-4 pb-[10px] pt-[6px] lg:mx-auto lg:mb-6 lg:w-full lg:max-w-[680px] lg:rounded-[14px] lg:border lg:border-border lg:bg-card lg:py-[6px] lg:pl-[14px] lg:pr-[6px]"
+          className="flex items-center gap-2 px-4 pb-[10px] pt-[6px] lg:mx-auto lg:mb-6 lg:w-[min(680px,calc(100%-48px))] lg:rounded-[14px] lg:border lg:border-border lg:bg-card lg:py-[6px] lg:pl-[14px] lg:pr-[6px]"
         >
           <Link
             href="/capture"
