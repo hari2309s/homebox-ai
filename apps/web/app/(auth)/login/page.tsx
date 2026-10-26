@@ -149,9 +149,11 @@ function LoginForm() {
           className="flex w-full flex-col gap-3"
         >
           {/* Segmented tab */}
-          <div className="grid grid-cols-2 rounded-xl bg-surface-soft p-[3px] text-sm font-semibold text-center">
+          <div role="tablist" aria-label="Account mode" className="grid grid-cols-2 rounded-xl bg-surface-soft p-[3px] text-sm font-semibold text-center">
             <button
               type="button"
+              role="tab"
+              aria-selected={mode === "sign-in"}
               onClick={() => switchMode("sign-in")}
               className={`cursor-pointer rounded-[9px] px-3 py-2.5 transition-all ${
                 mode === "sign-in"
@@ -163,6 +165,8 @@ function LoginForm() {
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={mode === "sign-up"}
               onClick={() => switchMode("sign-up")}
               className={`cursor-pointer rounded-[9px] px-3 py-2.5 transition-all ${
                 mode === "sign-up"
@@ -232,7 +236,9 @@ function LoginForm() {
           {/* Password */}
           <div className="flex flex-col gap-1.5">
             <div className="flex justify-between">
-              <span className="text-xs font-semibold text-body">Password</span>
+              <label htmlFor="login-password" className="text-xs font-semibold text-body">
+                Password
+              </label>
               {mode === "sign-in" && (
                 <Link href="/forgot-password" className="text-xs font-semibold text-accent no-underline">
                   Forgot password?
@@ -240,6 +246,7 @@ function LoginForm() {
               )}
             </div>
             <PasswordInput
+              id="login-password"
               required
               minLength={mode === "sign-up" ? PASSWORD_MIN_LENGTH : undefined}
               value={password}
@@ -276,9 +283,12 @@ function LoginForm() {
                 className="overflow-hidden"
               >
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-semibold text-body">Confirm password</span>
+                  <label htmlFor="login-confirm-password" className="text-xs font-semibold text-body">
+                    Confirm password
+                  </label>
                   <div className="relative">
                     <PasswordInput
+                      id="login-confirm-password"
                       required
                       minLength={PASSWORD_MIN_LENGTH}
                       value={confirmPassword}
