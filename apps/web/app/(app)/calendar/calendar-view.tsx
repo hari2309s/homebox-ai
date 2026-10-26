@@ -4,69 +4,20 @@ import { ConfirmDialog, Input, Select, SubmitButton, TapButton } from "@homebox-
 import { useMemo, useState } from "react";
 
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
+import {
+  Reminder,
+  Item,
+  WEEKDAY_LABELS,
+  UNASSIGNED_COLOR,
+  colorForAssignee,
+  toDateKey,
+  getMonthGrid,
+  assigneeLabel,
+  assigneeInitial,
+  seasonLabel,
+} from "./calendar-utils";
 import { CrudShell } from "../crud-shell";
 import { completeReminderAction, createReminderAction, deleteReminderAction, reopenReminderAction } from "./actions";
-
-interface Reminder {
-  id: string;
-  itemId: string | null;
-  itemName: string | null;
-  title: string;
-  description: string | null;
-  dueDate: string;
-  assignedToUserId: string | null;
-  status: "pending" | "done";
-}
-
-interface Item {
-  id: string;
-  name: string;
-}
-
-const WEEKDAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
-
-const ASSIGNEE_PALETTE = ["#3f6b45", "#b0643f", "#5b7fa6", "#c98bd9", "#e0a83e", "#4fb8b0"];
-const UNASSIGNED_COLOR = "#7c867f";
-
-function colorForAssignee(userId: string | null): string {
-  if (!userId) return UNASSIGNED_COLOR;
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) hash = (hash * 31 + userId.charCodeAt(i)) >>> 0;
-  return ASSIGNEE_PALETTE[hash % ASSIGNEE_PALETTE.length] ?? UNASSIGNED_COLOR;
-}
-
-function toDateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function getMonthGrid(year: number, month: number): Date[] {
-  const firstOfMonth = new Date(year, month, 1);
-  const startDay = firstOfMonth.getDay() === 0 ? 6 : firstOfMonth.getDay() - 1;
-  const start = new Date(year, month, 1 - startDay);
-  return Array.from({ length: 42 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
-}
-
-function assigneeLabel(userId: string | null, householdUsers: HouseholdUser[]): string {
-  if (!userId) return "Unassigned";
-  const match = householdUsers.find((person) => person.userId === userId);
-  if (!match) return "Someone";
-  return householdUserLabel(match);
-}
-
-function assigneeInitial(userId: string | null, householdUsers: HouseholdUser[]): string {
-  const label = assigneeLabel(userId, householdUsers);
-  return label.charAt(0).toUpperCase();
-}
-
-function seasonLabel(month: number): string {
-  if (month >= 2 && month <= 4) return "SPRING · NEW GROWTH";
-  if (month >= 5 && month <= 7) return "SUMMER · FULL SUN";
-  if (month >= 8 && month <= 10) return "AUTUMN · LEAF FALL";
-  return "WINTER · DORMANT";
-}
 
 export function CalendarView({
   reminders,
@@ -155,7 +106,9 @@ export function CalendarView({
             <Select name="itemId" defaultValue="">
               <option value="">No specific item</option>
               {items.map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
               ))}
             </Select>
           </div>
@@ -248,7 +201,10 @@ export function CalendarView({
         <div className="flex flex-wrap gap-x-[14px] gap-y-1">
           {householdUsers.map((person) => (
             <span key={person.userId} className="flex items-center gap-[5px] text-xs font-semibold text-body">
-              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: colorForAssignee(person.userId) }} />
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: colorForAssignee(person.userId) }}
+              />
               {householdUserLabel(person)}
             </span>
           ))}
@@ -260,7 +216,9 @@ export function CalendarView({
       )}
 
       {error && (
-        <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">{error}</p>
+        <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+          {error}
+        </p>
       )}
 
       {/* Day detail */}
@@ -301,7 +259,7 @@ export function CalendarView({
   );
 }
 
-function ReminderRow({
+export function ReminderRow({
   reminder,
   assignee,
   assigneeInitial,
@@ -350,10 +308,7 @@ function ReminderRow({
 
   return (
     <div className="flex items-center gap-[10px] border-b border-border/40 py-[10px] last:border-b-0">
-      <span
-        className="w-[3px] self-stretch rounded-sm"
-        style={{ background: assigneeColor }}
-      />
+      <span className="w-[3px] self-stretch rounded-sm" style={{ background: assigneeColor }} />
       <div className="min-w-0 flex-1">
         <button
           type="button"
@@ -364,7 +319,8 @@ function ReminderRow({
           {reminder.title}
         </button>
         <div className="font-mono text-[10px] text-muted">
-          {reminder.itemName ? `${reminder.itemName} · ` : ""}{assignee}
+          {reminder.itemName ? `${reminder.itemName} · ` : ""}
+          {assignee}
         </div>
       </div>
       <span

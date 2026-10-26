@@ -3,6 +3,7 @@ import { itemQueries, reminderQueries, sharingQueries } from "@homebox-ai/db";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
+import { CalendarDesktop } from "./calendar-desktop";
 import { CalendarView } from "./calendar-view";
 
 export default async function CalendarPage() {
@@ -23,8 +24,13 @@ export default async function CalendarPage() {
   ]);
 
   return (
-    <div className="h-full">
-      <CalendarView reminders={reminders} householdUsers={householdUsers} items={items} currentUserId={user.id} />
-    </div>
+    <>
+      <div className="h-full lg:hidden">
+        <CalendarView reminders={reminders} householdUsers={householdUsers} items={items} currentUserId={user.id} />
+      </div>
+      <div className="hidden h-full lg:block">
+        <CalendarDesktop reminders={reminders} householdUsers={householdUsers} items={items} currentUserId={user.id} />
+      </div>
+    </>
   );
 }
