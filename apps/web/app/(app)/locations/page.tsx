@@ -74,7 +74,7 @@ export default async function LocationsPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <div className="hidden h-full lg:flex">
+      <div data-full-bleed className="hidden h-full lg:flex">
         <div className="flex w-[440px] flex-none flex-col gap-3 border-r border-border px-5 py-6">
           <div>
             <h1 className="m-0 font-serif text-[30px] font-normal leading-none text-ink">Places</h1>
@@ -97,9 +97,9 @@ export default async function LocationsPage({ searchParams }: { searchParams: Pr
                 childCount={children.length}
                 thingCount={directThings.length}
               />
-              <PlanPreview places={placed} things={items} focusId={selectedPlace.id} className="h-[300px] shrink-0" />
+              <PlanPreview places={placed} things={items} focusId={selectedPlace.id} className="h-[clamp(300px,42vh,520px)] shrink-0" />
               {children.length > 0 ? (
-                <div className="grid grid-cols-3 gap-[10px]">
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-[10px]">
                   {children.map((child) => {
                     const inside = items.filter((i) => i.locationId === child.id).map((i) => i.name);
                     return (

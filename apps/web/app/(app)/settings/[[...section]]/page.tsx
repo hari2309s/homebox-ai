@@ -12,9 +12,33 @@ import { PasswordForm } from "../password-form";
 import { ZipImportForm } from "../zip-import-form";
 
 const SECTIONS = [
-  { slug: "profile", label: "Profile", icon: "person", eyebrow: "PROFILE", title: "How you show up" },
-  { slug: "account", label: "Account", icon: "mail", eyebrow: "ACCOUNT", title: "Your sign-in" },
-  { slug: "password", label: "Password", icon: "key", eyebrow: "PASSWORD", title: "Keep it locked" },
+  {
+    slug: "profile",
+    label: "Profile",
+    icon: "person",
+    eyebrow: "PROFILE",
+    title: "How you show up",
+    noteTitle: "Who sees this",
+    note: "Your name and photo show on reminders you're assigned, in the household list and on things you add.",
+  },
+  {
+    slug: "account",
+    label: "Account",
+    icon: "mail",
+    eyebrow: "ACCOUNT",
+    title: "Your sign-in",
+    noteTitle: "Signing in",
+    note: "This email is how you sign in and where invites and receipts go. Changing it isn't supported yet.",
+  },
+  {
+    slug: "password",
+    label: "Password",
+    icon: "key",
+    eyebrow: "PASSWORD",
+    title: "Keep it locked",
+    noteTitle: "A good password",
+    note: "At least 10 characters, with an uppercase letter, a lowercase letter, a number and a symbol. The checklist ticks off as you type.",
+  },
   {
     slug: "household",
     label: "Household",
@@ -22,8 +46,24 @@ const SECTIONS = [
     eyebrow: "HOUSEHOLD",
     title: "Who looks after the place",
   },
-  { slug: "data", label: "Your data", icon: "swap_vert", eyebrow: "YOUR DATA", title: "Take it with you" },
-  { slug: "danger", label: "Danger zone", icon: "warning", eyebrow: "DANGER ZONE", title: "Leave Homebox" },
+  {
+    slug: "data",
+    label: "Your data",
+    icon: "swap_vert",
+    eyebrow: "YOUR DATA",
+    title: "Take it with you",
+    noteTitle: "What's in each export",
+    note: "JSON has everything and can be imported again. CSV is the items list for spreadsheets. ZIP adds every photo and receipt. Importing only adds; it never replaces.",
+  },
+  {
+    slug: "danger",
+    label: "Danger zone",
+    icon: "warning",
+    eyebrow: "DANGER ZONE",
+    title: "Leave Homebox",
+    noteTitle: "Before you go",
+    note: "Export your data first from Your data if you want a copy. Deleting your account can't be undone.",
+  },
 ] as const;
 
 type Slug = (typeof SECTIONS)[number]["slug"];
@@ -63,13 +103,16 @@ function SettingsSection({
           {meta.title}
         </h2>
       </div>
-      <div
-        className={
-          aside ? "grid gap-[18px] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-start" : "lg:max-w-[640px]"
-        }
-      >
+      <div className="grid gap-[18px] lg:max-w-[1120px] lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-start">
         <div className={`flex flex-col gap-3 rounded-[14px] p-[14px] lg:p-4 ${card}`}>{children}</div>
-        {aside && <div className="flex flex-col gap-[14px]">{aside}</div>}
+        {aside ? (
+          <div className="flex flex-col gap-[14px]">{aside}</div>
+        ) : "note" in meta ? (
+          <div className="hidden flex-col gap-2 rounded-[14px] border border-border bg-card p-4 lg:flex">
+            <span className="text-[14px] font-semibold text-ink">{meta.noteTitle}</span>
+            <span className="text-[13px] leading-normal text-muted">{meta.note}</span>
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -86,7 +129,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
   const avatarUrl = typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
 
   return (
-    <div className="flex h-full flex-col lg:flex-row">
+    <div data-full-bleed className="flex h-full flex-col lg:flex-row">
       <nav
         aria-label="Settings sections"
         className="hidden w-[240px] flex-none flex-col gap-1 border-r border-border px-4 py-7 lg:flex"

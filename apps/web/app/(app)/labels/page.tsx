@@ -52,7 +52,7 @@ export default async function LabelsPage({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <div className="hidden h-full lg:flex">
+      <div data-full-bleed className="hidden h-full lg:flex">
         <div className="flex w-[440px] flex-none flex-col gap-3 border-r border-border px-5 pt-6">
           <div>
             <h1 className="m-0 font-serif text-[30px] font-normal leading-none text-ink">Labels</h1>
