@@ -23,6 +23,11 @@
      button text too, since `bg-white` and `text-white` share one variable. */
   --color-card: #ffffff;
 
+  /* Desktop sidebar / side panels, and the moss tint for selected rows. */
+  --color-rail: #fbfaf6;
+  --color-selected: #dfe8d6;
+  --color-selected-soft: #f6f9f3;
+
   /* Zone colours — used by the site-plan, item cards, and zone badges. */
   --color-zone-house: #f3f1ea;
   --color-zone-garden: #dfe8d6;
@@ -78,6 +83,9 @@
   --color-body: #cdd3cc;
   --color-muted: #8b958d;
   --color-border: #2c342f;
+  --color-rail: #171d19;
+  --color-selected: #223026;
+  --color-selected-soft: #1c2620;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -92,6 +100,9 @@
     --color-body: #cdd3cc;
     --color-muted: #8b958d;
     --color-border: #2c342f;
+    --color-rail: #171d19;
+    --color-selected: #223026;
+    --color-selected-soft: #1c2620;
   }
 }
 
@@ -152,7 +163,7 @@ body {
   #app-shell {
     height: auto;
   }
-  #app-header,
+  #app-sidebar,
   #app-bottom-nav {
     display: none;
   }
