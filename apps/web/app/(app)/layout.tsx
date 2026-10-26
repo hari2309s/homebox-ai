@@ -1,12 +1,15 @@
 export const maxDuration = 60;
 
 import { chatQueries, itemQueries, reminderQueries, sharingQueries } from "@homebox-ai/db";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { BottomNav } from "./bottom-nav";
+import { listLocationsCached } from "../../lib/cached-queries";
+import { needsOnboarding } from "../../lib/onboarding";
 import { JOIN_PATH } from "../../lib/pending-join";
 import { PendingInviteBanner } from "./pending-invite-banner";
 import { Sidebar } from "./sidebar";
@@ -24,12 +27,26 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const [unreadChatCount, itemCounts, reminders, householdUsers] = await Promise.all([
+  const [unreadChatCount, itemCounts, reminders, householdUsers, locations] = await Promise.all([
     chatQueries.countUnreadProactiveMessages(user.id),
     itemQueries.countItemsByLocation(user.id),
     reminderQueries.listReminders(user.id),
     sharingQueries.listHouseholdUsers(user.id),
+    listLocationsCached(user.id),
   ]);
+
+  // Brand-new owners set up their place first — but never instead of an invite they're opening.
+  const pathname = (await headers()).get("x-pathname") ?? "";
+  if (
+    !pathname.startsWith("/join/") &&
+    needsOnboarding(user.user_metadata, {
+      places: locations.length,
+      things: itemCounts.reduce((sum, c) => sum + c.count, 0),
+      householdSize: householdUsers.length,
+    })
+  ) {
+    redirect("/onboarding");
+  }
 
   const fullName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name.trim() : "";
   const userName = fullName || (user.email?.split("@")[0] ?? "You");
@@ -41,7 +58,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     initial: (person.isSelf ? userName : (person.email ?? "?")).charAt(0).toUpperCase(),
     color: MEMBER_COLORS[i % MEMBER_COLORS.length]!,
   }));
-  const householdLabel = householdUsers.length > 1 ? "Shared household" : `${userName.split(" ")[0]}'s home`;
+  const householdName =
+    typeof user.user_metadata?.household_name === "string" ? user.user_metadata.household_name : null;
+  const householdLabel =
+    householdUsers.length > 1 && !householdUsers[0]?.isSelf
+      ? "Shared household"
+      : (householdName ?? `${userName.split(" ")[0]}'s home`);
 
   // Set at sign-up from an invite link, so the invite can be offered again on any device after confirming.
   const pendingJoin = typeof user.user_metadata?.pending_join === "string" ? user.user_metadata.pending_join : null;

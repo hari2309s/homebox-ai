@@ -11,6 +11,8 @@ const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/forgot-password"];
  * apps/web/middleware.ts.
  */
 export async function updateSession(request: NextRequest) {
+  // Lets server layouts know the current path (e.g. so first-run onboarding never hijacks an invite link).
+  request.headers.set("x-pathname", request.nextUrl.pathname);
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(supabaseUrl(), supabasePublishableKey(), {

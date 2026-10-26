@@ -13,7 +13,7 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { isPasswordValid, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_MESSAGE } from "../../../lib/password-policy";
 import { PasswordStrengthBar } from "../../../lib/password-strength-bar";
@@ -37,6 +37,148 @@ const AUTH_NOTICES: Record<string, string> = {
   confirmed_elsewhere: "Your email is confirmed. Sign in to continue.",
 };
 
+function useResend(email: string, emailRedirectTo: string) {
+  const [cooldown, setCooldown] = useState(0);
+  const [resendError, setResendError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldown]);
+
+  async function resend() {
+    setResendError(null);
+    const { error } = await createSupabaseBrowserClient().auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo },
+    });
+    if (error) setResendError(error.message);
+    else setCooldown(60);
+  }
+
+  return { cooldown, resend, resendError };
+}
+
+/** J7 #40 — shown after sign-up until the email is confirmed (in any tab of this browser), then moves on. */
+function ConfirmPending({
+  email,
+  emailRedirectTo,
+  onConfirmed,
+  onChangeEmail,
+}: {
+  email: string;
+  emailRedirectTo: string;
+  onConfirmed: () => void;
+  onChangeEmail: () => void;
+}) {
+  const [confirmed, setConfirmed] = useState(false);
+  const { cooldown, resend, resendError } = useResend(email, emailRedirectTo);
+  const onConfirmedRef = useRef(onConfirmed);
+  onConfirmedRef.current = onConfirmed;
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    // Confirming in another tab of this browser signs it in via the shared session cookie.
+    const timer = setInterval(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        clearInterval(timer);
+        setConfirmed(true);
+        setTimeout(() => onConfirmedRef.current(), 800);
+      }
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <main className="mx-auto flex h-dvh w-full max-w-md flex-col px-6 pb-[34px] pt-10">
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+        <AnimatedHomeboxIcon size={96} />
+        <div className="font-mono text-[11px] text-accent">ONE LAST STEP</div>
+        <h1 className="m-0 font-serif text-[30px] font-normal leading-[1.1] text-ink">
+          Check your email to confirm your account
+        </h1>
+        <p className="m-0 text-[15px] leading-[1.55] text-muted">
+          We sent a link to <b className="text-ink">{email}</b>. Tap it and you&apos;ll land straight on your new plot.
+        </p>
+        <div
+          className="flex w-full flex-col gap-2 rounded-[14px] border border-border bg-card px-[14px] py-3 text-left"
+          aria-live="polite"
+        >
+          <span className="flex items-center gap-2 text-[13px] text-body">
+            <span aria-hidden className="material-symbols-rounded text-[18px] text-accent">
+              check_circle
+            </span>
+            Account created
+          </span>
+          <span className="flex items-center gap-2 text-[13px] text-body">
+            <span
+              aria-hidden
+              className={`material-symbols-rounded text-[18px] ${confirmed ? "text-accent" : "text-[#d9a43a]"}`}
+            >
+              {confirmed ? "check_circle" : "pending"}
+            </span>
+            {confirmed ? "Confirmed. Taking you in…" : "Waiting for you to confirm…"}
+          </span>
+        </div>
+        {resendError && (
+          <p role="alert" className="m-0 text-[13px] text-[#b0643f]">
+            {resendError}
+          </p>
+        )}
+      </div>
+      <div className="flex flex-col items-center gap-[10px]">
+        <button
+          type="button"
+          onClick={resend}
+          disabled={cooldown > 0}
+          className="w-full cursor-pointer rounded-xl border border-border bg-card py-[13px] text-[15px] font-semibold text-ink disabled:cursor-default disabled:opacity-60"
+        >
+          {cooldown > 0 ? `Sent ✓ · resend in ${cooldown}s` : "Resend email"}
+        </button>
+        <span className="text-[14px] text-muted">
+          Wrong address?{" "}
+          <button
+            type="button"
+            onClick={onChangeEmail}
+            className="cursor-pointer border-none bg-transparent p-0 text-[14px] font-semibold text-accent"
+          >
+            Change it
+          </button>
+        </span>
+      </div>
+    </main>
+  );
+}
+
+/** J7 #41 — signing in before confirming. */
+function UnconfirmedNotice({ email, emailRedirectTo }: { email: string; emailRedirectTo: string }) {
+  const { cooldown, resend, resendError } = useResend(email, emailRedirectTo);
+  return (
+    <div role="alert" className="flex items-start gap-[10px] rounded-xl bg-[#f6e7c4] p-3 dark:bg-[#2e2a1a]">
+      <span aria-hidden className="material-symbols-rounded text-[#8a6a1a] dark:text-[#d9a43a]">
+        mark_email_unread
+      </span>
+      <div className="flex flex-1 flex-col gap-2">
+        <span className="text-[13px] leading-normal text-[#5a4410] dark:text-[#e8d29a]">
+          <b>Confirm your email first.</b> We sent a link to {email} when you signed up.
+        </span>
+        <button
+          type="button"
+          onClick={resend}
+          disabled={cooldown > 0}
+          className="self-start cursor-pointer rounded-lg border-none bg-card px-3 py-[6px] text-[13px] font-semibold text-ink disabled:opacity-60"
+        >
+          {cooldown > 0 ? `Sent ✓ (${cooldown}s)` : "Resend link"}
+        </button>
+        {resendError && <span className="text-[12px] text-[#b0643f]">{resendError}</span>}
+      </div>
+    </div>
+  );
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -57,9 +199,14 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(() => AUTH_ERRORS[searchParams.get("error") ?? ""] ?? null);
   const [info, setInfo] = useState<string | null>(() => AUTH_NOTICES[searchParams.get("notice") ?? ""] ?? null);
   const [pending, setPending] = useState(false);
+  const [awaitingConfirm, setAwaitingConfirm] = useState<string | null>(null);
+  const [unconfirmed, setUnconfirmed] = useState<string | null>(null);
+  const emailRedirectTo = () =>
+    `${window.location.origin}/auth/callback?from=email&next=${encodeURIComponent(redirectTo)}`;
 
   function switchMode(next: "sign-in" | "sign-up") {
     if (next === mode) return;
+    setUnconfirmed(null);
     setMode(next);
     setError(null);
     setInfo(null);
@@ -71,6 +218,7 @@ function LoginForm() {
     event.preventDefault();
     setError(null);
     setInfo(null);
+    setUnconfirmed(null);
 
     const supabase = createSupabaseBrowserClient();
 
@@ -79,7 +227,8 @@ function LoginForm() {
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) {
         setPending(false);
-        setError(authError.message);
+        if (authError.code === "email_not_confirmed") setUnconfirmed(email);
+        else setError(authError.message);
         return;
       }
       router.replace(redirectTo);
@@ -104,7 +253,7 @@ function LoginForm() {
         // pending_join lets the app offer the invite again after sign-in even if the confirmation email is
         // opened on another device; emailRedirectTo brings this browser straight back to it.
         data: { full_name: name.trim(), ...(joining ? { pending_join: redirectTo } : {}) },
-        emailRedirectTo: `${window.location.origin}/auth/callback?from=email&next=${encodeURIComponent(redirectTo)}`,
+        emailRedirectTo: emailRedirectTo(),
       },
     });
 
@@ -116,8 +265,7 @@ function LoginForm() {
 
     if (!data.session) {
       setPending(false);
-      setInfo("Check your email to confirm your account, then sign in.");
-      setMode("sign-in");
+      setAwaitingConfirm(email);
       return;
     }
 
@@ -143,6 +291,23 @@ function LoginForm() {
   }
 
   const passwordMatch = confirmPassword.length > 0 && password === confirmPassword;
+
+  if (awaitingConfirm) {
+    return (
+      <ConfirmPending
+        email={awaitingConfirm}
+        emailRedirectTo={emailRedirectTo()}
+        onConfirmed={() => {
+          router.replace(redirectTo);
+          router.refresh();
+        }}
+        onChangeEmail={() => {
+          setAwaitingConfirm(null);
+          setMode("sign-up");
+        }}
+      />
+    );
+  }
 
   return (
     <main className="no-scrollbar mx-auto flex h-dvh w-full max-w-md flex-col items-center overflow-y-auto px-5 py-10">
@@ -178,6 +343,10 @@ function LoginForm() {
             <p className="m-0 rounded-xl bg-selected px-3 py-2.5 text-center text-[13px] leading-snug text-(--plan-ink)">
               Sign in, or create an account, to accept your household invite.
             </p>
+          )}
+
+          {unconfirmed && mode === "sign-in" && (
+            <UnconfirmedNotice email={unconfirmed} emailRedirectTo={emailRedirectTo()} />
           )}
 
           {/* Segmented tab */}
