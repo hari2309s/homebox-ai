@@ -30,7 +30,7 @@ const CARD = "rounded-[14px] border border-border bg-card";
 const SMALL_BASE =
   "flex cursor-pointer items-center justify-center gap-1 rounded-[9px] px-[10px] py-[7px] text-[12px] font-semibold no-underline";
 const SMALL_BUTTON = `${SMALL_BASE} border border-border bg-card text-ink`;
-const SMALL_PRIMARY = `${SMALL_BASE} border-none bg-accent text-white`;
+const SMALL_PRIMARY = `${SMALL_BASE} border-none bg-accent text-on-accent`;
 
 function kindMeta(kind: PlanKind) {
   return PLAN_KINDS.find((k) => k.kind === kind)!;
@@ -155,7 +155,7 @@ function PlacePanel({
             <button
               type="submit"
               disabled={saving}
-              className="self-start cursor-pointer rounded-[9px] border-none bg-accent px-3 py-[7px] text-[12px] font-semibold text-white disabled:opacity-60"
+              className="self-start cursor-pointer rounded-[9px] border-none bg-accent px-3 py-[7px] text-[12px] font-semibold text-on-accent disabled:opacity-60"
             >
               {saving ? "Saving…" : "Save changes"}
             </button>
@@ -278,8 +278,8 @@ function PlacePanel({
         )}
       </div>
 
-      <div className="flex flex-col gap-2 rounded-[14px] border-[1.5px] border-[#d9a58a] bg-[#fbf1ec] p-[14px] dark:border-[#6b3d28] dark:bg-[#2a1d16]">
-        <p className="m-0 text-[12px] leading-snug text-[#7a3f22] dark:text-[#e7a582]">
+      <div className="flex flex-col gap-2 rounded-[14px] border-[1.5px] border-danger-line bg-danger-faint p-[14px]">
+        <p className="m-0 text-[12px] leading-snug text-danger">
           Deleting a place keeps its things; they become unassigned. Spots inside it move up to the plot.
         </p>
         <button

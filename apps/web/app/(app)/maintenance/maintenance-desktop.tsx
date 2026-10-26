@@ -291,7 +291,7 @@ export function MaintenanceDesktop({
             type="button"
             onClick={suggest}
             disabled={!item || loading}
-            className="flex h-9 flex-none cursor-pointer items-center gap-[6px] rounded-[9px] border-none bg-accent px-3 text-[13px] font-semibold text-white disabled:opacity-50"
+            className="flex h-9 flex-none cursor-pointer items-center gap-[6px] rounded-[9px] border-none bg-accent px-3 text-[13px] font-semibold text-on-accent disabled:opacity-50"
           >
             <span aria-hidden className="material-symbols-rounded text-[18px]">
               auto_awesome
@@ -302,17 +302,17 @@ export function MaintenanceDesktop({
       </div>
 
       {error && (
-        <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+        <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
           {error}
         </p>
       )}
 
       {showWarranty && item && (
-        <div className="flex items-start gap-[10px] rounded-xl bg-[#ecdccd] px-[14px] py-[11px]">
-          <span aria-hidden className="material-symbols-rounded text-[#7a3f22]">
+        <div className="flex items-start gap-[10px] rounded-xl bg-danger-soft px-[14px] py-[11px]">
+          <span aria-hidden className="material-symbols-rounded text-danger">
             gpp_maybe
           </span>
-          <span className="flex-1 text-[13px] leading-[1.45] text-[#5a2e18]">
+          <span className="flex-1 text-[13px] leading-[1.45] text-danger-ink">
             <b>
               {warrantyDays !== null && warrantyDays >= 0
                 ? `Warranty ends in ${warrantyDays} ${warrantyDays === 1 ? "day" : "days"} (${monthDay(item.warrantyExpires!)}).`
@@ -322,7 +322,7 @@ export function MaintenanceDesktop({
           </span>
           <Link
             href={`/items/${item.id}#attachments`}
-            className="text-[13px] font-semibold text-[#7a3f22] no-underline hover:underline"
+            className="text-[13px] font-semibold text-danger no-underline hover:underline"
           >
             Open receipt
           </Link>
@@ -401,7 +401,7 @@ export function MaintenanceDesktop({
                       className={`flex h-[34px] flex-none cursor-pointer items-center rounded-[9px] px-3 text-[13px] font-semibold ${
                         isAdded
                           ? "border border-accent bg-card text-accent"
-                          : "border-none bg-accent text-white disabled:opacity-60"
+                          : "border-none bg-accent text-on-accent disabled:opacity-60"
                       }`}
                     >
                       {isAdded ? "Added ✓" : pending.has(index) ? "Adding…" : "Add reminder"}

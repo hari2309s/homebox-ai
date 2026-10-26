@@ -246,9 +246,9 @@ export function AvatarUploadForm({ userId, currentAvatarUrl }: AvatarUploadFormP
                   type="button"
                   onClick={handleApplyCrop}
                   disabled={uploading}
-                  className="flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:opacity-60"
+                  className="flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-bold text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:opacity-60"
                 >
-                  {uploading && <Spinner size={14} className="text-white" />}
+                  {uploading && <Spinner size={14} className="text-on-accent" />}
                   {uploading ? "Saving…" : "Save"}
                 </button>
               </div>

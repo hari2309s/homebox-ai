@@ -292,7 +292,7 @@ export function PlaceTree({ places: serverPlaces, selectedId }: { places: TreePl
         </SubmitButton>
       </form>
       {error && (
-        <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2 text-sm text-[#5a2e18]">
+        <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-ink">
           {error}
         </p>
       )}

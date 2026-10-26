@@ -272,7 +272,7 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
             type="button"
             onClick={startNewChat}
             aria-label="New conversation"
-            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-[9px] border-none bg-accent text-white"
+            className="flex h-[34px] w-[34px] cursor-pointer items-center justify-center rounded-[9px] border-none bg-accent text-on-accent"
           >
             <span className="material-symbols-rounded text-[18px]">edit_square</span>
           </TapButton>
@@ -372,7 +372,7 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
                       key={s}
                       type="button"
                       onClick={() => sendMessage(s)}
-                      className="cursor-pointer rounded-full bg-[#dfe8d6] px-[13px] py-[7px] text-[13px] font-semibold text-[#2c4d31] dark:bg-[#2c3e2e] dark:text-[#9cc68f]"
+                      className="cursor-pointer rounded-full bg-selected px-[13px] py-[7px] text-[13px] font-semibold text-moss-ink"
                     >
                       {s}
                     </TapButton>
@@ -404,7 +404,7 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
                         )}
                       </div>
                     ) : isUser ? (
-                      <div className="rounded-2xl rounded-br-sm bg-[#1f2622] px-[15px] py-[11px] text-[15px] text-[#fbfaf6] dark:bg-[#2c342f] lg:rounded-[16px_16px_4px_16px] lg:px-4 lg:py-3">
+                      <div className="rounded-2xl rounded-br-sm bg-inverse px-[15px] py-[11px] text-[15px] text-inverse-ink lg:rounded-[16px_16px_4px_16px] lg:px-4 lg:py-3">
                         {message.content}
                       </div>
                     ) : (
@@ -457,7 +457,7 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
             )}
 
             {error && (
-              <p role="alert" className="mt-1 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+              <p role="alert" className="mt-1 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
                 {error}
               </p>
             )}
@@ -494,7 +494,7 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
             type="submit"
             disabled={!pending && !input.trim()}
             aria-label={pending ? "Stop reply" : "Send"}
-            className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl border-none bg-accent text-white disabled:opacity-50 lg:h-10 lg:w-10 lg:rounded-[10px] lg:bg-ink lg:text-surface"
+            className="flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-xl border-none bg-accent text-on-accent disabled:opacity-50 lg:h-10 lg:w-10 lg:rounded-[10px] lg:bg-ink lg:text-surface"
           >
             <span className="material-symbols-rounded">{pending ? "stop" : "arrow_upward"}</span>
           </button>

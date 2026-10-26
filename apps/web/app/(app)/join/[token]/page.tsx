@@ -33,7 +33,7 @@ function ErrorCard({
   return (
     <div
       className="flex w-full max-w-sm flex-col items-center gap-3 rounded-[28px] p-[26px_22px] text-center shadow-card"
-      style={{ background: "#f4f3ee" }}
+      style={{ background: "var(--color-surface)" }}
     >
       <div
         className="flex h-[72px] w-[72px] items-center justify-center rounded-2xl border-2 border-dashed"
@@ -51,7 +51,7 @@ function ErrorCard({
       <Link
         href={href}
         className={`w-full rounded-xl py-[13px] text-center text-[15px] font-semibold no-underline ${
-          buttonStyle === "primary" ? "bg-accent text-white" : "border border-border bg-card text-ink"
+          buttonStyle === "primary" ? "bg-accent text-on-accent" : "border border-border bg-card text-ink"
         }`}
       >
         {buttonLabel}
@@ -76,9 +76,9 @@ export default async function JoinPage({
         <ErrorCard
           icon="link_off"
           tag="INVALID LINK"
-          tagColor="#7a3f22"
-          borderColor="#b0643f"
-          bgColor="#ecdccd"
+          tagColor="var(--color-danger)"
+          borderColor="var(--color-clay)"
+          bgColor="var(--color-danger-soft)"
           title="We couldn't find that invite"
           description="The link may be incomplete. Try opening it straight from the message again."
           buttonLabel="Go to my home"
@@ -95,9 +95,9 @@ export default async function JoinPage({
         <ErrorCard
           icon="hourglass_disabled"
           tag="INVITE EXPIRED"
-          tagColor="#8a6a1a"
-          borderColor="#d9a43a"
-          bgColor="#f6e7c4"
+          tagColor="var(--color-warn)"
+          borderColor="var(--color-warn)"
+          bgColor="var(--color-warn-soft)"
           title="This invite has gone stale"
           description="Invites last 7 days. Ask for a fresh link from Settings > Household."
           buttonLabel="Go to my home"
@@ -114,9 +114,9 @@ export default async function JoinPage({
         <ErrorCard
           icon="check_circle"
           tag="ALREADY JOINED"
-          tagColor="#2c4d31"
-          borderColor="#3f6b45"
-          bgColor="#dfe8d6"
+          tagColor="var(--color-moss-ink)"
+          borderColor="var(--color-accent)"
+          bgColor="var(--color-selected)"
           title="You've already joined"
           description="This invite has been used. You're all set."
           buttonLabel="Go to my home"
@@ -133,9 +133,9 @@ export default async function JoinPage({
         <ErrorCard
           icon="home"
           tag="YOUR OWN INVITE"
-          tagColor="#2c4d31"
-          borderColor="#3f6b45"
-          bgColor="#dfe8d6"
+          tagColor="var(--color-moss-ink)"
+          borderColor="var(--color-accent)"
+          bgColor="var(--color-selected)"
           title="You're already home"
           description="This is your invite link. Share it with someone else to add them to your household."
           buttonLabel="Back to my home"
@@ -171,7 +171,7 @@ export default async function JoinPage({
 
       <div className="w-full max-w-sm">
         {error && (
-          <p role="alert" className="mb-3 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-left text-sm text-[#5a2e18]">
+          <p role="alert" className="mb-3 rounded-xl bg-danger-soft px-3 py-2.5 text-left text-sm text-danger-ink">
             {error.slice(0, 200)}
           </p>
         )}

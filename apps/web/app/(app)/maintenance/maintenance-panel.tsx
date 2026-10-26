@@ -106,7 +106,7 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
             type="button"
             onClick={handleGetSuggestions}
             disabled={!itemId || loading}
-            className="flex cursor-pointer items-center gap-[6px] rounded-xl border-none bg-accent px-[14px] text-[14px] font-semibold text-white disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-[6px] rounded-xl border-none bg-accent px-[14px] text-[14px] font-semibold text-on-accent disabled:opacity-50"
           >
             <span className="material-symbols-rounded text-[18px]">auto_awesome</span>
             {loading ? "…" : "Suggest"}
@@ -114,14 +114,14 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
         </div>
 
         {error && (
-          <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">{error}</p>
+          <p role="alert" className="rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">{error}</p>
         )}
 
         {/* Warranty warning */}
         {suggestions?.warrantyExpiringSoon && (
-          <div className="flex items-start gap-[10px] rounded-xl bg-[#ecdccd] px-3 py-[11px]">
-            <span className="material-symbols-rounded text-[#7a3f22]">gpp_maybe</span>
-            <p className="flex-1 text-[13px] leading-snug text-[#5a2e18]">
+          <div className="flex items-start gap-[10px] rounded-xl bg-danger-soft px-3 py-[11px]">
+            <span className="material-symbols-rounded text-danger">gpp_maybe</span>
+            <p className="flex-1 text-[13px] leading-snug text-danger-ink">
               <b>Warranty is expiring soon.</b> If something&apos;s wrong, claim it now while the receipt is on file.
             </p>
           </div>
@@ -155,7 +155,7 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
                       </div>
                     </div>
                     <div className="flex items-center gap-[6px]">
-                      <span className="rounded-lg bg-[#e9e8e1] px-[9px] py-[7px] font-mono text-[11px] text-ink">
+                      <span className="rounded-lg bg-surface-soft px-[9px] py-[7px] font-mono text-[11px] text-ink">
                         {formatDate(suggestion.recommendedDate)}
                       </span>
                       <Select
@@ -176,8 +176,8 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
                         disabled={accepted || pending}
                         className={`flex cursor-pointer items-center gap-1 rounded-lg border px-[10px] py-[6px] text-[13px] font-semibold ${
                           accepted
-                            ? "border-border bg-[#dfe8d6] text-[#2c4d31]"
-                            : "border-none bg-accent text-white"
+                            ? "border-border bg-selected text-moss-ink"
+                            : "border-none bg-accent text-on-accent"
                         }`}
                       >
                         <span className="material-symbols-rounded text-[16px]">

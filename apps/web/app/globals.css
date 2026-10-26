@@ -28,12 +28,31 @@
   --color-selected: #dfe8d6;
   --color-selected-soft: #f6f9f3;
 
+  /* Status tones (error/destructive, warning) and the always-dark "inverse" chip (chat bubbles,
+     toasts). Each has a dark-mode value below, so never hard-code these hexes in components. */
+  --color-danger: #7a3f22;
+  --color-danger-ink: #5a2e18;
+  --color-danger-soft: #ecdccd;
+  --color-danger-faint: #fbf1ec;
+  --color-danger-line: #d9a58a;
+  --color-clay: #b0643f;
+  --color-warn: #8a6a1a;
+  --color-warn-ink: #5a4410;
+  --color-warn-soft: #f6e7c4;
+  --color-moss-ink: #2c4d31;
+  --color-border-strong: #b9bfb3;
+  --color-faint: #9aa49c;
+  --color-inverse: #1f2622;
+  --color-inverse-ink: #fbfaf6;
+  --color-on-accent: #ffffff;
+
   /* Zone colours — used by the site-plan, item cards, and zone badges. */
   --color-zone-house: #f3f1ea;
   --color-zone-garden: #dfe8d6;
   --color-zone-garage: #ecdccd;
   --color-zone-shed: #e7e1d0;
   --color-zone-drive: #e2e2dc;
+  --color-zone-shed-ink: #7a6a3f;
 
   --radius-lg: 20px;
   --radius-md: 14px;
@@ -86,6 +105,27 @@
   --color-rail: #171d19;
   --color-selected: #223026;
   --color-selected-soft: #1c2620;
+  --color-danger: #e7a582;
+  --color-danger-ink: #f0c4ab;
+  --color-danger-soft: #3a2820;
+  --color-danger-faint: #2a1d16;
+  --color-danger-line: #6b3d28;
+  --color-clay: #e08a5f;
+  --color-warn: #d9a43a;
+  --color-warn-ink: #e8d29a;
+  --color-warn-soft: #2e2a1a;
+  --color-moss-ink: #9cc68f;
+  --color-border-strong: #3d4740;
+  --color-faint: #66706a;
+  --color-inverse: #2c342f;
+  --color-inverse-ink: #eef1ec;
+  --color-on-accent: #14201a;
+  --color-zone-house: #1e2420;
+  --color-zone-garden: #223026;
+  --color-zone-garage: #35261d;
+  --color-zone-shed: #2e2a20;
+  --color-zone-drive: #1c231f;
+  --color-zone-shed-ink: #d6c9a3;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -103,6 +143,27 @@
     --color-rail: #171d19;
     --color-selected: #223026;
     --color-selected-soft: #1c2620;
+    --color-danger: #e7a582;
+    --color-danger-ink: #f0c4ab;
+    --color-danger-soft: #3a2820;
+    --color-danger-faint: #2a1d16;
+    --color-danger-line: #6b3d28;
+    --color-clay: #e08a5f;
+    --color-warn: #d9a43a;
+    --color-warn-ink: #e8d29a;
+    --color-warn-soft: #2e2a1a;
+    --color-moss-ink: #9cc68f;
+    --color-border-strong: #3d4740;
+    --color-faint: #66706a;
+    --color-inverse: #2c342f;
+    --color-inverse-ink: #eef1ec;
+    --color-on-accent: #14201a;
+    --color-zone-house: #1e2420;
+    --color-zone-garden: #223026;
+    --color-zone-garage: #35261d;
+    --color-zone-shed: #2e2a20;
+    --color-zone-drive: #1c231f;
+    --color-zone-shed-ink: #d6c9a3;
   }
 }
 

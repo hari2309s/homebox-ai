@@ -160,7 +160,7 @@ export function ReceiptDesktop({
           <StepPills steps={["Receipt", "Read", "Choose"]} current={0} />
         </div>
         {error && (
-          <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+          <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
             {error}
           </p>
         )}
@@ -190,17 +190,17 @@ export function ReceiptDesktop({
             <>
               <div className="text-center font-medium text-ink">{(merchant ?? "RECEIPT").toUpperCase()}</div>
               {purchaseDate && <div className="text-center text-[10px] text-muted">{purchaseDate}</div>}
-              <div className="my-1 border-t border-dashed border-[#b9bfb3]" />
+              <div className="my-1 border-t border-dashed border-border-strong" />
               {rows.map((row) => (
                 <div
                   key={row.key}
-                  className={`-mx-[6px] flex justify-between gap-3 rounded-[3px] px-[6px] py-[2px] ${focused === row.key ? "bg-[#f6e7c4] dark:bg-[#3a3320]" : ""}`}
+                  className={`-mx-[6px] flex justify-between gap-3 rounded-[3px] px-[6px] py-[2px] ${focused === row.key ? "bg-warn-soft" : ""}`}
                 >
                   <span className="truncate">{row.name.toUpperCase()}</span>
                   <span>{row.price || "—"}</span>
                 </div>
               ))}
-              <div className="my-1 border-t border-dashed border-[#b9bfb3]" />
+              <div className="my-1 border-t border-dashed border-border-strong" />
               <div className="flex justify-between font-medium text-ink">
                 <span>TOTAL</span>
                 <span>{total.toFixed(2)}</span>
@@ -208,7 +208,7 @@ export function ReceiptDesktop({
             </>
           )}
           {analyzing && (
-            <div className="absolute inset-0 flex items-center justify-center bg-[rgba(244,243,238,.75)] dark:bg-[rgba(22,27,24,.75)]">
+            <div className="absolute inset-0 flex items-center justify-center bg-surface/75">
               <HoppingSquares label="Reading the receipt…" />
             </div>
           )}
@@ -277,7 +277,7 @@ export function ReceiptDesktop({
         </div>
 
         {error && (
-          <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+          <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
             {error}
           </p>
         )}
@@ -369,8 +369,8 @@ export function ReceiptDesktop({
                         onClick={() => update(row.key, { included: !row.included })}
                         className={`flex h-5 w-5 cursor-pointer items-center justify-center rounded-[6px] p-0 ${
                           row.included
-                            ? "border-none bg-accent text-white"
-                            : "border-[1.5px] border-solid border-[#b9bfb3] bg-card"
+                            ? "border-none bg-accent text-on-accent"
+                            : "border-[1.5px] border-solid border-border-strong bg-card"
                         }`}
                       >
                         {row.included && (
@@ -416,7 +416,7 @@ export function ReceiptDesktop({
                       <span className="min-w-0 flex-1 truncate">
                         {locations.find((l) => l.id === row.locationId)?.name ?? "No location"}
                       </span>
-                      <span aria-hidden className="material-symbols-rounded text-[16px] text-[#a3aba5]">
+                      <span aria-hidden className="material-symbols-rounded text-[16px] text-faint">
                         expand_more
                       </span>
                       <select

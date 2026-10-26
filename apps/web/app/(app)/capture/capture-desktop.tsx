@@ -110,7 +110,7 @@ export function CaptureDesktop({ locations, labels }: CaptureDesktopProps) {
       </div>
 
       {error && (
-        <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+        <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
           {error}
         </p>
       )}
@@ -128,12 +128,12 @@ export function CaptureDesktop({ locations, labels }: CaptureDesktopProps) {
               {/* eslint-disable-next-line @next/next/no-img-element -- locally-selected blob URL */}
               <img src={previewUrl} alt="The photo you added" className="h-full w-full object-cover" />
               {analyzing && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[rgba(244,243,238,.72)] dark:bg-[rgba(22,27,24,.72)]">
+                <div className="absolute inset-0 flex items-center justify-center bg-surface/70">
                   <HoppingSquares label="Looking at your photo…" />
                 </div>
               )}
               {draft && (
-                <span className="absolute left-3 top-3 max-w-[85%] truncate rounded-[5px] bg-accent px-[7px] py-[3px] font-mono text-[10px] text-white">
+                <span className="absolute left-3 top-3 max-w-[85%] truncate rounded-[5px] bg-accent px-[7px] py-[3px] font-mono text-[10px] text-on-accent">
                   {draft.name.toUpperCase()}
                 </span>
               )}
@@ -144,7 +144,7 @@ export function CaptureDesktop({ locations, labels }: CaptureDesktopProps) {
                 <img src={previewUrl} alt="" className="h-full w-full object-cover" />
               </span>
               <label
-                className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-[9px] border-[1.5px] border-dashed border-[#b9bfb3] text-accent dark:border-border"
+                className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-[9px] border-[1.5px] border-dashed border-border-strong text-accent"
                 title="Use a different photo"
               >
                 <span aria-hidden className="material-symbols-rounded">
@@ -164,11 +164,11 @@ export function CaptureDesktop({ locations, labels }: CaptureDesktopProps) {
               </label>
             </div>
             {draft && (
-              <div className="flex items-start gap-[10px] rounded-xl bg-[#f6e7c4] px-3 py-[11px] dark:bg-[#2e2a1a]">
-                <span aria-hidden className="material-symbols-rounded text-[#8a6a1a] dark:text-[#d9a43a]">
+              <div className="flex items-start gap-[10px] rounded-xl bg-warn-soft px-3 py-[11px]">
+                <span aria-hidden className="material-symbols-rounded text-warn">
                   help
                 </span>
-                <span className="flex-1 text-[13px] leading-[1.45] text-[#5a4410] dark:text-[#e8d29a]">
+                <span className="flex-1 text-[13px] leading-[1.45] text-warn-ink">
                   <b>Check before saving.</b> Fields marked AI are my guesses from the photo, especially the price and
                   date.
                 </span>

@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
             />
           </FormField>
           {error && (
-            <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+            <p role="alert" className="rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
               {error}
             </p>
           )}

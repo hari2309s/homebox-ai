@@ -70,7 +70,7 @@ export function Button({
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       disabled={isDisabled}
       className={cx(
-        "relative flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-semibold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60",
+        "relative flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 font-semibold text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60",
         className,
       )}
       {...props}

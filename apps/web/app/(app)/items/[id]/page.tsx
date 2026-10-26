@@ -29,7 +29,7 @@ function Card({ id, title, children }: { id?: string; title: string; children: R
 
 const BAR_BASE = "flex h-9 items-center gap-[6px] rounded-[10px] px-[14px] text-[13px] font-semibold no-underline";
 const BAR_BUTTON = `${BAR_BASE} border border-border bg-card text-ink`;
-const BAR_PRIMARY = `${BAR_BASE} bg-accent text-white`;
+const BAR_PRIMARY = `${BAR_BASE} bg-accent text-on-accent`;
 
 export default async function ItemDetailPage({
   params,
@@ -103,7 +103,7 @@ export default async function ItemDetailPage({
           itemId={item.id}
           itemName={item.name}
           icon="delete"
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card text-muted hover:text-[#b0643f]"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card text-muted hover:text-clay"
         />
       </div>
 
@@ -148,7 +148,7 @@ export default async function ItemDetailPage({
             <a
               href="#attachments"
               aria-label="Add a photo"
-              className="flex h-16 items-center justify-center rounded-[10px] border-[1.5px] border-dashed border-[#b9bfb3] text-accent no-underline dark:border-border"
+              className="flex h-16 items-center justify-center rounded-[10px] border-[1.5px] border-dashed border-border-strong text-accent no-underline"
             >
               <span className="material-symbols-rounded">add_a_photo</span>
             </a>
@@ -186,7 +186,7 @@ export default async function ItemDetailPage({
             </Link>
             <a
               href="#care"
-              className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-accent px-4 py-[15px] text-[15px] font-semibold text-white no-underline"
+              className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-accent px-4 py-[15px] text-[15px] font-semibold text-on-accent no-underline"
             >
               <span className="material-symbols-rounded text-lg">build</span>
               Log service

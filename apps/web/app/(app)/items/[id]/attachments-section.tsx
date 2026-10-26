@@ -47,7 +47,7 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
   return (
     <div className="flex flex-col gap-3 pb-3">
       {error && (
-        <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+        <p role="alert" className="rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
           {error}
         </p>
       )}
@@ -110,7 +110,7 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
                   type="button"
                   onClick={() => setPendingDeleteId(attachment.id)}
                   aria-label={`Delete ${title}`}
-                  className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-[#b0643f]"
+                  className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-clay"
                 >
                   <span className="material-symbols-rounded text-[16px]">close</span>
                 </TapButton>

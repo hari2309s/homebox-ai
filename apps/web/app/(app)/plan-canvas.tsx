@@ -853,7 +853,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
             <button
               type="button"
               onClick={keepLayout}
-              className="cursor-pointer rounded-[8px] border-none bg-accent px-[10px] py-[5px] text-[12px] font-semibold text-white"
+              className="cursor-pointer rounded-[8px] border-none bg-accent px-[10px] py-[5px] text-[12px] font-semibold text-on-accent"
             >
               Keep layout
             </button>
@@ -863,7 +863,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
         {(tool !== "select" || places.length === 0) && !draft && (
           <div
             data-plan-ui
-            className="pointer-events-none absolute bottom-3 left-3 z-[80] max-w-[70%] rounded-[10px] bg-ink px-3 py-2 text-[12px] leading-snug text-surface"
+            className="pointer-events-none absolute bottom-3 left-3 z-[80] max-w-[70%] rounded-[10px] bg-inverse px-3 py-2 text-[12px] leading-snug text-inverse-ink"
           >
             {tool === "place"
               ? "Drag to draw a place. Draw inside a zone to nest it there."
@@ -877,7 +877,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
           <div
             data-plan-ui
             role="status"
-            className="pointer-events-none absolute bottom-3 left-3 z-[85] rounded-[10px] bg-ink px-3 py-2 text-[12px] text-surface"
+            className="pointer-events-none absolute bottom-3 left-3 z-[85] rounded-[10px] bg-inverse px-3 py-2 text-[12px] text-inverse-ink"
           >
             {notice}
           </div>
@@ -887,14 +887,14 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
           <div
             data-plan-ui
             role="alert"
-            className="absolute bottom-3 left-3 z-[90] flex items-center gap-2 rounded-[10px] bg-[#ecdccd] py-2 pl-3 pr-2 text-[12px] text-[#5a2e18]"
+            className="absolute bottom-3 left-3 z-[90] flex items-center gap-2 rounded-[10px] bg-danger-soft py-2 pl-3 pr-2 text-[12px] text-danger-ink"
           >
             {error}
             <button
               type="button"
               onClick={() => setError(null)}
               aria-label="Dismiss"
-              className="flex cursor-pointer border-none bg-transparent p-0 text-[#7a3f22]"
+              className="flex cursor-pointer border-none bg-transparent p-0 text-danger"
             >
               <span aria-hidden className="material-symbols-rounded text-[16px]">
                 close
@@ -998,7 +998,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
               <button
                 type="submit"
                 disabled={busy}
-                className="flex-1 cursor-pointer rounded-[10px] border-none bg-accent py-[9px] text-[13px] font-semibold text-white disabled:opacity-60"
+                className="flex-1 cursor-pointer rounded-[10px] border-none bg-accent py-[9px] text-[13px] font-semibold text-on-accent disabled:opacity-60"
               >
                 {busy ? "Adding…" : draft.type === "place" ? "Add place" : "Add to inventory"}
               </button>

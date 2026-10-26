@@ -156,7 +156,7 @@ export default async function DashboardPage() {
           />
           <Link
             href="/capture"
-            className="flex h-9 items-center gap-[6px] rounded-[9px] bg-accent px-3 text-[13px] font-semibold text-white no-underline"
+            className="flex h-9 items-center gap-[6px] rounded-[9px] bg-accent px-3 text-[13px] font-semibold text-on-accent no-underline"
           >
             <span className="material-symbols-rounded text-[18px]">photo_camera</span>
             Snap
@@ -249,7 +249,7 @@ export default async function DashboardPage() {
                     />
                     <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-ink">{reminder.title}</span>
                     <span
-                      className={`font-mono text-[10px] ${reminder.dueDate < todayKey ? "text-[#b0643f]" : "text-muted"}`}
+                      className={`font-mono text-[10px] ${reminder.dueDate < todayKey ? "text-clay" : "text-muted"}`}
                     >
                       {dueLabel(reminder.dueDate, todayKey)}
                     </span>
@@ -289,7 +289,7 @@ export default async function DashboardPage() {
                 <div className="text-[11px] text-muted">worth</div>
               </div>
               <div className="border-l border-border/60">
-                <div className="font-mono text-[18px] text-[#8a6a1a] dark:text-[#d9a43a]">
+                <div className="font-mono text-[18px] text-warn">
                   {expiringWarranties.length}
                 </div>
                 <div className="text-[11px] text-muted">warranties</div>
@@ -308,8 +308,8 @@ export default async function DashboardPage() {
               href={`/items/${item.id}`}
               className="flex items-start gap-3 rounded-[14px] border border-border bg-card p-[14px] no-underline shadow-card"
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#ecdccd]">
-                <span className="material-symbols-rounded text-[18px] text-[#b0643f]">shield</span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-danger-soft">
+                <span className="material-symbols-rounded text-[18px] text-clay">shield</span>
               </span>
               <div className="flex-1 text-sm leading-relaxed text-body">
                 <b className="text-ink">{item.name}</b> warranty expires{" "}
@@ -323,8 +323,8 @@ export default async function DashboardPage() {
               href={`/items/${entry.itemId}`}
               className="flex items-start gap-3 rounded-[14px] border border-border bg-card p-[14px] no-underline shadow-card"
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dfe8d6]">
-                <span className="material-symbols-rounded text-[18px] text-[#3f6b45]">build</span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-selected">
+                <span className="material-symbols-rounded text-[18px] text-accent">build</span>
               </span>
               <div className="flex-1 text-sm leading-relaxed text-body">
                 <b className="text-ink">{entry.name}</b>
@@ -354,7 +354,7 @@ export default async function DashboardPage() {
           aria-label="Capture a new thing"
           className="relative z-10 flex h-[42px] w-[42px] items-center justify-center rounded-[10px] bg-accent no-underline"
         >
-          <span className="material-symbols-rounded text-white">photo_camera</span>
+          <span className="material-symbols-rounded text-on-accent">photo_camera</span>
         </Link>
       </div>
 
@@ -362,14 +362,14 @@ export default async function DashboardPage() {
       <div className="flex flex-wrap gap-2 lg:hidden">
         <Link
           href="/capture"
-          className="flex items-center gap-1.5 rounded-full bg-[#dfe8d6] px-3 py-[7px] text-[13px] font-semibold text-[#2c4d31] no-underline dark:bg-[#2c3e2e] dark:text-[#9cc68f]"
+          className="flex items-center gap-1.5 rounded-full bg-selected px-3 py-[7px] text-[13px] font-semibold text-moss-ink no-underline"
         >
           <span className="material-symbols-rounded text-[16px]">photo_camera</span>
           Capture
         </Link>
         <Link
           href="/receipts"
-          className="flex items-center gap-1.5 rounded-full bg-[#ecdccd] px-3 py-[7px] text-[13px] font-semibold text-[#7a3f22] no-underline dark:bg-[#3a2e22] dark:text-[#d4a47e]"
+          className="flex items-center gap-1.5 rounded-full bg-danger-soft px-3 py-[7px] text-[13px] font-semibold text-danger no-underline"
         >
           <span className="material-symbols-rounded text-[16px]">receipt_long</span>
           Receipt

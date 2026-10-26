@@ -11,7 +11,7 @@ import { completeOnboardingAction, createZonesAction, saveHouseholdAction } from
 
 const RELATIONSHIPS = ["Partner", "Spouse", "Child", "Parent", "Sibling", "Housemate"];
 const PRIMARY =
-  "w-full cursor-pointer rounded-xl border-none bg-accent py-[15px] text-[16px] font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-default disabled:opacity-45";
+  "w-full cursor-pointer rounded-xl border-none bg-accent py-[15px] text-[16px] font-semibold text-on-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:cursor-default disabled:opacity-45";
 const SECONDARY =
   "cursor-pointer rounded-xl border border-border bg-card py-[14px] text-[15px] font-semibold text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink";
 
@@ -69,7 +69,7 @@ function Title({ children }: { children: ReactNode }) {
 function ErrorNote({ error }: { error: string | null }) {
   if (!error) return null;
   return (
-    <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+    <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
       {error}
     </p>
   );
@@ -315,7 +315,7 @@ export function OnboardingFlow({
               <button
                 type="button"
                 onClick={openInviteLink}
-                className="cursor-pointer rounded-[10px] border-none bg-accent px-4 text-[13px] font-semibold text-white"
+                className="cursor-pointer rounded-[10px] border-none bg-accent px-4 text-[13px] font-semibold text-on-accent"
               >
                 Open
               </button>
@@ -385,7 +385,7 @@ export function OnboardingFlow({
                 <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">{zone.name}</span>
                 <span
                   aria-hidden
-                  className={`material-symbols-rounded text-[20px] ${on ? "text-accent" : "text-[#a3aba5]"}`}
+                  className={`material-symbols-rounded text-[20px] ${on ? "text-accent" : "text-faint"}`}
                   style={{ fontVariationSettings: on ? "'FILL' 1" : undefined }}
                 >
                   {zone.locked ? "lock" : on ? "check_circle" : "add_circle"}
@@ -425,7 +425,7 @@ export function OnboardingFlow({
             />
             <button
               type="submit"
-              className="cursor-pointer rounded-[10px] border-none bg-accent px-4 text-[13px] font-semibold text-white"
+              className="cursor-pointer rounded-[10px] border-none bg-accent px-4 text-[13px] font-semibold text-on-accent"
             >
               Add
             </button>
@@ -482,7 +482,7 @@ export function OnboardingFlow({
             type="button"
             disabled={busy}
             onClick={createInvite}
-            className="cursor-pointer rounded-[10px] border-none bg-accent px-[14px] text-[13px] font-semibold text-white disabled:opacity-45"
+            className="cursor-pointer rounded-[10px] border-none bg-accent px-[14px] text-[13px] font-semibold text-on-accent disabled:opacity-45"
           >
             Invite
           </button>
@@ -505,7 +505,7 @@ export function OnboardingFlow({
             >
               {copied === invite.token ? "Link copied ✓" : "Copy link"}
             </button>
-            <span className="rounded-[5px] bg-[#f6e7c4] px-[6px] py-[3px] font-mono text-[10px] text-[#6b4e10]">
+            <span className="rounded-[5px] bg-warn-soft px-[6px] py-[3px] font-mono text-[10px] text-warn-ink">
               INVITED
             </span>
           </div>

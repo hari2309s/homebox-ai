@@ -146,14 +146,14 @@ function MaintenanceRow({
             type="button"
             onClick={() => setConfirmOpen(true)}
             aria-label={`Delete ${entry.name}`}
-            className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-[#b0643f]"
+            className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-clay"
           >
             <span className="material-symbols-rounded text-[16px]">close</span>
           </TapButton>
         </span>
       </div>
       {error && (
-        <p role="alert" className="mt-1 text-sm text-[#b0643f]">
+        <p role="alert" className="mt-1 text-sm text-clay">
           {error}
         </p>
       )}

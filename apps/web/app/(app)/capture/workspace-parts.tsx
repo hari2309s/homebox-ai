@@ -8,7 +8,7 @@ export const FIELD =
 export const BAR_BUTTON =
   "flex h-[34px] cursor-pointer items-center gap-[6px] rounded-[9px] border border-border bg-card px-3 text-[13px] font-semibold text-ink";
 export const BAR_PRIMARY =
-  "flex h-[34px] cursor-pointer items-center gap-[6px] rounded-[9px] border-none bg-accent px-[14px] text-[13px] font-semibold text-white disabled:opacity-60";
+  "flex h-[34px] cursor-pointer items-center gap-[6px] rounded-[9px] border-none bg-accent px-[14px] text-[13px] font-semibold text-on-accent disabled:opacity-60";
 
 export function StepPills({ steps, current }: { steps: string[]; current: number }) {
   return (
@@ -97,7 +97,7 @@ export function DropZone({
         if (file) onFile(file);
       }}
       className={`flex min-h-[420px] flex-1 flex-col items-center justify-center gap-4 rounded-[18px] border-2 border-dashed p-8 text-center transition-colors ${
-        over ? "border-accent bg-selected-soft" : "border-[#b9bfb3] bg-rail dark:border-border"
+        over ? "border-accent bg-selected-soft" : "border-border-strong bg-rail"
       }`}
     >
       <span aria-hidden className="flex h-16 w-16 items-center justify-center rounded-2xl bg-selected text-accent">

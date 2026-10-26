@@ -92,7 +92,7 @@ function SettingsSection({
   const meta = SECTIONS.find((s) => s.slug === slug)!;
   const danger = slug === "danger";
   const card = danger
-    ? "border-[1.5px] border-[#d9a58a] bg-[#fbf1ec] dark:border-[#6b3d28] dark:bg-[#2a1d16]"
+    ? "border-[1.5px] border-danger-line bg-danger-faint"
     : "border border-border bg-card";
   return (
     <section
@@ -101,12 +101,12 @@ function SettingsSection({
       className={`flex scroll-mt-4 flex-col gap-2 lg:gap-[18px] ${slug === active ? "" : "lg:hidden"}`}
     >
       <div
-        className={`px-1 font-mono text-[10px] tracking-wide lg:hidden ${danger ? "text-[#7a3f22] dark:text-[#e7a582]" : "text-muted"}`}
+        className={`px-1 font-mono text-[10px] tracking-wide lg:hidden ${danger ? "text-danger" : "text-muted"}`}
       >
         {meta.eyebrow}
       </div>
       <div className="hidden lg:block">
-        <div className={`font-mono text-[10px] ${danger ? "text-[#7a3f22] dark:text-[#e7a582]" : "text-muted"}`}>
+        <div className={`font-mono text-[10px] ${danger ? "text-danger" : "text-muted"}`}>
           {meta.eyebrow}
         </div>
         <h2 id={`${slug}-title`} className="m-0 font-serif text-[28px] font-normal text-ink">
@@ -154,7 +154,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
               aria-current={isActive ? "page" : undefined}
               className={`flex h-10 items-center gap-[10px] rounded-[10px] px-[10px] text-[14px] font-semibold no-underline ${
                 isActive ? "bg-selected" : "hover:bg-surface-soft"
-              } ${s.slug === "danger" ? "text-[#b0643f]" : "text-ink"}`}
+              } ${s.slug === "danger" ? "text-clay" : "text-ink"}`}
             >
               <span
                 aria-hidden

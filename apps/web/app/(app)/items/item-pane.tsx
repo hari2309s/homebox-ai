@@ -90,7 +90,7 @@ export async function ItemPane({
         </Link>
         <Link
           href={`/items/${item.id}#care`}
-          className="flex h-[34px] items-center gap-[6px] rounded-[9px] bg-accent px-3 text-[13px] font-semibold text-white no-underline"
+          className="flex h-[34px] items-center gap-[6px] rounded-[9px] bg-accent px-3 text-[13px] font-semibold text-on-accent no-underline"
         >
           <span className="material-symbols-rounded text-[16px]">build</span>
           Log care
@@ -164,9 +164,9 @@ export async function ItemPane({
             )}
           </section>
           {(warranty.tone === "warn" || warranty.tone === "bad") && (
-            <div className="flex items-start gap-[10px] rounded-xl bg-[#ecdccd] px-3 py-[11px]">
-              <span className="material-symbols-rounded text-[#7a3f22]">gpp_maybe</span>
-              <span className="flex-1 text-[13px] leading-[1.45] text-[#5a2e18]">
+            <div className="flex items-start gap-[10px] rounded-xl bg-danger-soft px-3 py-[11px]">
+              <span className="material-symbols-rounded text-danger">gpp_maybe</span>
+              <span className="flex-1 text-[13px] leading-[1.45] text-danger-ink">
                 {warranty.tone === "bad" ? (
                   <b>Warranty has ended.</b>
                 ) : (

@@ -71,7 +71,7 @@ function LabelChip({ label }: { label: LabelRecord }) {
   if (editing) {
     return (
       <div className="flex w-full flex-col gap-2">
-        <div className="rounded-[14px] border-2 border-accent bg-[#f6f9f3] p-[10px]">
+        <div className="rounded-[14px] border-2 border-accent bg-selected-soft p-[10px]">
           <div className="font-mono text-[10px] text-accent">EDITING</div>
           <form
             action={async (formData) => {
@@ -107,14 +107,14 @@ function LabelChip({ label }: { label: LabelRecord }) {
             <TapButton
               type="button"
               onClick={() => setConfirmOpen(true)}
-              className="cursor-pointer border-none bg-transparent text-xs font-semibold text-[#b0643f]"
+              className="cursor-pointer border-none bg-transparent text-xs font-semibold text-clay"
             >
               Delete label
             </TapButton>
           </div>
         </div>
         {error && (
-          <p role="alert" className="text-xs text-[#7a3f22]">{error}</p>
+          <p role="alert" className="text-xs text-danger">{error}</p>
         )}
         <ConfirmDialog
           open={confirmOpen}

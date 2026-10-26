@@ -186,8 +186,8 @@ export function ItemViewClient({
               onClick={() => filterByLocation(null)}
               className={`flex-none cursor-pointer rounded-full px-3 py-[7px] text-[13px] font-semibold ${
                 !activeLocationId
-                  ? "border-none bg-[#1f2622] text-[#fbfaf6]"
-                  : "border border-border bg-[#fbfaf6] text-[#1f2622] dark:bg-card"
+                  ? "border-none bg-inverse text-inverse-ink"
+                  : "border border-border bg-rail text-ink"
               }`}
             >
               All
@@ -225,7 +225,7 @@ export function ItemViewClient({
                 {view === v && (
                   <motion.span
                     layoutId="items-view-toggle"
-                    className="absolute inset-0 rounded-[8px] bg-white shadow-sm dark:bg-card"
+                    className="absolute inset-0 rounded-[8px] bg-card shadow-sm"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}

@@ -50,7 +50,7 @@ export function DeleteItemButton({
         <span className="material-symbols-rounded text-[20px]">{icon}</span>
       </TapButton>
       {error && (
-        <p role="alert" className="absolute right-4 top-[98px] z-10 rounded-xl bg-[#ecdccd] px-3 py-2 text-sm text-[#5a2e18]">
+        <p role="alert" className="absolute right-4 top-[98px] z-10 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-ink">
           {error}
         </p>
       )}

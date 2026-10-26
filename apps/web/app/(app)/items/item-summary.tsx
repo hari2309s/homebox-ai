@@ -73,8 +73,8 @@ export interface Stat {
 export const STAT_TONE: Record<Stat["tone"], string> = {
   ink: "text-ink",
   good: "text-(--plan-ink)",
-  warn: "text-[#8a6a1a] dark:text-[#d9a43a]",
-  bad: "text-[#b0643f]",
+  warn: "text-warn",
+  bad: "text-clay",
 };
 
 export function warrantyStat(item: SummaryItem): Stat {

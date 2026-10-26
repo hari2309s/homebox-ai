@@ -23,8 +23,8 @@ import { safeRedirect } from "../../../lib/safe-redirect";
 const FEATURES = [
   { icon: "photo_camera", label: "Snap a photo to add", bg: "bg-zone-garden", color: "text-accent" },
   { icon: "forum", label: "Ask where anything is", bg: "bg-card", color: "text-accent" },
-  { icon: "map", label: "A plan of your property", bg: "bg-zone-garage", color: "text-[#b0643f]" },
-  { icon: "yard", label: "Seasonal garden care", bg: "bg-zone-shed", color: "text-[#7a6a3f]" },
+  { icon: "map", label: "A plan of your property", bg: "bg-zone-garage", color: "text-clay" },
+  { icon: "yard", label: "Seasonal garden care", bg: "bg-zone-shed", color: "text-zone-shed-ink" },
 ];
 
 const AUTH_ERRORS: Record<string, string> = {
@@ -116,7 +116,7 @@ function ConfirmPending({
           <span className="flex items-center gap-2 text-[13px] text-body">
             <span
               aria-hidden
-              className={`material-symbols-rounded text-[18px] ${confirmed ? "text-accent" : "text-[#d9a43a]"}`}
+              className={`material-symbols-rounded text-[18px] ${confirmed ? "text-accent" : "text-warn"}`}
             >
               {confirmed ? "check_circle" : "pending"}
             </span>
@@ -124,7 +124,7 @@ function ConfirmPending({
           </span>
         </div>
         {resendError && (
-          <p role="alert" className="m-0 text-[13px] text-[#b0643f]">
+          <p role="alert" className="m-0 text-[13px] text-clay">
             {resendError}
           </p>
         )}
@@ -157,12 +157,12 @@ function ConfirmPending({
 function UnconfirmedNotice({ email, emailRedirectTo }: { email: string; emailRedirectTo: string }) {
   const { cooldown, resend, resendError } = useResend(email, emailRedirectTo);
   return (
-    <div role="alert" className="flex items-start gap-[10px] rounded-xl bg-[#f6e7c4] p-3 dark:bg-[#2e2a1a]">
-      <span aria-hidden className="material-symbols-rounded text-[#8a6a1a] dark:text-[#d9a43a]">
+    <div role="alert" className="flex items-start gap-[10px] rounded-xl bg-warn-soft p-3">
+      <span aria-hidden className="material-symbols-rounded text-warn">
         mark_email_unread
       </span>
       <div className="flex flex-1 flex-col gap-2">
-        <span className="text-[13px] leading-normal text-[#5a4410] dark:text-[#e8d29a]">
+        <span className="text-[13px] leading-normal text-warn-ink">
           <b>Confirm your email first.</b> We sent a link to {email} when you signed up.
         </span>
         <button
@@ -173,7 +173,7 @@ function UnconfirmedNotice({ email, emailRedirectTo }: { email: string; emailRed
         >
           {cooldown > 0 ? `Sent ✓ (${cooldown}s)` : "Resend link"}
         </button>
-        {resendError && <span className="text-[12px] text-[#b0643f]">{resendError}</span>}
+        {resendError && <span className="text-[12px] text-clay">{resendError}</span>}
       </div>
     </div>
   );
@@ -393,7 +393,7 @@ function LoginForm() {
           </button>
 
           {/* Divider */}
-          <div className="flex items-center gap-2.5 font-mono text-[10px] tracking-wider text-[#9aa49c]">
+          <div className="flex items-center gap-2.5 font-mono text-[10px] tracking-wider text-faint">
             <span className="h-px flex-1 bg-border" />
             {mode === "sign-in" ? "OR WITH EMAIL" : "OR"}
             <span className="h-px flex-1 bg-border" />
@@ -517,7 +517,7 @@ function LoginForm() {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]"
+                className="overflow-hidden rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink"
               >
                 {error}
               </motion.p>
@@ -530,7 +530,7 @@ function LoginForm() {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
-                className="overflow-hidden rounded-xl bg-zone-garden px-3 py-2.5 text-sm text-[#2c4d31]"
+                className="overflow-hidden rounded-xl bg-zone-garden px-3 py-2.5 text-sm text-moss-ink"
               >
                 {info}
               </motion.p>
@@ -544,7 +544,7 @@ function LoginForm() {
             whileHover={pending ? undefined : { scale: 1.01 }}
             whileTap={pending ? undefined : { scale: 0.98 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            className="flex cursor-pointer items-center justify-center rounded-xl bg-accent px-3 py-[15px] text-base font-semibold text-white transition-colors hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
+            className="flex cursor-pointer items-center justify-center rounded-xl bg-accent px-3 py-[15px] text-base font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
           >
             {pending ? <Spinner size={16} /> : mode === "sign-in" ? "Sign in" : "Create account"}
           </motion.button>

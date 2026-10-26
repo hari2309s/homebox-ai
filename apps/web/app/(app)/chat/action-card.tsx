@@ -44,7 +44,7 @@ export function ActionCard({ action, onConfirm, onCancel }: ActionCardProps) {
           onClick={handleConfirm}
           disabled={pending}
           whileHover={pending ? undefined : { scale: 1.02 }}
-          className="flex flex-1 cursor-pointer items-center justify-center rounded-md bg-accent px-3 py-2 font-bold text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
+          className="flex flex-1 cursor-pointer items-center justify-center rounded-md bg-accent px-3 py-2 font-bold text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
         >
           {pending ? <Spinner size={16} /> : "Confirm"}
         </TapButton>

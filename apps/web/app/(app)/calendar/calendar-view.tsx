@@ -166,7 +166,7 @@ export function CalendarView({
                 onClick={() => setSelectedDateKey(dateKey)}
                 className="flex h-11 cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] border-none bg-transparent transition-colors duration-100"
                 style={{
-                  background: isSelected ? "#3f6b45" : "transparent",
+                  background: isSelected ? "var(--color-accent)" : "transparent",
                   opacity: inMonth ? 1 : 0.35,
                 }}
               >
@@ -174,7 +174,7 @@ export function CalendarView({
                   className="text-[14px]"
                   style={{
                     fontWeight: isSelected || isToday ? 700 : 500,
-                    color: isSelected ? "#fff" : isToday ? "#3f6b45" : "#1f2622",
+                    color: isSelected ? "var(--color-surface)" : isToday ? "var(--color-accent)" : "var(--color-ink)",
                   }}
                 >
                   {date.getDate()}
@@ -185,7 +185,7 @@ export function CalendarView({
                       <span
                         key={i}
                         className="h-[5px] w-[5px] rounded-full"
-                        style={{ background: isSelected ? "#fff" : color }}
+                        style={{ background: isSelected ? "var(--color-surface)" : color }}
                       />
                     ))}
                   </span>
@@ -216,7 +216,7 @@ export function CalendarView({
       )}
 
       {error && (
-        <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+        <p role="alert" className="rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
           {error}
         </p>
       )}

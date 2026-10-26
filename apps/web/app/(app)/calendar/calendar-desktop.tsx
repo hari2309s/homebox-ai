@@ -185,7 +185,7 @@ export function CalendarDesktop({
                   <span
                     className={`self-start rounded-full px-[6px] py-px text-[12px] ${
                       selected
-                        ? "bg-accent font-bold text-white"
+                        ? "bg-accent font-bold text-on-accent"
                         : isToday
                           ? "font-bold text-accent"
                           : !inMonth || key < todayKey
@@ -219,7 +219,7 @@ export function CalendarDesktop({
                       setSelectedKey(key);
                       setFormOpen(true);
                     }}
-                    className="absolute right-[5px] top-[5px] hidden h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-accent text-white group-hover:flex group-focus-visible:flex"
+                    className="absolute right-[5px] top-[5px] hidden h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-accent text-on-accent group-hover:flex group-focus-visible:flex"
                   >
                     <span aria-hidden className="material-symbols-rounded text-[16px]">
                       add
@@ -244,7 +244,7 @@ export function CalendarDesktop({
         </div>
 
         {error && (
-          <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
+          <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
             {error}
           </p>
         )}
@@ -309,7 +309,7 @@ export function CalendarDesktop({
           <button
             type="button"
             onClick={() => setFormOpen(true)}
-            className="flex cursor-pointer items-center justify-center gap-[6px] rounded-[10px] border-none bg-accent py-3 text-[14px] font-semibold text-white"
+            className="flex cursor-pointer items-center justify-center gap-[6px] rounded-[10px] border-none bg-accent py-3 text-[14px] font-semibold text-on-accent"
           >
             <span aria-hidden className="material-symbols-rounded text-[18px]">
               add_alarm

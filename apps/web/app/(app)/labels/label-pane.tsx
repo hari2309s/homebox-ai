@@ -110,7 +110,7 @@ export function LabelPane({
         <button
           type="button"
           onClick={() => setConfirming((c) => !c)}
-          className={`${BAR} border border-border bg-card text-[#b0643f]`}
+          className={`${BAR} border border-border bg-card text-clay`}
         >
           <span aria-hidden className="material-symbols-rounded text-[16px]">
             delete
@@ -121,7 +121,7 @@ export function LabelPane({
           type="button"
           onClick={save}
           disabled={!dirty || saving}
-          className={`${BAR} border-none bg-accent text-white disabled:opacity-50`}
+          className={`${BAR} border-none bg-accent text-on-accent disabled:opacity-50`}
         >
           <span aria-hidden className="material-symbols-rounded text-[16px]">
             check
@@ -131,8 +131,8 @@ export function LabelPane({
       </div>
 
       {confirming && (
-        <div className="flex items-center gap-3 rounded-[12px] bg-[#fbf1ec] px-[14px] py-3 dark:bg-[#2a1d16]">
-          <p className="m-0 flex-1 text-[13px] text-[#7a3f22] dark:text-[#e7a582]">
+        <div className="flex items-center gap-3 rounded-[12px] bg-danger-faint px-[14px] py-3">
+          <p className="m-0 flex-1 text-[13px] text-danger">
             <b>Delete &ldquo;{initialName}&rdquo;?</b> It comes off {things.length}{" "}
             {things.length === 1 ? "thing" : "things"}; the things stay.
           </p>
@@ -154,7 +154,7 @@ export function LabelPane({
       )}
 
       {error && (
-        <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2 text-sm text-[#5a2e18]">
+        <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-ink">
           {error}
         </p>
       )}
@@ -222,7 +222,7 @@ export function LabelPane({
           {removed && (
             <div
               role="status"
-              className="mb-1 flex items-center gap-2 rounded-[10px] bg-ink px-3 py-2 text-[12px] text-surface"
+              className="mb-1 flex items-center gap-2 rounded-[10px] bg-inverse px-3 py-2 text-[12px] text-inverse-ink"
             >
               <span className="min-w-0 flex-1 truncate">Removed from {removed.name}</span>
               <button
@@ -253,7 +253,7 @@ export function LabelPane({
                   type="button"
                   onClick={() => untag(thing)}
                   aria-label={`Remove ${initialName} from ${thing.name}`}
-                  className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-[#b0643f]"
+                  className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-clay"
                 >
                   <span aria-hidden className="material-symbols-rounded text-[16px]">
                     close

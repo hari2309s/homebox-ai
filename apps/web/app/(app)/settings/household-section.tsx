@@ -45,7 +45,7 @@ function RoleChip({ role }: { role: "owner" | "member" | "pending" }) {
     role === "owner"
       ? "bg-selected text-(--plan-ink)"
       : role === "pending"
-        ? "bg-[#f6e7c4] text-[#6b4e10] dark:bg-[#2e2a1a] dark:text-[#e8d29a]"
+        ? "bg-warn-soft text-warn-ink"
         : "bg-surface-soft text-body";
   return <span className={`rounded-[6px] px-[7px] py-1 font-mono text-[10px] ${style}`}>{role.toUpperCase()}</span>;
 }
@@ -169,7 +169,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
   }
 
   if (loading) return <Spinner size={16} />;
-  if (!status) return <p className="m-0 text-sm text-[#b0643f]">{error ?? "Couldn't load household info"}</p>;
+  if (!status) return <p className="m-0 text-sm text-clay">{error ?? "Couldn't load household info"}</p>;
 
   if (status.role === "member") {
     return (
@@ -183,12 +183,12 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
         <button
           type="button"
           onClick={() => setLeaveConfirmOpen(true)}
-          className={`${SMALL} self-start border border-border bg-card text-[#b0643f]`}
+          className={`${SMALL} self-start border border-border bg-card text-clay`}
         >
           Leave household
         </button>
         {error && (
-          <p role="alert" className="m-0 text-sm text-[#b0643f]">
+          <p role="alert" className="m-0 text-sm text-clay">
             {error}
           </p>
         )}
@@ -217,7 +217,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
     <div className="flex flex-col gap-3">
       <ul className="m-0 flex list-none flex-col p-0" aria-label="Household members">
         <li className="flex items-center gap-3 border-b border-border/40 py-3">
-          <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-accent font-bold text-white">
+          <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-accent font-bold text-on-accent">
             {initialOf(selfName || selfEmail)}
           </span>
           <span className="min-w-0 flex-1">
@@ -258,7 +258,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
                 type="button"
                 onClick={() => setPendingRemove({ userId: member.userId, label })}
                 aria-label={`Remove ${label}`}
-                className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-[#b0643f]"
+                className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-clay"
               >
                 <span aria-hidden className="material-symbols-rounded text-[18px]">
                   person_remove
@@ -302,7 +302,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
                 }, "Couldn't revoke this invite");
                 setRevokingId(null);
               }}
-              className={`${SMALL} border-none bg-transparent text-[#b0643f]`}
+              className={`${SMALL} border-none bg-transparent text-clay`}
             >
               {revokingId === invite.id ? <Spinner size={12} /> : "Revoke"}
             </button>
@@ -331,7 +331,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
             type="button"
             onClick={handleInvite}
             disabled={creating}
-            className="flex cursor-pointer items-center gap-[6px] rounded-[10px] border-none bg-accent px-4 py-[10px] text-[13px] font-semibold text-white disabled:opacity-60"
+            className="flex cursor-pointer items-center gap-[6px] rounded-[10px] border-none bg-accent px-4 py-[10px] text-[13px] font-semibold text-on-accent disabled:opacity-60"
           >
             <span aria-hidden className="material-symbols-rounded text-[16px]">
               link
@@ -346,7 +346,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
       </div>
 
       {error && (
-        <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2 text-sm text-[#5a2e18]">
+        <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-ink">
           {error}
         </p>
       )}

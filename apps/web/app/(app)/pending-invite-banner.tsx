@@ -36,7 +36,7 @@ export function PendingInviteBanner({
       </span>
       <Link
         href={href}
-        className="flex-none rounded-[9px] bg-accent px-3 py-[7px] text-[12px] font-semibold text-white no-underline"
+        className="flex-none rounded-[9px] bg-accent px-3 py-[7px] text-[12px] font-semibold text-on-accent no-underline"
       >
         Review invite
       </Link>

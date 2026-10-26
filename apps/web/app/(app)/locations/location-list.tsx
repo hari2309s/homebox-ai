@@ -125,7 +125,7 @@ function LocationNode({
   if (editing) {
     return (
       <div
-        className="border-b border-border/60 bg-[#f6f9f3]"
+        className="border-b border-border/60 bg-selected-soft"
         style={{ paddingLeft }}
       >
         <form
@@ -167,7 +167,7 @@ function LocationNode({
           </TapButton>
         </form>
         {error && (
-          <p role="alert" className="px-3 pb-2 text-sm text-[#7a3f22]">{error}</p>
+          <p role="alert" className="px-3 pb-2 text-sm text-danger">{error}</p>
         )}
       </div>
     );
@@ -176,7 +176,7 @@ function LocationNode({
   return (
     <>
       <div
-        className={`flex items-center gap-2 border-b border-border/40 ${isTopLevel ? "bg-[#fbfaf6] dark:bg-card" : ""}`}
+        className={`flex items-center gap-2 border-b border-border/40 ${isTopLevel ? "bg-rail" : ""}`}
         style={{ paddingLeft, height: 40, paddingRight: 12 }}
       >
         <button
@@ -208,14 +208,14 @@ function LocationNode({
           className="cursor-pointer border-none bg-transparent p-0"
           aria-label="Edit location"
         >
-          <span className="material-symbols-rounded text-[18px] text-[#a3aba5]">more_horiz</span>
+          <span className="material-symbols-rounded text-[18px] text-faint">more_horiz</span>
         </button>
       </div>
 
       {confirmOpen && (
-        <div className="border-b border-border/40 bg-[#fbf1ec] px-4 py-3" style={{ paddingLeft }}>
+        <div className="border-b border-border/40 bg-danger-faint px-4 py-3" style={{ paddingLeft }}>
           <div className="flex flex-col gap-2">
-            <p className="text-[13px] leading-snug text-[#7a3f22]">
+            <p className="text-[13px] leading-snug text-danger">
               <b>Delete &ldquo;{location.name}&rdquo;?</b>
               {" "}Items inside will become unassigned.
             </p>
@@ -241,7 +241,7 @@ function LocationNode({
       )}
 
       {error && !editing && (
-        <p role="alert" className="border-b border-border/40 px-4 py-2 text-sm text-[#7a3f22]">{error}</p>
+        <p role="alert" className="border-b border-border/40 px-4 py-2 text-sm text-danger">{error}</p>
       )}
 
       {expanded &&

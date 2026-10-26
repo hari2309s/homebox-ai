@@ -30,7 +30,7 @@ function MiniPlanLogo() {
   return (
     <div className="relative h-9 w-9 flex-none overflow-hidden rounded-[9px] bg-selected">
       <span className="absolute left-1 top-[15px] h-[17px] w-[18px] rounded-[2px] border-[1.5px] border-ink bg-rail" />
-      <span className="absolute left-6 top-[18px] h-[14px] w-[9px] rounded-[2px] border-[1.5px] border-[#7a3f22] bg-[#ecdccd]" />
+      <span className="absolute left-6 top-[18px] h-[14px] w-[9px] rounded-[2px] border-[1.5px] border-danger bg-danger-soft" />
       <span className="absolute left-[21px] top-[3px] h-[11px] w-[11px] rounded-full bg-[#7fa572]" />
     </div>
   );
@@ -87,7 +87,7 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
         </span>
         <span className="flex-1">{link.label}</span>
         {main && badges[link.href] && (
-          <span className="font-mono text-[10px] text-[#7a3f22] dark:text-[#e7a582]">{badges[link.href]}</span>
+          <span className="font-mono text-[10px] text-danger">{badges[link.href]}</span>
         )}
       </Link>
     );
@@ -123,13 +123,13 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
 
       {PRIMARY_LINKS.map((link) => row(link, "main"))}
 
-      <div className="px-[10px] pb-[6px] pt-4 font-mono text-[9px] text-[#9aa49c]">TOOLS</div>
+      <div className="px-[10px] pb-[6px] pt-4 font-mono text-[9px] text-faint">TOOLS</div>
       {TOOL_LINKS.map((link) => row(link, "tool"))}
 
       <div className="flex-1" />
 
       <div className="flex items-center gap-2 px-[10px] pb-2">
-        <span className="font-mono text-[9px] text-[#9aa49c]">THEME</span>
+        <span className="font-mono text-[9px] text-faint">THEME</span>
         <div className="flex-1">
           <ThemeSwitcher variant="compact" />
         </div>
