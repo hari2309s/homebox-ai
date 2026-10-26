@@ -90,6 +90,7 @@ export interface ShareStatus {
   /** "owner": this account anchors the household (possibly solo). "member": sharing someone else's data instead. */
   role: "owner" | "member";
   ownerEmail?: string | null;
+  ownerName?: string | null;
   /** For a member: how the owner described them. */
   relationship?: string | null;
   members: { userId: string; email: string | null; name: string | null; relationship: string | null }[];
@@ -101,8 +102,17 @@ export function getShareStatus(userId: string): Promise<ShareStatus> {
     if (membership) {
       // auth.users reads need the direct (non-RLS) connection — the RLS
       // transaction's role has no grant on that table (see emailsFor above).
-      const ownerEmail = (await emailsFor([membership.ownerId])).get(membership.ownerId) ?? null;
-      return { role: "member", ownerEmail, relationship: membership.relationship, members: [] };
+      const [ownerEmails, ownerProfiles] = await Promise.all([
+        emailsFor([membership.ownerId]),
+        getUserProfiles([membership.ownerId]),
+      ]);
+      return {
+        role: "member",
+        ownerEmail: ownerEmails.get(membership.ownerId) ?? null,
+        ownerName: ownerProfiles.get(membership.ownerId)?.name?.trim() || null,
+        relationship: membership.relationship,
+        members: [],
+      };
     }
 
     const memberRows = await tx.select().from(sharedAccess).where(eq(sharedAccess.ownerId, userId));
@@ -121,6 +131,8 @@ export function getShareStatus(userId: string): Promise<ShareStatus> {
 export interface HouseholdUser {
   userId: string;
   email: string | null;
+  /** Display name from the account (set at sign-up or in Settings › Profile). */
+  name: string | null;
   isSelf: boolean;
   /** How this member is related to the owner; null for the owner and for members without one. */
   relationship: string | null;
@@ -141,10 +153,11 @@ export function listHouseholdUsers(userId: string): Promise<HouseholdUser[]> {
     const relationships = new Map(memberRows.map((row) => [row.memberUserId, row.relationship]));
     // auth.users reads need the direct (non-RLS) connection — the RLS
     // transaction's role has no grant on that table (see emailsFor above).
-    const emails = await emailsFor(ids);
+    const [emails, profiles] = await Promise.all([emailsFor(ids), getUserProfiles(ids)]);
     return ids.map((id) => ({
       userId: id,
       email: emails.get(id) ?? null,
+      name: profiles.get(id)?.name?.trim() || null,
       isSelf: id === userId,
       relationship: relationships.get(id) ?? null,
     }));

@@ -175,7 +175,8 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
     return (
       <div className="flex flex-col gap-3">
         <p className="m-0 text-[14px] leading-normal text-body">
-          You&apos;re sharing <b className="text-ink">{status.ownerEmail ?? "another account"}</b>&apos;s household
+          You&apos;re sharing <b className="text-ink">{status.ownerName ?? status.ownerEmail ?? "another account"}</b>
+          &apos;s household
           {status.relationship ? ` as their ${status.relationship.toLowerCase()}` : ""}. You can see, add and move
           anything in it.
         </p>

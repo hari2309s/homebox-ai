@@ -55,7 +55,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const dueCount = reminders.filter((r) => r.status === "pending" && r.dueDate <= dueCutoff).length;
   const members = householdUsers.map((person, i) => ({
     userId: person.userId,
-    initial: (person.isSelf ? userName : (person.email ?? "?")).charAt(0).toUpperCase(),
+    initial: (person.isSelf ? userName : (person.name ?? person.email ?? "?")).charAt(0).toUpperCase(),
     color: MEMBER_COLORS[i % MEMBER_COLORS.length]!,
   }));
   const householdName =

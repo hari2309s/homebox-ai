@@ -4,8 +4,8 @@ import { isAssignableToHousehold } from "./reminders";
 import type { HouseholdUser } from "./household";
 
 const household: HouseholdUser[] = [
-  { userId: "owner", email: "owner@example.com", isSelf: true, relationship: null },
-  { userId: "member", email: "member@example.com", isSelf: false, relationship: null },
+  { userId: "owner", email: "owner@example.com", isSelf: true, relationship: null, name: null },
+  { userId: "member", email: "member@example.com", isSelf: false, relationship: null, name: null },
 ];
 
 describe("isAssignableToHousehold", () => {
