@@ -263,7 +263,7 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
   const activeSession = sessions.find((s) => s.sessionId === sessionId);
 
   return (
-    <div className="flex h-full">
+    <div data-full-bleed className="flex h-full">
       {/* Desktop conversations rail */}
       <aside className="hidden w-[300px] flex-none flex-col gap-3 overflow-y-auto border-r border-border px-4 py-[22px] lg:flex">
         <div className="flex items-center justify-between">
