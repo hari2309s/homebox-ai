@@ -106,6 +106,69 @@
   }
 }
 
+/* Site-plan drawing colours (dashboard hero, chat/item mini-plans). */
+:root {
+  --plan-ground: #dfe8d6;
+  --plan-dots: rgba(63, 107, 69, 0.18);
+  --plan-ink: #2c4d31;
+  --plan-house: #fbfaf6;
+  --plan-house-line: #1f2622;
+  --plan-room-hi: #fff6e3;
+  --plan-room-line: #c5c9bf;
+  --plan-garage: #ecdccd;
+  --plan-garage-line: #7a3f22;
+  --plan-garage-door: #b0643f;
+  --plan-shed: #e7e1d0;
+  --plan-shed-line: #c9bfa3;
+  --plan-shed-ink: #5a4f33;
+  --plan-bed: #c9d9bd;
+  --plan-bed-line: #9fb894;
+  --plan-drive: #e2e2dc;
+  --plan-front: #ecebe4;
+}
+
+:root[data-theme="dark"] {
+  --plan-ground: #223026;
+  --plan-dots: rgba(156, 198, 143, 0.14);
+  --plan-ink: #9cc68f;
+  --plan-house: #171d19;
+  --plan-house-line: #ecebe4;
+  --plan-room-hi: #2a2a1f;
+  --plan-room-line: #2f3833;
+  --plan-garage: #35261d;
+  --plan-garage-line: #e7a582;
+  --plan-garage-door: #e08a5f;
+  --plan-shed: #2e2a20;
+  --plan-shed-line: #4a4330;
+  --plan-shed-ink: #d6c9a3;
+  --plan-bed: #2e4632;
+  --plan-bed-line: #3b5a40;
+  --plan-drive: #1c231f;
+  --plan-front: #252a27;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --plan-ground: #223026;
+    --plan-dots: rgba(156, 198, 143, 0.14);
+    --plan-ink: #9cc68f;
+    --plan-house: #171d19;
+    --plan-house-line: #ecebe4;
+    --plan-room-hi: #2a2a1f;
+    --plan-room-line: #2f3833;
+    --plan-garage: #35261d;
+    --plan-garage-line: #e7a582;
+    --plan-garage-door: #e08a5f;
+    --plan-shed: #2e2a20;
+    --plan-shed-line: #4a4330;
+    --plan-shed-ink: #d6c9a3;
+    --plan-bed: #2e4632;
+    --plan-bed-line: #3b5a40;
+    --plan-drive: #1c231f;
+    --plan-front: #252a27;
+  }
+}
+
 /* Framer Motion's <MotionConfig reducedMotion="user"> (see app/layout.tsx) covers every
    motion.* animation; this covers plain CSS transitions (buttons, links, etc.) that
    MotionConfig has no reach into. */

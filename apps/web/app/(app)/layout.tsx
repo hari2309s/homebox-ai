@@ -44,7 +44,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div
       id="app-shell"
-      className="mx-auto flex h-dvh w-full max-w-lg bg-surface md:max-w-[672px] lg:max-w-6xl"
+      className="mx-auto flex h-dvh w-full max-w-lg bg-surface md:max-w-[672px] lg:max-w-none"
     >
       <Sidebar
         itemCount={itemCount}
@@ -55,7 +55,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         members={members}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="app-content flex-1 overflow-y-auto">{children}</div>
+        <div className="app-content flex-1 overflow-y-auto lg:px-[max(0px,calc((100%-1048px)/2))]">{children}</div>
         <BottomNav unreadChatCount={unreadChatCount} />
       </div>
     </div>

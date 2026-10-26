@@ -280,6 +280,7 @@ export interface UpcomingWarrantyExpiration {
   id: string;
   name: string;
   warrantyExpires: string | null;
+  locationId: string | null;
 }
 
 /** User-scoped counterpart to notifierQueries.listItemsWithExpiringWarranty (that one is a system-wide cron scan) — for the dashboard's "expiring soon" list. */
@@ -290,7 +291,7 @@ export function listUpcomingWarrantyExpirations(userId: string, daysAhead = 60):
     cutoff.setDate(cutoff.getDate() + daysAhead);
     const cutoffDate = cutoff.toISOString().slice(0, 10);
     return tx
-      .select({ id: items.id, name: items.name, warrantyExpires: items.warrantyExpires })
+      .select({ id: items.id, name: items.name, warrantyExpires: items.warrantyExpires, locationId: items.locationId })
       .from(items)
       .where(
         and(
