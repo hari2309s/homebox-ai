@@ -7,7 +7,7 @@ import { redirect } from "next/navigation";
 
 import { PENDING_JOIN_COOKIE } from "../../../../lib/pending-join";
 
-import { requireSessionUser } from "@homebox-ai/supabase/server";
+import { createSupabaseServerClient, requireSessionUser } from "@homebox-ai/supabase/server";
 
 export async function acceptInviteAction(formData: FormData) {
   const user = await requireSessionUser();
@@ -23,6 +23,10 @@ export async function acceptInviteAction(formData: FormData) {
     redirect(`/join/${encodeURIComponent(token)}?error=${encodeURIComponent(message)}`);
   }
   (await cookies()).delete(PENDING_JOIN_COOKIE);
+  if (user.user_metadata?.pending_join) {
+    const supabase = await createSupabaseServerClient();
+    await supabase.auth.updateUser({ data: { pending_join: null } });
+  }
   revalidatePath("/", "layout");
   redirect("/items");
 }

@@ -27,14 +27,24 @@ const FEATURES = [
   { icon: "yard", label: "Seasonal garden care", bg: "bg-zone-shed", color: "text-[#7a6a3f]" },
 ];
 
+const AUTH_ERRORS: Record<string, string> = {
+  confirmation_failed: "That confirmation link didn't work. It may have expired. Try signing in, or sign up again.",
+  oauth_failed: "Signing in didn't finish. Please try again.",
+  link_expired: "That link has expired. Sign in, or ask for a new one.",
+};
+
+const AUTH_NOTICES: Record<string, string> = {
+  confirmed_elsewhere: "Your email is confirmed. Sign in to continue.",
+};
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = safeRedirect(searchParams.get("redirectTo"));
   const joining = JOIN_PATH.test(redirectTo);
 
-  // A new family member signing up has to confirm their email first, and that link lands in a fresh tab
-  // with no memory of the invite. Remember it so /auth/confirm can send them back to it.
+  // A new family member signing up has to confirm their email first, and that link can land in a fresh
+  // tab with no memory of the invite. Remember it so /auth/callback and /auth/confirm can send them back.
   useEffect(() => {
     if (joining)
       document.cookie = `${PENDING_JOIN_COOKIE}=${encodeURIComponent(redirectTo)}; path=/; max-age=${7 * 24 * 3600}; samesite=lax`;
@@ -44,8 +54,8 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
-  const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => AUTH_ERRORS[searchParams.get("error") ?? ""] ?? null);
+  const [info, setInfo] = useState<string | null>(() => AUTH_NOTICES[searchParams.get("notice") ?? ""] ?? null);
   const [pending, setPending] = useState(false);
 
   function switchMode(next: "sign-in" | "sign-up") {
@@ -90,7 +100,12 @@ function LoginForm() {
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name.trim() } },
+      options: {
+        // pending_join lets the app offer the invite again after sign-in even if the confirmation email is
+        // opened on another device; emailRedirectTo brings this browser straight back to it.
+        data: { full_name: name.trim(), ...(joining ? { pending_join: redirectTo } : {}) },
+        emailRedirectTo: `${window.location.origin}/auth/callback?from=email&next=${encodeURIComponent(redirectTo)}`,
+      },
     });
 
     if (authError) {

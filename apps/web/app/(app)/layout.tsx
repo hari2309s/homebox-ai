@@ -7,6 +7,8 @@ import type { ReactNode } from "react";
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { BottomNav } from "./bottom-nav";
+import { JOIN_PATH } from "../../lib/pending-join";
+import { PendingInviteBanner } from "./pending-invite-banner";
 import { Sidebar } from "./sidebar";
 
 const MEMBER_COLORS = ["#3f6b45", "#5b7fa6", "#b0643f", "#8a7a4f"];
@@ -41,6 +43,18 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   }));
   const householdLabel = householdUsers.length > 1 ? "Shared household" : `${userName.split(" ")[0]}'s home`;
 
+  // Set at sign-up from an invite link, so the invite can be offered again on any device after confirming.
+  const pendingJoin = typeof user.user_metadata?.pending_join === "string" ? user.user_metadata.pending_join : null;
+  const pendingInvite =
+    pendingJoin && JOIN_PATH.test(pendingJoin)
+      ? await sharingQueries.getInviteByToken(pendingJoin.split("/")[2]!)
+      : null;
+  const showInvite =
+    pendingInvite &&
+    !pendingInvite.expired &&
+    !pendingInvite.alreadyAccepted &&
+    pendingInvite.ownerEmail !== user.email;
+
   return (
     <div id="app-shell" className="mx-auto flex h-dvh w-full max-w-lg bg-surface md:max-w-[672px] lg:max-w-none">
       <Sidebar
@@ -56,6 +70,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
         <BottomNav unreadChatCount={unreadChatCount} />
+        {showInvite && pendingJoin && (
+          <PendingInviteBanner
+            href={pendingJoin}
+            from={pendingInvite.ownerName?.split(" ")[0] ?? pendingInvite.ownerEmail ?? "Someone"}
+            relationship={pendingInvite.relationship}
+          />
+        )}
       </div>
     </div>
   );
