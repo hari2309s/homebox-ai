@@ -12,13 +12,34 @@ export function listLocations(userId: string) {
   });
 }
 
-export function createLocation(userId: string, data: { name: string; parentId?: string | null }) {
+export interface LocationPlan {
+  planKind?: string | null;
+  planX?: number | null;
+  planY?: number | null;
+  planW?: number | null;
+  planH?: number | null;
+}
+
+export function createLocation(userId: string, data: { name: string; parentId?: string | null } & LocationPlan) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
     return tx
       .insert(locations)
-      .values({ ownerId, name: data.name, parentId: data.parentId ?? null })
+      .values({ ...data, ownerId, parentId: data.parentId ?? null })
       .returning();
+  });
+}
+
+/** Saves site-plan kind/geometry for several places in one transaction (a dragged zone moves its sub-places too). */
+export function updateLocationPlans(userId: string, updates: ({ id: string } & LocationPlan)[]) {
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    for (const { id, ...plan } of updates) {
+      await tx
+        .update(locations)
+        .set(plan)
+        .where(and(eq(locations.id, id), eq(locations.ownerId, ownerId)));
+    }
   });
 }
 

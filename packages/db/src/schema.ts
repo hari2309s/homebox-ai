@@ -3,6 +3,7 @@ import {
   type AnyPgColumn,
   boolean,
   date,
+  doublePrecision,
   index,
   integer,
   numeric,
@@ -63,6 +64,13 @@ export const locations = pgTable("locations", {
     .references(() => authUsers.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   parentId: uuid("parent_id").references((): AnyPgColumn => locations.id, { onDelete: "set null" }),
+  /** How the place is drawn on the site plan (house, garden, garage, room, bed, …); null lets the app infer it from the name. */
+  planKind: text("plan_kind"),
+  /** Plot-space rectangle on the site plan. All four are null until the place is drawn or moved there. */
+  planX: doublePrecision("plan_x"),
+  planY: doublePrecision("plan_y"),
+  planW: doublePrecision("plan_w"),
+  planH: doublePrecision("plan_h"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -113,6 +121,9 @@ export const items = pgTable("items", {
   locationId: uuid("location_id").references(() => locations.id, { onDelete: "set null" }),
   parentItemId: uuid("parent_item_id").references((): AnyPgColumn => items.id, { onDelete: "set null" }),
   notes: text("notes"),
+  /** Pin position on the site plan, in the same plot space as locations.plan_*; null when the item isn't pinned. */
+  planX: doublePrecision("plan_x"),
+  planY: doublePrecision("plan_y"),
   /** The user who actually created this item — may differ from ownerId when a shared household member adds it. Null on rows predating this column. */
   createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

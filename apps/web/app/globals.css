@@ -126,6 +126,8 @@
   --plan-drive: #e2e2dc;
   --plan-front: #ecebe4;
   --stripe-mix: 100%;
+  --plan-area: rgba(255, 255, 255, 0.35);
+  --plan-garden: rgba(255, 255, 255, 0.14);
 }
 
 :root[data-theme="dark"] {
@@ -147,6 +149,8 @@
   --plan-drive: #1c231f;
   --plan-front: #252a27;
   --stripe-mix: 16%;
+  --plan-area: rgba(255, 255, 255, 0.05);
+  --plan-garden: rgba(156, 198, 143, 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -169,6 +173,8 @@
     --plan-drive: #1c231f;
     --plan-front: #252a27;
     --stripe-mix: 16%;
+    --plan-area: rgba(255, 255, 255, 0.05);
+    --plan-garden: rgba(156, 198, 143, 0.06);
   }
 }
 

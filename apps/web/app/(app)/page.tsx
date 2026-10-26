@@ -6,7 +6,7 @@ import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { formatDate } from "../../lib/date";
 import { listLocationsCached } from "../../lib/cached-queries";
-import { SitePlan } from "./site-plan";
+import { PlanWorkspace } from "./plan-canvas";
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -41,32 +41,38 @@ function buildZones(locations: Location[], counts: LocationCount[]) {
   }));
 }
 
-const ZONE_COLORS = [
-  { bg: "#f3f1ea", border: "#c5c9bf", text: "#3a423d", label: "HOUSE" },
-  { bg: "#dfe8d6", border: "#9fb894", text: "#2c4d31", label: "GARDEN" },
-  { bg: "#ecdccd", border: "#b0643f", text: "#7a3f22", label: "GARAGE" },
-  { bg: "#e7e1d0", border: "#c9bfa3", text: "#5a4f33", label: "SHED" },
-  { bg: "#e2e2dc", border: "#b8b8b0", text: "#5f6a62", label: "DRIVE" },
-];
-
 const DUE_DOT_COLORS = ["#3f6b45", "#b0643f", "#8a7a4f"];
 
 function dueLabel(dueDate: string, todayKey: string): string {
   if (dueDate < todayKey) return "OVERDUE";
   if (dueDate === todayKey) return "TODAY";
-  return new Date(`${dueDate}T00:00:00`).toLocaleDateString(undefined, { weekday: "short", day: "numeric" }).toUpperCase();
+  return new Date(`${dueDate}T00:00:00`)
+    .toLocaleDateString(undefined, { weekday: "short", day: "numeric" })
+    .toUpperCase();
 }
 
 function formatCompactMoney(total: string, currency: string): string {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency, notation: "compact", maximumFractionDigits: 1 }).format(
-    Number(total),
-  );
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency,
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(Number(total));
 }
 
 export default async function DashboardPage() {
   const user = await getSessionUser();
 
-  const [locations, itemCounts, totalItems, expiringWarranties, recentMaintenance, reminders, valueByCurrency] = user
+  const [
+    locations,
+    itemCounts,
+    totalItems,
+    expiringWarranties,
+    recentMaintenance,
+    reminders,
+    valueByCurrency,
+    allItems,
+  ] = user
     ? await Promise.all([
         listLocationsCached(user.id),
         itemQueries.countItemsByLocation(user.id),
@@ -75,15 +81,31 @@ export default async function DashboardPage() {
         maintenanceQueries.listRecentMaintenance(user.id, 3).catch(() => []),
         reminderQueries.listReminders(user.id).catch(() => []),
         itemQueries.getInventoryValueByCurrency(user.id).catch(() => []),
+        itemQueries.searchItems(user.id),
       ])
-    : [[], [], 0, [], [], [], []];
+    : [[], [], 0, [], [], [], [], []];
+
+  const planLocations = locations.map((l) => ({
+    id: l.id,
+    name: l.name,
+    parentId: l.parentId,
+    planKind: l.planKind,
+    planX: l.planX,
+    planY: l.planY,
+    planW: l.planW,
+    planH: l.planH,
+  }));
+  const planThings = allItems.map((item) => ({
+    id: item.id,
+    name: item.name,
+    locationId: item.locationId,
+    planX: item.planX,
+    planY: item.planY,
+  }));
 
   const zones = buildZones(locations, itemCounts);
-  const displayName = typeof user?.user_metadata?.full_name === "string"
-    ? user.user_metadata.full_name.split(" ")[0]
-    : undefined;
-
-  const unassignedCount = itemCounts.find((c) => c.locationId === null)?.count ?? 0;
+  const displayName =
+    typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name.split(" ")[0] : undefined;
 
   const now = new Date();
   const todayKey = now.toISOString().slice(0, 10);
@@ -94,19 +116,9 @@ export default async function DashboardPage() {
   const dueSoon = reminders.filter((r) => r.status === "pending").slice(0, 3);
   const topValue = [...valueByCurrency].sort((a, b) => Number(b.total) - Number(a.total))[0];
 
-  const parentById = new Map(locations.map((l) => [l.id, l.parentId]));
-  function topZoneOf(locationId: string | null): string | null {
-    let current = locationId;
-    for (let guard = 0; current && guard < 50; guard++) {
-      const parent = parentById.get(current);
-      if (!parent) return current;
-      current = parent;
-    }
-    return current;
-  }
-  const alertZoneIds = new Set(
-    expiringWarranties.map((w) => topZoneOf(w.locationId)).filter((id): id is string => id !== null),
-  );
+  const alertPlaceIds = [
+    ...new Set(expiringWarranties.map((w) => w.locationId).filter((id): id is string => id !== null)),
+  ];
 
   const firstWarranty = expiringWarranties[0];
   const firstDue = dueSoon[0];
@@ -117,7 +129,8 @@ export default async function DashboardPage() {
       <div className="hidden items-end gap-4 lg:flex">
         <div className="min-w-0 flex-1">
           <div className="font-mono text-[11px] text-muted">
-            {dateLine} · {totalItems} {totalItems === 1 ? "THING" : "THINGS"} · {zones.length} {zones.length === 1 ? "ZONE" : "ZONES"}
+            {dateLine} · {totalItems} {totalItems === 1 ? "THING" : "THINGS"} · {zones.length}{" "}
+            {zones.length === 1 ? "ZONE" : "ZONES"}
           </div>
           <div className="font-serif text-[36px] leading-[1.1] text-ink">
             {getGreeting()}
@@ -148,122 +161,6 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      <div className="hidden min-h-0 flex-1 grid-cols-[minmax(0,1fr)_320px] gap-5 lg:grid">
-        {zones.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-[18px] bg-(--plan-ground) p-8 text-center">
-            <span className="font-serif text-[24px] text-ink">No locations yet</span>
-            <p className="max-w-sm text-sm text-muted">
-              Add your first location — a room, garage, or garden — and the site plan will map it here.
-            </p>
-            <Link href="/locations" className="rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white no-underline">
-              Add a location
-            </Link>
-          </div>
-        ) : (
-          <SitePlan zones={zones} alertZoneIds={alertZoneIds} />
-        )}
-
-        <div className="flex min-h-0 flex-col gap-[14px] overflow-y-auto">
-          <div className="flex flex-col gap-[10px] rounded-[14px] border border-border bg-card p-4 shadow-[8px_12px_24px_-14px_rgba(31,38,34,.25)]">
-            <div className="flex items-center gap-[10px]">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-selected">
-                <span className="material-symbols-rounded text-[18px] text-accent">psychiatry</span>
-              </span>
-              <span className="font-mono text-[10px] text-accent">FROM THE HOUSE</span>
-            </div>
-            <p className="m-0 text-[15px] leading-normal text-body">
-              {firstWarranty || firstDue ? (
-                <>
-                  {firstWarranty && (
-                    <>
-                      The <b className="text-ink">{firstWarranty.name}</b> warranty ends
-                      {firstWarranty.warrantyExpires ? ` ${formatDate(firstWarranty.warrantyExpires)}` : " soon"}.{" "}
-                    </>
-                  )}
-                  {firstDue && (
-                    <>
-                      <b className="text-ink">{firstDue.title}</b> is due {formatDate(firstDue.dueDate)}.
-                    </>
-                  )}
-                </>
-              ) : totalItems === 0 ? (
-                "Nothing logged on the property yet. Walk out and snap something?"
-              ) : (
-                "All quiet on the property. Nothing due and no warranties running out."
-              )}
-            </p>
-            <div className="flex gap-[6px]">
-              <Link href="/calendar" className="rounded-full bg-selected px-3 py-[6px] text-[13px] font-semibold text-(--plan-ink) no-underline">
-                Open seasons
-              </Link>
-              <Link href="/chat" className="rounded-full border border-border bg-card px-3 py-[5px] text-[13px] font-semibold text-ink no-underline">
-                Ask the house
-              </Link>
-            </div>
-          </div>
-
-          <div className="rounded-[14px] border border-border bg-card">
-            <div className="flex justify-between border-b border-border/60 px-[14px] py-3 font-mono text-[10px] text-muted">
-              <span>DUE SOON</span>
-              <span>{dueSoon.length}</span>
-            </div>
-            {dueSoon.length === 0 ? (
-              <p className="m-0 px-[14px] py-3 text-[13px] text-muted">Nothing due. Enjoy the garden.</p>
-            ) : (
-              dueSoon.map((reminder, i) => (
-                <Link
-                  key={reminder.id}
-                  href="/calendar"
-                  className="flex items-center gap-[10px] border-b border-border/40 px-[14px] py-[11px] no-underline last:border-b-0 hover:bg-selected-soft"
-                >
-                  <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: DUE_DOT_COLORS[i % DUE_DOT_COLORS.length] }} />
-                  <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-ink">{reminder.title}</span>
-                  <span className={`font-mono text-[10px] ${reminder.dueDate < todayKey ? "text-[#b0643f]" : "text-muted"}`}>
-                    {dueLabel(reminder.dueDate, todayKey)}
-                  </span>
-                </Link>
-              ))
-            )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { href: "/capture", icon: "photo_camera", label: "Capture", color: "#3f6b45" },
-              { href: "/receipts", icon: "receipt_long", label: "Receipt", color: "#b0643f" },
-              { href: "/scan", icon: "barcode_scanner", label: "Scan", color: "#8a7a4f" },
-            ].map((action) => (
-              <Link
-                key={action.href}
-                href={action.href}
-                className="flex flex-col items-center gap-[6px] rounded-xl border border-border bg-card px-[6px] py-3 no-underline transition-shadow hover:shadow-card"
-              >
-                <span className="material-symbols-rounded" style={{ color: action.color }}>
-                  {action.icon}
-                </span>
-                <span className="text-[12px] font-semibold text-ink">{action.label}</span>
-              </Link>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-3 rounded-[14px] border border-border bg-card px-1 py-3 text-center">
-            <div>
-              <div className="font-mono text-[18px] text-ink">{totalItems}</div>
-              <div className="text-[11px] text-muted">things</div>
-            </div>
-            <div className="border-l border-border/60">
-              <div className="font-mono text-[18px] text-ink">
-                {topValue ? formatCompactMoney(topValue.total, topValue.currency) : "—"}
-              </div>
-              <div className="text-[11px] text-muted">worth</div>
-            </div>
-            <div className="border-l border-border/60">
-              <div className="font-mono text-[18px] text-[#8a6a1a] dark:text-[#d9a43a]">{expiringWarranties.length}</div>
-              <div className="text-[11px] text-muted">warranties</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Mobile header */}
       <div className="flex items-center gap-3 px-1 lg:hidden">
         <AnimatedHomeboxIcon size={44} />
@@ -272,82 +169,132 @@ export default async function DashboardPage() {
             {totalItems} ITEMS · {locations.length} LOCATIONS
           </div>
           <div className="font-serif text-2xl leading-tight text-ink">
-            {getGreeting()}{displayName ? `, ${displayName}` : ""}
+            {getGreeting()}
+            {displayName ? `, ${displayName}` : ""}
           </div>
         </div>
       </div>
 
-      {/* Site plan */}
-      <div className="relative overflow-hidden rounded-[18px] lg:hidden bg-[#dfe8d6] dark:bg-[#1e2e20]" style={{ backgroundImage: "radial-gradient(rgba(63,107,69,.18) 1px, transparent 1.2px)", backgroundSize: "10px 10px" }}>
-        <div className="p-3">
-          <span className="font-mono text-[10px] tracking-wide text-[#2c4d31] dark:text-[#9cc68f]">
-            YOUR PROPERTY · {zones.length} ZONES
-          </span>
-        </div>
-
-        {zones.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 px-4 pb-8 pt-4 text-center">
-            <span className="font-serif text-lg text-ink">No locations yet</span>
-            <p className="text-sm text-muted">
-              Add your first location — a room, garage, or garden — and the site plan will map it here.
-            </p>
-            <Link
-              href="/locations"
-              className="mt-1 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white no-underline"
-            >
-              Add a location
-            </Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-[6px] p-3 pt-0">
-            {zones.map((zone, i) => {
-              const palette = ZONE_COLORS[i % ZONE_COLORS.length]!;
-              return (
+      <PlanWorkspace
+        locations={planLocations}
+        things={planThings}
+        alertPlaceIds={alertPlaceIds}
+        defaultAside={
+          <>
+            <div className="flex flex-col gap-[10px] rounded-[14px] border border-border bg-card p-4 shadow-[8px_12px_24px_-14px_rgba(31,38,34,.25)]">
+              <div className="flex items-center gap-[10px]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-selected">
+                  <span className="material-symbols-rounded text-[18px] text-accent">psychiatry</span>
+                </span>
+                <span className="font-mono text-[10px] text-accent">FROM THE HOUSE</span>
+              </div>
+              <p className="m-0 text-[15px] leading-normal text-body">
+                {firstWarranty || firstDue ? (
+                  <>
+                    {firstWarranty && (
+                      <>
+                        The <b className="text-ink">{firstWarranty.name}</b> warranty ends
+                        {firstWarranty.warrantyExpires ? ` ${formatDate(firstWarranty.warrantyExpires)}` : " soon"}
+                        .{" "}
+                      </>
+                    )}
+                    {firstDue && (
+                      <>
+                        <b className="text-ink">{firstDue.title}</b> is due {formatDate(firstDue.dueDate)}.
+                      </>
+                    )}
+                  </>
+                ) : totalItems === 0 ? (
+                  "Nothing logged on the property yet. Walk out and snap something?"
+                ) : (
+                  "All quiet on the property. Nothing due and no warranties running out."
+                )}
+              </p>
+              <div className="flex gap-[6px]">
                 <Link
-                  key={zone.id}
-                  href={`/items?location=${zone.id}`}
-                  className="flex flex-col gap-1 rounded-md border-[1.5px] p-2 no-underline transition-shadow hover:shadow-card"
-                  style={{ background: palette.bg, borderColor: palette.border }}
+                  href="/calendar"
+                  className="rounded-full bg-selected px-3 py-[6px] text-[13px] font-semibold text-(--plan-ink) no-underline"
                 >
-                  <span className="font-mono text-[9px] tracking-wide" style={{ color: palette.text }}>
-                    {zone.name.toUpperCase()}
-                  </span>
-                  <span className="font-sans text-lg font-bold" style={{ color: palette.text }}>
-                    {zone.count}
-                  </span>
-                  {zone.children.length > 0 && (
-                    <div className="mt-0.5 flex flex-wrap gap-1">
-                      {zone.children.slice(0, 3).map((child) => (
-                        <span
-                          key={child.id}
-                          className="rounded-[3px] px-1.5 py-0.5 font-mono text-[8px]"
-                          style={{ background: `${palette.border}33`, color: palette.text }}
-                        >
-                          {child.name.toUpperCase()} · {child.count}
-                        </span>
-                      ))}
-                      {zone.children.length > 3 && (
-                        <span className="font-mono text-[8px]" style={{ color: palette.text }}>
-                          +{zone.children.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  Open seasons
                 </Link>
-              );
-            })}
-            {unassignedCount > 0 && (
-              <Link
-                href="/items"
-                className="flex flex-col gap-1 rounded-md border-[1.5px] border-dashed border-[#b8b8b0] bg-[#ecebe4] p-2 no-underline dark:border-[#3a4a3c] dark:bg-[#232a25]"
-              >
-                <span className="font-mono text-[9px] tracking-wide text-muted">UNASSIGNED</span>
-                <span className="text-lg font-bold text-muted">{unassignedCount}</span>
-              </Link>
-            )}
-          </div>
-        )}
-      </div>
+                <Link
+                  href="/chat"
+                  className="rounded-full border border-border bg-card px-3 py-[5px] text-[13px] font-semibold text-ink no-underline"
+                >
+                  Ask the house
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-[14px] border border-border bg-card">
+              <div className="flex justify-between border-b border-border/60 px-[14px] py-3 font-mono text-[10px] text-muted">
+                <span>DUE SOON</span>
+                <span>{dueSoon.length}</span>
+              </div>
+              {dueSoon.length === 0 ? (
+                <p className="m-0 px-[14px] py-3 text-[13px] text-muted">Nothing due. Enjoy the garden.</p>
+              ) : (
+                dueSoon.map((reminder, i) => (
+                  <Link
+                    key={reminder.id}
+                    href="/calendar"
+                    className="flex items-center gap-[10px] border-b border-border/40 px-[14px] py-[11px] no-underline last:border-b-0 hover:bg-selected-soft"
+                  >
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-[2px]"
+                      style={{ background: DUE_DOT_COLORS[i % DUE_DOT_COLORS.length] }}
+                    />
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-ink">{reminder.title}</span>
+                    <span
+                      className={`font-mono text-[10px] ${reminder.dueDate < todayKey ? "text-[#b0643f]" : "text-muted"}`}
+                    >
+                      {dueLabel(reminder.dueDate, todayKey)}
+                    </span>
+                  </Link>
+                ))
+              )}
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { href: "/capture", icon: "photo_camera", label: "Capture", color: "#3f6b45" },
+                { href: "/receipts", icon: "receipt_long", label: "Receipt", color: "#b0643f" },
+                { href: "/scan", icon: "barcode_scanner", label: "Scan", color: "#8a7a4f" },
+              ].map((action) => (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  className="flex flex-col items-center gap-[6px] rounded-xl border border-border bg-card px-[6px] py-3 no-underline transition-shadow hover:shadow-card"
+                >
+                  <span className="material-symbols-rounded" style={{ color: action.color }}>
+                    {action.icon}
+                  </span>
+                  <span className="text-[12px] font-semibold text-ink">{action.label}</span>
+                </Link>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-3 rounded-[14px] border border-border bg-card px-1 py-3 text-center">
+              <div>
+                <div className="font-mono text-[18px] text-ink">{totalItems}</div>
+                <div className="text-[11px] text-muted">things</div>
+              </div>
+              <div className="border-l border-border/60">
+                <div className="font-mono text-[18px] text-ink">
+                  {topValue ? formatCompactMoney(topValue.total, topValue.currency) : "—"}
+                </div>
+                <div className="text-[11px] text-muted">worth</div>
+              </div>
+              <div className="border-l border-border/60">
+                <div className="font-mono text-[18px] text-[#8a6a1a] dark:text-[#d9a43a]">
+                  {expiringWarranties.length}
+                </div>
+                <div className="text-[11px] text-muted">warranties</div>
+              </div>
+            </div>
+          </>
+        }
+      />
 
       {/* AI suggestion / alerts */}
       {(expiringWarranties.length > 0 || recentMaintenance.length > 0) && (
@@ -387,15 +334,16 @@ export default async function DashboardPage() {
 
       {totalItems === 0 && (
         <div className="flex flex-col items-center gap-2 py-4 text-center lg:hidden">
-          <p className="text-sm text-muted">
-            Nothing logged on the property yet. Walk out and snap something?
-          </p>
+          <p className="text-sm text-muted">Nothing logged on the property yet. Walk out and snap something?</p>
         </div>
       )}
 
       {/* Search + capture bar */}
       <div className="relative flex items-center gap-[10px] rounded-[14px] border border-border bg-card py-[6px] pl-4 pr-[6px] shadow-card lg:hidden">
-        <Link href="/chat" className="flex-1 text-[15px] text-muted no-underline after:absolute after:inset-0 after:content-['']">
+        <Link
+          href="/chat"
+          className="flex-1 text-[15px] text-muted no-underline after:absolute after:inset-0 after:content-['']"
+        >
           Find anything on your property…
         </Link>
         <Link
@@ -409,15 +357,24 @@ export default async function DashboardPage() {
 
       {/* Quick actions */}
       <div className="flex flex-wrap gap-2 lg:hidden">
-        <Link href="/capture" className="flex items-center gap-1.5 rounded-full bg-[#dfe8d6] px-3 py-[7px] text-[13px] font-semibold text-[#2c4d31] no-underline dark:bg-[#2c3e2e] dark:text-[#9cc68f]">
+        <Link
+          href="/capture"
+          className="flex items-center gap-1.5 rounded-full bg-[#dfe8d6] px-3 py-[7px] text-[13px] font-semibold text-[#2c4d31] no-underline dark:bg-[#2c3e2e] dark:text-[#9cc68f]"
+        >
           <span className="material-symbols-rounded text-[16px]">photo_camera</span>
           Capture
         </Link>
-        <Link href="/receipts" className="flex items-center gap-1.5 rounded-full bg-[#ecdccd] px-3 py-[7px] text-[13px] font-semibold text-[#7a3f22] no-underline dark:bg-[#3a2e22] dark:text-[#d4a47e]">
+        <Link
+          href="/receipts"
+          className="flex items-center gap-1.5 rounded-full bg-[#ecdccd] px-3 py-[7px] text-[13px] font-semibold text-[#7a3f22] no-underline dark:bg-[#3a2e22] dark:text-[#d4a47e]"
+        >
           <span className="material-symbols-rounded text-[16px]">receipt_long</span>
           Receipt
         </Link>
-        <Link href="/scan" className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-[6px] text-[13px] font-semibold text-ink no-underline">
+        <Link
+          href="/scan"
+          className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-[6px] text-[13px] font-semibold text-ink no-underline"
+        >
           <span className="material-symbols-rounded text-[16px]">qr_code_scanner</span>
           Scan
         </Link>

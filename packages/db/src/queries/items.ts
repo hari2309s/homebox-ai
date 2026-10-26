@@ -173,6 +173,8 @@ export interface CreateItemInput {
   locationId?: string | null;
   parentItemId?: string | null;
   notes?: string;
+  planX?: number | null;
+  planY?: number | null;
 }
 
 export function createItem(userId: string, data: CreateItemInput) {
@@ -208,6 +210,8 @@ export interface UpdateItemInput {
   locationId?: string | null;
   parentItemId?: string | null;
   notes?: string | null;
+  planX?: number | null;
+  planY?: number | null;
 }
 
 // Same reasoning as locations.ts: without this, an item can be re-parented
