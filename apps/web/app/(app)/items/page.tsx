@@ -49,7 +49,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
     <div data-full-bleed className="flex h-full flex-col lg:flex-row">
       <div
         data-scroll-container
-        className="flex h-full flex-col overflow-y-auto lg:w-[440px] lg:flex-none lg:border-r lg:border-border"
+        className="flex h-full flex-col overflow-y-auto lg:w-[clamp(440px,34vw,560px)] lg:flex-none lg:border-r lg:border-border"
       >
         <ItemViewClient
           items={items}

@@ -75,7 +75,7 @@ export default async function LocationsPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <div data-full-bleed className="hidden h-full lg:flex">
-        <div className="flex w-[440px] flex-none flex-col gap-3 border-r border-border px-5 py-6">
+        <div className="flex w-[clamp(440px,34vw,560px)] flex-none flex-col gap-3 border-r border-border px-5 py-6">
           <div>
             <h1 className="m-0 font-serif text-[30px] font-normal leading-none text-ink">Places</h1>
             <div className="mt-1 font-mono text-[10px] text-muted">
