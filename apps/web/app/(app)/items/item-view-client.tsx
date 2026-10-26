@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
@@ -49,6 +49,8 @@ interface ItemViewClientProps {
   topLocations: Location[];
   locationTotal: Record<string, number>;
   selectedId: string | null;
+  /** Title and search, pinned together with the zone chips while the list scrolls. */
+  header?: ReactNode;
 }
 
 export function ItemViewClient({
@@ -59,6 +61,7 @@ export function ItemViewClient({
   topLocations,
   locationTotal: _locationTotal,
   selectedId,
+  header,
 }: ItemViewClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -100,7 +103,9 @@ export function ItemViewClient({
         if (!cancelled) setLoadingPhotos(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [view, items]);
 
   function switchView(next: View) {
@@ -157,7 +162,9 @@ export function ItemViewClient({
         event.preventDefault();
         const current = selectedId ? orderedIds.indexOf(selectedId) : -1;
         const next =
-          event.key === "ArrowDown" ? Math.min(orderedIds.length - 1, current + 1) : Math.max(0, current === -1 ? 0 : current - 1);
+          event.key === "ArrowDown"
+            ? Math.min(orderedIds.length - 1, current + 1)
+            : Math.max(0, current === -1 ? 0 : current - 1);
         selectItem(orderedIds[next]!);
       } else if (event.key === "Enter" && selectedId && target?.tagName !== "A" && target?.tagName !== "BUTTON") {
         router.push(`/items/${selectedId}`);
@@ -168,73 +175,88 @@ export function ItemViewClient({
   }, [orderedIds, selectedId, selectItem, router]);
 
   return (
-    <div className="flex flex-col gap-[14px] px-4 lg:gap-3 lg:px-5">
-      {/* Zone chips + view toggle */}
-      <div className="flex items-center gap-2">
-        <div className="no-scrollbar flex flex-1 gap-[6px] overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => filterByLocation(null)}
-            className={`flex-none cursor-pointer rounded-full px-3 py-[7px] text-[13px] font-semibold ${
-              !activeLocationId
-                ? "border-none bg-[#1f2622] text-[#fbfaf6]"
-                : "border border-border bg-[#fbfaf6] text-[#1f2622] dark:bg-card"
-            }`}
-          >
-            All
-          </button>
-          {topLocations.map((loc, i) => {
-            const colors = ZONE_CHIP_COLORS[i % 5]!;
-            const isActive = activeLocationId === loc.id;
-            return (
-              <button
-                key={loc.id}
-                type="button"
-                onClick={() => filterByLocation(loc.id)}
-                className={`flex flex-none cursor-pointer items-center gap-[6px] rounded-full px-3 py-[7px] text-[13px] font-semibold ${
-                  isActive ? "border-none" : "border border-border"
-                }`}
-                style={isActive ? { background: colors.bg, color: colors.text } : undefined}
-              >
-                <span className="h-2 w-2 rounded-[2px]" style={{ background: colors.dot }} />
-                {loc.name}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex shrink-0 rounded-[10px] bg-surface-soft p-[3px]">
-          {(["list", "grid"] as const).map((v) => (
+    <>
+      <div className="sticky top-0 z-20 flex flex-col gap-[14px] border-b border-border/60 bg-surface px-4 pb-3 pt-4 lg:gap-3 lg:px-5 lg:pt-6">
+        {header}
+        {/* Zone chips + view toggle */}
+        <div className="flex items-center gap-2">
+          <div className="no-scrollbar flex flex-1 gap-[6px] overflow-x-auto">
             <button
-              key={v}
               type="button"
-              onClick={() => switchView(v)}
-              aria-label={v === "list" ? "List view" : "Grid view"}
-              aria-pressed={view === v}
-              className="relative cursor-pointer rounded-[8px] border-none bg-transparent px-[9px] py-[5px]"
+              onClick={() => filterByLocation(null)}
+              className={`flex-none cursor-pointer rounded-full px-3 py-[7px] text-[13px] font-semibold ${
+                !activeLocationId
+                  ? "border-none bg-[#1f2622] text-[#fbfaf6]"
+                  : "border border-border bg-[#fbfaf6] text-[#1f2622] dark:bg-card"
+              }`}
             >
-              {view === v && (
-                <motion.span
-                  layoutId="items-view-toggle"
-                  className="absolute inset-0 rounded-[8px] bg-white shadow-sm dark:bg-card"
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                />
-              )}
-              <span className={`material-symbols-rounded relative text-[20px] ${view === v ? "text-ink" : "text-muted"}`}>
-                {v === "list" ? "view_list" : "grid_view"}
-              </span>
+              All
             </button>
-          ))}
+            {topLocations.map((loc, i) => {
+              const colors = ZONE_CHIP_COLORS[i % 5]!;
+              const isActive = activeLocationId === loc.id;
+              return (
+                <button
+                  key={loc.id}
+                  type="button"
+                  onClick={() => filterByLocation(loc.id)}
+                  className={`flex flex-none cursor-pointer items-center gap-[6px] rounded-full px-3 py-[7px] text-[13px] font-semibold ${
+                    isActive ? "border-none" : "border border-border"
+                  }`}
+                  style={isActive ? { background: colors.bg, color: colors.text } : undefined}
+                >
+                  <span className="h-2 w-2 rounded-[2px]" style={{ background: colors.dot }} />
+                  {loc.name}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex shrink-0 rounded-[10px] bg-surface-soft p-[3px]">
+            {(["list", "grid"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => switchView(v)}
+                aria-label={v === "list" ? "List view" : "Grid view"}
+                aria-pressed={view === v}
+                className="relative cursor-pointer rounded-[8px] border-none bg-transparent px-[9px] py-[5px]"
+              >
+                {view === v && (
+                  <motion.span
+                    layoutId="items-view-toggle"
+                    className="absolute inset-0 rounded-[8px] bg-white shadow-sm dark:bg-card"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span
+                  className={`material-symbols-rounded relative text-[20px] ${view === v ? "text-ink" : "text-muted"}`}
+                >
+                  {v === "list" ? "view_list" : "grid_view"}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-
-      {/* Content */}
-      {view === "list" ? (
-        <ItemList groups={groupedByZone} locationNameById={locationNameById} selectedId={selectedId} onSelect={handleSelect} />
-      ) : (
-        <ItemGrid items={gridItems} locationNameById={locationNameById} selectedId={selectedId} onSelect={handleSelect} />
-      )}
-    </div>
+      <div className="flex flex-col px-4 pt-[14px] lg:px-5 lg:pt-3">
+        {view === "list" ? (
+          <ItemList
+            groups={groupedByZone}
+            locationNameById={locationNameById}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+          />
+        ) : (
+          <ItemGrid
+            items={gridItems}
+            locationNameById={locationNameById}
+            selectedId={selectedId}
+            onSelect={handleSelect}
+          />
+        )}
+      </div>
+    </>
   );
 }
 
@@ -267,13 +289,25 @@ function groupItemsByZone(items: Item[], locations: Location[], topLocations: Lo
   for (const loc of topLocations) {
     const list = groups.get(loc.id);
     if (list?.length) {
-      result.push({ zoneId: loc.id, zoneName: loc.name, zoneIndex: indexByZone.get(loc.id)!, color: colorByZone.get(loc.id)!, items: list });
+      result.push({
+        zoneId: loc.id,
+        zoneName: loc.name,
+        zoneIndex: indexByZone.get(loc.id)!,
+        color: colorByZone.get(loc.id)!,
+        items: list,
+      });
     }
   }
 
   for (const [zoneId, list] of groups) {
     if (zoneId && !topLocationIds.has(zoneId) && list.length) {
-      result.push({ zoneId, zoneName: locationNameById.get(zoneId) ?? "Unknown", zoneIndex: -1, color: "#7c867f", items: list });
+      result.push({
+        zoneId,
+        zoneName: locationNameById.get(zoneId) ?? "Unknown",
+        zoneIndex: -1,
+        color: "#7c867f",
+        items: list,
+      });
     }
   }
 
