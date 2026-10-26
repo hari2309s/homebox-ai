@@ -36,9 +36,11 @@ interface ItemEditFormProps {
   labels: { id: string; name: string; color: string | null }[];
   otherItems: { id: string; name: string }[];
   selectedLabelIds: string[];
+  onSaved?: () => void;
+  onCancel?: () => void;
 }
 
-export function ItemEditForm({ item, locations, labels, otherItems, selectedLabelIds }: ItemEditFormProps) {
+export function ItemEditForm({ item, locations, labels, otherItems, selectedLabelIds, onSaved, onCancel }: ItemEditFormProps) {
   const selected = new Set(selectedLabelIds);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,6 +48,7 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
     setError(null);
     try {
       await updateItemAction(formData);
+      onSaved?.();
     } catch (err) {
       // e.g. setting "Part of item" to one of this item's own sub-items — a
       // plain user mistake, not a crash: show it inline instead of letting
@@ -198,12 +201,23 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
       )}
 
       {error && (
-        <p role="alert" className="text-sm text-accent-hover">
+        <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
           {error}
         </p>
       )}
 
-      <SubmitButton className="self-start">Save changes</SubmitButton>
+      <div className="flex items-center gap-3">
+        <SubmitButton>Save changes</SubmitButton>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="cursor-pointer border-none bg-transparent text-sm font-semibold text-accent"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 }

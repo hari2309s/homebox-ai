@@ -2,6 +2,7 @@
 
 import { EmptyState, Spinner } from "@homebox-ai/ui";
 import Link from "next/link";
+import type { MouseEvent } from "react";
 
 interface Item {
   id: string;
@@ -15,15 +16,32 @@ interface Item {
 interface ItemGridProps {
   items: Item[];
   locationNameById: Map<string, string>;
+  selectedId: string | null;
+  onSelect: (itemId: string, event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
-function ItemCard({ item, locationNameById }: { item: Item; locationNameById: Map<string, string> }) {
+function ItemCard({
+  item,
+  locationNameById,
+  selected,
+  onSelect,
+}: {
+  item: Item;
+  locationNameById: Map<string, string>;
+  selected: boolean;
+  onSelect: ItemGridProps["onSelect"];
+}) {
   const locationName = item.locationId ? locationNameById.get(item.locationId) : null;
 
   return (
     <Link
       href={`/items/${item.id}`}
-      className="flex flex-col gap-2 rounded-[14px] border border-border bg-card p-[6px] no-underline shadow-card transition-transform hover:-translate-y-0.5"
+      onClick={(event) => onSelect(item.id, event)}
+      aria-current={selected ? "true" : undefined}
+      data-item-id={item.id}
+      className={`flex flex-col gap-2 rounded-[14px] border border-border bg-card p-[6px] no-underline shadow-card transition-transform hover:-translate-y-0.5 ${
+        selected ? "lg:shadow-[0_0_0_2px_var(--color-accent)]" : ""
+      }`}
     >
       <div className="relative overflow-hidden rounded-[10px] bg-surface-soft">
         {item.photoUrl ? (
@@ -54,7 +72,7 @@ function ItemCard({ item, locationNameById }: { item: Item; locationNameById: Ma
   );
 }
 
-export function ItemGrid({ items, locationNameById }: ItemGridProps) {
+export function ItemGrid({ items, locationNameById, selectedId, onSelect }: ItemGridProps) {
   if (items.length === 0) {
     return <EmptyState>No items match — try a different search.</EmptyState>;
   }
@@ -62,7 +80,13 @@ export function ItemGrid({ items, locationNameById }: ItemGridProps) {
   return (
     <div className="grid grid-cols-2 gap-[10px] pb-4">
       {items.map((item) => (
-        <ItemCard key={item.id} item={item} locationNameById={locationNameById} />
+        <ItemCard
+          key={item.id}
+          item={item}
+          locationNameById={locationNameById}
+          selected={item.id === selectedId}
+          onSelect={onSelect}
+        />
       ))}
     </div>
   );

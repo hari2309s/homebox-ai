@@ -6,7 +6,20 @@ import { useState } from "react";
 
 import { deleteItemAction } from "../actions";
 
-export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemName: string }) {
+const FLOATING =
+  "absolute right-4 top-[52px] flex h-[42px] w-[42px] cursor-pointer items-center justify-center rounded-xl border-none bg-rail text-ink shadow-card";
+
+export function DeleteItemButton({
+  itemId,
+  itemName,
+  className = FLOATING,
+  icon = "more_horiz",
+}: {
+  itemId: string;
+  itemName: string;
+  className?: string;
+  icon?: string;
+}) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,12 +44,13 @@ export function DeleteItemButton({ itemId, itemName }: { itemId: string; itemNam
       <TapButton
         type="button"
         onClick={() => setConfirmOpen(true)}
-        className="absolute right-4 top-[52px] flex h-[42px] w-[42px] cursor-pointer items-center justify-center rounded-xl border-none bg-[#fbfaf6] text-ink shadow-card dark:bg-card"
+        aria-label={`Delete ${itemName}`}
+        className={className}
       >
-        <span className="material-symbols-rounded">more_horiz</span>
+        <span className="material-symbols-rounded text-[20px]">{icon}</span>
       </TapButton>
       {error && (
-        <p role="alert" className="absolute right-4 top-[98px] rounded-xl bg-[#ecdccd] px-3 py-2 text-sm text-[#5a2e18]">
+        <p role="alert" className="absolute right-4 top-[98px] z-10 rounded-xl bg-[#ecdccd] px-3 py-2 text-sm text-[#5a2e18]">
           {error}
         </p>
       )}

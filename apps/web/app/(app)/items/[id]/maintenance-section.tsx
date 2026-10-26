@@ -1,10 +1,9 @@
 "use client";
 
-import { ConfirmDialog, Input, StaggerItem, StaggerList, SubmitButton, TapButton } from "@homebox-ai/ui";
+import { ConfirmDialog, Input, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { formatCurrency } from "../../../../lib/currency";
-import { formatDate } from "../../../../lib/date";
 import { addMaintenanceEntryAction, deleteMaintenanceEntryAction, updateMaintenanceEntryAction } from "../actions";
 
 interface MaintenanceEntry {
@@ -25,29 +24,26 @@ export function MaintenanceSection({
   entries: MaintenanceEntry[];
 }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 pb-3">
       {entries.length === 0 ? (
-        <p className="text-sm text-muted">No maintenance logged yet.</p>
+        <p className="m-0 text-[13px] text-muted">No care logged yet.</p>
       ) : (
-        <StaggerList className="m-0 flex list-none flex-col gap-2 p-0">
+        <ul className="m-0 flex list-none flex-col p-0">
           {entries.map((entry) => (
             <MaintenanceRow key={entry.id} itemId={itemId} itemCurrency={itemCurrency} entry={entry} />
           ))}
-        </StaggerList>
+        </ul>
       )}
 
-      <form
-        action={addMaintenanceEntryAction}
-        className="flex flex-col gap-2 rounded-md border border-dashed border-border p-3"
-      >
+      <form action={addMaintenanceEntryAction} className="flex flex-col gap-2 border-t border-border/40 pt-3">
         <input type="hidden" name="itemId" value={itemId} />
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Input name="name" placeholder="What was done" required className="sm:flex-1" />
-          <Input name="date" type="date" required />
-          <Input name="cost" placeholder="Cost" className="sm:w-24" />
+        <Input name="name" placeholder="What was done" aria-label="What was done" required />
+        <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-2">
+          <Input name="date" type="date" aria-label="Date" required className="w-full" />
+          <Input name="cost" placeholder="Cost" aria-label="Cost" className="w-full" />
         </div>
-        <Input name="description" placeholder="Notes (optional)" />
-        <SubmitButton className="self-start">Add entry</SubmitButton>
+        <Input name="description" placeholder="Notes (optional)" aria-label="Notes" />
+        <SubmitButton className="self-start">Log care</SubmitButton>
       </form>
     </div>
   );
@@ -86,7 +82,7 @@ function MaintenanceRow({
 
   if (editing) {
     return (
-      <StaggerItem className="flex flex-col gap-1">
+      <li className="flex flex-col gap-1 py-2">
         <form
           action={async (formData) => {
             setError(null);
@@ -97,7 +93,7 @@ function MaintenanceRow({
               setError(err instanceof Error ? err.message : "Couldn't save that change");
             }
           }}
-          className="flex flex-col gap-2 rounded-md border border-border bg-card p-3"
+          className="flex flex-col gap-2 rounded-[10px] border border-border bg-selected-soft p-3"
         >
           <input type="hidden" name="itemId" value={itemId} />
           <input type="hidden" name="entryId" value={entry.id} />
@@ -123,40 +119,41 @@ function MaintenanceRow({
             {error}
           </p>
         )}
-      </StaggerItem>
+      </li>
     );
   }
 
+  const cost = formatCurrency(entry.cost, itemCurrency);
+
   return (
-    <StaggerItem hover className="flex flex-col gap-1 rounded-md border border-border bg-card px-3 py-2.5">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-0.5">
-          <span className="font-medium text-ink">{entry.name}</span>
-          <span className="text-xs text-muted">
-            {formatDate(entry.date)}
-            {formatCurrency(entry.cost, itemCurrency) ? ` · ${formatCurrency(entry.cost, itemCurrency)}` : ""}
-          </span>
-          {entry.description && <span className="text-sm text-body">{entry.description}</span>}
-        </div>
-        <div className="flex shrink-0 items-center gap-2 text-sm">
+    <li className="flex flex-col border-b border-border/40 py-2 last:border-b-0">
+      <div className="grid grid-cols-[64px_minmax(0,1fr)_auto_auto] items-center gap-2 text-[13px]">
+        <span className="font-mono text-[10px] text-muted">{shortDate(entry.date)}</span>
+        <span className="min-w-0 truncate text-ink" title={entry.description ?? entry.name}>
+          {entry.name}
+        </span>
+        <span className="font-mono text-[12px] text-body">{cost ?? ""}</span>
+        <span className="flex gap-1">
           <TapButton
             type="button"
             onClick={() => setEditing(true)}
-            className="cursor-pointer border-none bg-transparent font-semibold text-ink"
+            aria-label={`Edit ${entry.name}`}
+            className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-ink"
           >
-            Edit
+            <span className="material-symbols-rounded text-[16px]">edit</span>
           </TapButton>
           <TapButton
             type="button"
             onClick={() => setConfirmOpen(true)}
-            className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
+            aria-label={`Delete ${entry.name}`}
+            className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-[#b0643f]"
           >
-            Delete
+            <span className="material-symbols-rounded text-[16px]">close</span>
           </TapButton>
-        </div>
+        </span>
       </div>
       {error && (
-        <p role="alert" className="text-sm text-accent-hover">
+        <p role="alert" className="mt-1 text-sm text-[#b0643f]">
           {error}
         </p>
       )}
@@ -168,6 +165,12 @@ function MaintenanceRow({
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}
       />
-    </StaggerItem>
+    </li>
   );
+}
+
+function shortDate(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  if (!y || !m || !d) return dateKey;
+  return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "2-digit" }).format(new Date(y, m - 1, d)).toUpperCase();
 }

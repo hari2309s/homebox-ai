@@ -1,16 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
 
 import { ItemGrid } from "./item-grid";
-import { ItemList } from "./item-list";
+import { ItemList, type ZoneGroup } from "./item-list";
 
 type View = "list" | "grid";
 const STORAGE_KEY = "items-view";
+
+function isDesktop() {
+  return typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches;
+}
 
 const ZONE_CHIP_COLORS: Record<number, { bg: string; dot: string; text: string }> = {
   0: { bg: "#f3f1ea", dot: "#c5c9bf", text: "#1f2622" },
@@ -44,6 +48,7 @@ interface ItemViewClientProps {
   activeLocationId: string | null;
   topLocations: Location[];
   locationTotal: Record<string, number>;
+  selectedId: string | null;
 }
 
 export function ItemViewClient({
@@ -53,6 +58,7 @@ export function ItemViewClient({
   activeLocationId,
   topLocations,
   locationTotal: _locationTotal,
+  selectedId,
 }: ItemViewClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -113,6 +119,22 @@ export function ItemViewClient({
     router.push(`/items?${params.toString()}`);
   }
 
+  const selectItem = useCallback(
+    (itemId: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("selected", itemId);
+      router.replace(`/items?${params.toString()}`, { scroll: false });
+      document.querySelector(`[data-item-id="${itemId}"]`)?.scrollIntoView({ block: "nearest" });
+    },
+    [router, searchParams],
+  );
+
+  function handleSelect(itemId: string, event: MouseEvent<HTMLAnchorElement>) {
+    if (!isDesktop() || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    selectItem(itemId);
+  }
+
   const gridItems = items.map((item) => ({
     id: item.id,
     name: item.name,
@@ -123,9 +145,30 @@ export function ItemViewClient({
   }));
 
   const groupedByZone = view === "list" ? groupItemsByZone(items, locations, topLocations) : [];
+  const orderedIds = view === "list" ? groupedByZone.flatMap((g) => g.items.map((i) => i.id)) : items.map((i) => i.id);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (!isDesktop() || event.altKey || event.metaKey || event.ctrlKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        if (orderedIds.length === 0) return;
+        event.preventDefault();
+        const current = selectedId ? orderedIds.indexOf(selectedId) : -1;
+        const next =
+          event.key === "ArrowDown" ? Math.min(orderedIds.length - 1, current + 1) : Math.max(0, current === -1 ? 0 : current - 1);
+        selectItem(orderedIds[next]!);
+      } else if (event.key === "Enter" && selectedId && target?.tagName !== "A" && target?.tagName !== "BUTTON") {
+        router.push(`/items/${selectedId}`);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [orderedIds, selectedId, selectItem, router]);
 
   return (
-    <div className="flex flex-col gap-[14px] px-4">
+    <div className="flex flex-col gap-[14px] px-4 lg:gap-3 lg:px-5">
       {/* Zone chips + view toggle */}
       <div className="flex items-center gap-2">
         <div className="no-scrollbar flex flex-1 gap-[6px] overflow-x-auto">
@@ -160,7 +203,7 @@ export function ItemViewClient({
           })}
         </div>
 
-        <div className="flex shrink-0 rounded-[10px] bg-[#e9e8e1] p-[3px] dark:bg-[#1e2420]">
+        <div className="flex shrink-0 rounded-[10px] bg-surface-soft p-[3px]">
           {(["list", "grid"] as const).map((v) => (
             <button
               key={v}
@@ -187,19 +230,12 @@ export function ItemViewClient({
 
       {/* Content */}
       {view === "list" ? (
-        <ItemList groups={groupedByZone} locationNameById={locationNameById} />
+        <ItemList groups={groupedByZone} locationNameById={locationNameById} selectedId={selectedId} onSelect={handleSelect} />
       ) : (
-        <ItemGrid items={gridItems} locationNameById={locationNameById} />
+        <ItemGrid items={gridItems} locationNameById={locationNameById} selectedId={selectedId} onSelect={handleSelect} />
       )}
     </div>
   );
-}
-
-interface ZoneGroup {
-  zoneId: string | null;
-  zoneName: string;
-  color: string;
-  items: Item[];
 }
 
 function groupItemsByZone(items: Item[], locations: Location[], topLocations: Location[]): ZoneGroup[] {
@@ -225,24 +261,25 @@ function groupItemsByZone(items: Item[], locations: Location[], topLocations: Lo
 
   const COLORS = ["#c5c9bf", "#3f6b45", "#b0643f", "#8a7a4f", "#7c867f"];
   const colorByZone = new Map(topLocations.map((l, i) => [l.id, COLORS[i % COLORS.length]!]));
+  const indexByZone = new Map(topLocations.map((l, i) => [l.id, i]));
 
   const result: ZoneGroup[] = [];
   for (const loc of topLocations) {
     const list = groups.get(loc.id);
     if (list?.length) {
-      result.push({ zoneId: loc.id, zoneName: loc.name, color: colorByZone.get(loc.id)!, items: list });
+      result.push({ zoneId: loc.id, zoneName: loc.name, zoneIndex: indexByZone.get(loc.id)!, color: colorByZone.get(loc.id)!, items: list });
     }
   }
 
   for (const [zoneId, list] of groups) {
     if (zoneId && !topLocationIds.has(zoneId) && list.length) {
-      result.push({ zoneId, zoneName: locationNameById.get(zoneId) ?? "Unknown", color: "#7c867f", items: list });
+      result.push({ zoneId, zoneName: locationNameById.get(zoneId) ?? "Unknown", zoneIndex: -1, color: "#7c867f", items: list });
     }
   }
 
   const unassigned = groups.get(null);
   if (unassigned?.length) {
-    result.push({ zoneId: null, zoneName: "Unassigned", color: "#7c867f", items: unassigned });
+    result.push({ zoneId: null, zoneName: "Unassigned", zoneIndex: -1, color: "#7c867f", items: unassigned });
   }
 
   return result;

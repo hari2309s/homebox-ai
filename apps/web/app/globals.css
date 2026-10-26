@@ -125,6 +125,7 @@
   --plan-bed-line: #9fb894;
   --plan-drive: #e2e2dc;
   --plan-front: #ecebe4;
+  --stripe-mix: 100%;
 }
 
 :root[data-theme="dark"] {
@@ -145,6 +146,7 @@
   --plan-bed-line: #3b5a40;
   --plan-drive: #1c231f;
   --plan-front: #252a27;
+  --stripe-mix: 16%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -166,6 +168,7 @@
     --plan-bed-line: #3b5a40;
     --plan-drive: #1c231f;
     --plan-front: #252a27;
+    --stripe-mix: 16%;
   }
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { ConfirmDialog, Select, SubmitButton, TapButton } from "@homebox-ai/ui";
-import { motion } from "framer-motion";
 import { useState } from "react";
 
 import { deleteAttachmentAction, setPrimaryAttachmentAction, uploadItemAttachmentAction } from "../actions";
@@ -12,6 +11,13 @@ interface AttachmentRecord {
   isPrimary: boolean;
   url: string | null;
 }
+
+const ATTACHMENT_STYLES: Record<string, { icon: string; bg: string; fg: string }> = {
+  photo: { icon: "image", bg: "#dfe8d6", fg: "#3f6b45" },
+  receipt: { icon: "receipt_long", bg: "#ecdccd", fg: "#b0643f" },
+  warranty: { icon: "verified_user", bg: "#dde6f0", fg: "#2c4767" },
+  manual: { icon: "menu_book", bg: "#e7e1d0", fg: "#5a4f33" },
+};
 
 export function AttachmentsSection({ itemId, attachments }: { itemId: string; attachments: AttachmentRecord[] }) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -36,90 +42,102 @@ export function AttachmentsSection({ itemId, attachments }: { itemId: string; at
     }
   }
 
+  let photoNumber = 0;
+
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 pb-3">
       {error && (
-        <p role="alert" className="text-sm text-accent-hover">
+        <p role="alert" className="rounded-xl bg-[#ecdccd] px-3 py-2.5 text-sm text-[#5a2e18]">
           {error}
         </p>
       )}
-      {attachments.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {attachments.map((attachment) => (
-            <motion.div
-              key={attachment.id}
-              whileHover={{ scale: 1.015, y: -1 }}
-              whileTap={{ scale: 0.985 }}
-              transition={{ type: "spring", stiffness: 400, damping: 22 }}
-              className="flex flex-col gap-1"
-            >
-              <div className="relative">
+      {attachments.length === 0 ? (
+        <p className="m-0 text-[13px] text-muted">No photos, receipts or manuals yet.</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-[6px]">
+          {attachments.map((attachment) => {
+            const style = ATTACHMENT_STYLES[attachment.type] ?? ATTACHMENT_STYLES.manual!;
+            const title =
+              attachment.type === "photo" ? `Photo ${++photoNumber}` : attachment.type[0]!.toUpperCase() + attachment.type.slice(1);
+            return (
+              <div
+                key={attachment.id}
+                className="group flex min-w-0 items-center gap-2 rounded-[10px] border border-border/60 p-[7px]"
+              >
+                <span
+                  className="material-symbols-rounded flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[16px]"
+                  style={{ background: style.bg, color: style.fg }}
+                >
+                  {style.icon}
+                </span>
                 {attachment.url ? (
-                  <a href={attachment.url} target="_blank" rel="noreferrer" className="block">
-                    {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL, not a static/local asset */}
-                    <img
-                      src={attachment.url}
-                      alt={attachment.type}
-                      className="aspect-square w-full rounded-md border border-border object-cover"
-                    />
+                  <a
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="min-w-0 flex-1 truncate text-[12px] font-medium text-ink no-underline hover:underline"
+                  >
+                    {title}
                   </a>
                 ) : (
-                  // Signed URLs can fail transiently — falling back to this instead of
-                  // rendering nothing keeps the delete/cover controls reachable either way.
-                  <div className="flex aspect-square w-full items-center justify-center rounded-md border border-border bg-surface-soft text-center text-xs text-muted">
-                    Preview unavailable
-                  </div>
-                )}
-                {attachment.isPrimary && (
-                  <span className="absolute left-1 top-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold text-white">
-                    Cover
+                  <span className="min-w-0 flex-1 truncate text-[12px] font-medium text-muted" title="Preview unavailable">
+                    {title}
                   </span>
                 )}
-              </div>
-              <div className="flex items-center justify-between gap-1 text-xs">
-                <span className="capitalize text-muted">{attachment.type}</span>
-                <div className="flex gap-2">
-                  {!attachment.isPrimary && (
-                    <form action={setPrimaryAttachmentAction}>
+                {attachment.type === "photo" &&
+                  (attachment.isPrimary ? (
+                    <span
+                      className="material-symbols-rounded text-[16px] text-accent"
+                      style={{ fontVariationSettings: "'FILL' 1" }}
+                      title="Cover photo"
+                    >
+                      star
+                    </span>
+                  ) : (
+                    <form action={setPrimaryAttachmentAction} className="flex">
                       <input type="hidden" name="itemId" value={itemId} />
                       <input type="hidden" name="attachmentId" value={attachment.id} />
                       <TapButton
                         type="submit"
-                        className="cursor-pointer border-none bg-transparent font-semibold text-ink"
+                        aria-label={`Make ${title} the cover photo`}
+                        className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-accent"
                       >
-                        Set cover
+                        <span className="material-symbols-rounded text-[16px]">star</span>
                       </TapButton>
                     </form>
-                  )}
-                  <TapButton
-                    type="button"
-                    onClick={() => setPendingDeleteId(attachment.id)}
-                    className="cursor-pointer border-none bg-transparent font-semibold text-accent-hover"
-                  >
-                    Delete
-                  </TapButton>
-                </div>
+                  ))}
+                <TapButton
+                  type="button"
+                  onClick={() => setPendingDeleteId(attachment.id)}
+                  aria-label={`Delete ${title}`}
+                  className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-[#b0643f]"
+                >
+                  <span className="material-symbols-rounded text-[16px]">close</span>
+                </TapButton>
               </div>
-            </motion.div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      <form action={uploadItemAttachmentAction} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <form action={uploadItemAttachmentAction} className="flex flex-col gap-2 border-t border-border/40 pt-3">
         <input type="hidden" name="itemId" value={itemId} />
         <input
           type="file"
           name="file"
           required
-          className="flex-1 text-sm text-body file:mr-2 file:cursor-pointer file:rounded-md file:border-none file:bg-card file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-ink"
+          aria-label="File to attach"
+          className="min-w-0 text-[12px] text-body file:mr-2 file:cursor-pointer file:rounded-lg file:border file:border-solid file:border-border file:bg-card file:px-3 file:py-1.5 file:text-[12px] file:font-semibold file:text-ink"
         />
-        <Select name="type" defaultValue="manual" className="sm:w-40">
-          <option value="manual">Manual</option>
-          <option value="warranty">Warranty</option>
-          <option value="receipt">Receipt</option>
-          <option value="photo">Photo</option>
-        </Select>
-        <SubmitButton>Upload</SubmitButton>
+        <div className="flex gap-2">
+          <Select name="type" defaultValue="photo" aria-label="Attachment type" className="flex-1">
+            <option value="photo">Photo</option>
+            <option value="receipt">Receipt</option>
+            <option value="warranty">Warranty</option>
+            <option value="manual">Manual</option>
+          </Select>
+          <SubmitButton>Upload</SubmitButton>
+        </div>
       </form>
 
       <ConfirmDialog

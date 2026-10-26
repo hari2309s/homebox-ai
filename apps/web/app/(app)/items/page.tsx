@@ -1,23 +1,25 @@
 import { itemQueries } from "@homebox-ai/db";
 import { Input, Select, SubmitButton } from "@homebox-ai/ui";
+import { Suspense } from "react";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { listLabelsCached, listLocationsCached } from "../../../lib/cached-queries";
 import { createItemAction } from "./actions";
+import { EmptyPane, ItemPane } from "./item-pane";
 import { ItemViewClient } from "./item-view-client";
 
 interface ItemsPageProps {
-  searchParams: Promise<{ q?: string; locationId?: string; location?: string; archived?: string }>;
+  searchParams: Promise<{ q?: string; locationId?: string; location?: string; archived?: string; selected?: string }>;
 }
 
 export default async function ItemsPage({ searchParams }: ItemsPageProps) {
-  const { q, locationId: filterLocationId, location: locationFromDashboard, archived } = await searchParams;
+  const { q, locationId: filterLocationId, location: locationFromDashboard, archived, selected } = await searchParams;
   const effectiveLocationId = filterLocationId ?? locationFromDashboard;
   const includeArchived = archived === "1";
   const user = await getSessionUser();
 
-  const [items, locations, _labels, itemCounts] = user
+  const [items, locations, labels, itemCounts] = user
     ? await Promise.all([
         itemQueries.searchItemsWithPrimaryPhoto(user.id, { query: q, locationId: effectiveLocationId, includeArchived }),
         listLocationsCached(user.id),
@@ -40,54 +42,89 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
   }
 
   return (
-    <div data-scroll-container className="flex h-full flex-col overflow-y-auto">
-      <div className="flex flex-col gap-[14px] p-4 pb-2">
-        {/* Header */}
-        <div className="flex items-end justify-between px-1">
-          <div>
-            <div className="font-serif text-[32px] leading-none text-ink">Things</div>
-            <div className="mt-1 font-mono text-[11px] tracking-wide text-muted">
-              {totalItems} ACROSS {topLocations.length} ZONES
+    <div className="flex h-full flex-col lg:flex-row">
+      <div
+        data-scroll-container
+        className="flex h-full flex-col overflow-y-auto lg:w-[440px] lg:flex-none lg:border-r lg:border-border"
+      >
+        <div className="flex flex-col gap-[14px] p-4 pb-2 lg:gap-3 lg:px-5 lg:pb-3 lg:pt-6">
+          <div className="flex items-end justify-between px-1 lg:px-0">
+            <div>
+              <h1 className="m-0 font-serif text-[32px] font-normal leading-none text-ink lg:text-[30px]">Things</h1>
+              <div className="mt-1 font-mono text-[11px] tracking-wide text-muted lg:text-[10px]">
+                {totalItems} ACROSS {topLocations.length} {topLocations.length === 1 ? "ZONE" : "ZONES"}
+              </div>
             </div>
           </div>
+
+          <form method="GET" role="search" className="flex gap-2">
+            <label className="flex min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-border bg-card px-3 focus-within:border-accent">
+              <span className="material-symbols-rounded text-[20px] text-muted">search</span>
+              <input
+                name="q"
+                type="search"
+                defaultValue={q ?? ""}
+                placeholder="Filter things"
+                aria-label="Filter things"
+                className="h-[40px] min-w-0 flex-1 border-none bg-transparent text-[14px] text-ink outline-none placeholder:text-muted"
+              />
+              <span className="flex shrink-0 items-center gap-1 text-[12px] font-semibold text-body">
+                <input
+                  type="checkbox"
+                  name="archived"
+                  value="1"
+                  defaultChecked={includeArchived}
+                  aria-label="Show archived"
+                  className="accent-accent"
+                />
+                <span aria-hidden>Show archived</span>
+              </span>
+            </label>
+            {effectiveLocationId && <input type="hidden" name="locationId" value={effectiveLocationId} />}
+            <button
+              type="submit"
+              aria-label="Search"
+              className="flex h-[42px] w-[42px] shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card text-ink"
+            >
+              <span className="material-symbols-rounded text-[20px]">arrow_forward</span>
+            </button>
+          </form>
         </div>
 
-        {/* Search */}
-        <form method="GET" className="flex gap-2">
-          <Input name="q" defaultValue={q ?? ""} placeholder="Search items…" className="flex-1" />
-          <input type="hidden" name="locationId" value={effectiveLocationId ?? ""} />
-          <button
-            type="submit"
-            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-border bg-card text-ink"
-          >
-            <span className="material-symbols-rounded text-[20px]">search</span>
-          </button>
-        </form>
+        <ItemViewClient
+          items={items}
+          locations={locations}
+          locationNameById={locationNameById}
+          activeLocationId={effectiveLocationId ?? null}
+          topLocations={topLocations}
+          locationTotal={Object.fromEntries(topLocations.map((l) => [l.id, locationTotal(l.id)]))}
+          selectedId={selected ?? null}
+        />
+
+        <div className="sticky bottom-0 mt-auto border-t border-border/70 bg-surface/80 p-4 backdrop-blur-lg lg:px-5">
+          <form action={createItemAction} className="flex gap-2">
+            <Input name="name" placeholder="Quick add…" aria-label="New thing name" required className="flex-1" />
+            <Select name="locationId" defaultValue={effectiveLocationId ?? ""} aria-label="Location" className="max-w-[140px]">
+              <option value="">No location</option>
+              {locations.map((location) => (
+                <option key={location.id} value={location.id}>{location.name}</option>
+              ))}
+            </Select>
+            <SubmitButton className="!px-4" aria-label="Add thing">
+              <span className="material-symbols-rounded text-[18px]">add</span>
+            </SubmitButton>
+          </form>
+        </div>
       </div>
 
-      <ItemViewClient
-        items={items}
-        locations={locations}
-        locationNameById={locationNameById}
-        activeLocationId={effectiveLocationId ?? null}
-        topLocations={topLocations}
-        locationTotal={Object.fromEntries(topLocations.map((l) => [l.id, locationTotal(l.id)]))}
-      />
-
-      {/* Inline add form */}
-      <div className="sticky bottom-0 border-t border-border/70 bg-surface/80 p-4 backdrop-blur-lg">
-        <form action={createItemAction} className="flex gap-2">
-          <Input name="name" placeholder="Quick add…" required className="flex-1" />
-          <Select name="locationId" defaultValue={effectiveLocationId ?? ""} className="max-w-[140px]">
-            <option value="">No location</option>
-            {locations.map((location) => (
-              <option key={location.id} value={location.id}>{location.name}</option>
-            ))}
-          </Select>
-          <SubmitButton className="!px-4">
-            <span className="material-symbols-rounded text-[18px]">add</span>
-          </SubmitButton>
-        </form>
+      <div className="hidden min-w-0 flex-1 overflow-y-auto lg:block">
+        {user && selected ? (
+          <Suspense key={selected} fallback={<div className="p-7 font-mono text-[10px] text-muted">LOADING…</div>}>
+            <ItemPane userId={user.id} itemId={selected} locations={locations} labels={labels} />
+          </Suspense>
+        ) : (
+          <EmptyPane locations={locations} />
+        )}
       </div>
     </div>
   );
