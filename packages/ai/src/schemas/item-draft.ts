@@ -7,10 +7,16 @@ import { z } from "zod";
 // symbol/code it actually sees (e.g. "₹" -> "INR", "kr" -> "SEK"); the UI
 // layer (apps/web/lib/currency.ts's normalizeCurrency) is what falls back to
 // a supported default if this doesn't match one of the ones the app offers.
-const currencyField = z
-  .string()
-  .optional()
-  .describe("ISO 4217 currency code inferred from a price symbol/text if visible (e.g. USD, EUR, GBP, INR)");
+//
+// A factory, not a shared constant: reusing one schema instance in both
+// itemDraftSchema and receiptDraftSchema makes the JSON-schema conversion
+// emit a "$ref" for the second use, which Gemini's response_schema rejects
+// (400 "Unknown name \"$ref\"").
+const currencyField = () =>
+  z
+    .string()
+    .optional()
+    .describe("ISO 4217 currency code inferred from a price symbol/text if visible (e.g. USD, EUR, GBP, INR)");
 
 export const itemDraftSchema = z.object({
   name: z.string().min(1),
@@ -21,7 +27,7 @@ export const itemDraftSchema = z.object({
   // for an integer and compiles to the widely-supported `minimum` keyword.
   quantity: z.number().int().min(1).default(1),
   purchasePrice: z.string().optional().describe("Decimal string, e.g. '129.99'"),
-  currency: currencyField,
+  currency: currencyField(),
   purchaseDate: z.string().optional().describe("ISO date, e.g. '2024-03-01'"),
   suggestedLabel: z.string().optional().describe("Best-guess label/category name"),
   suggestedLocation: z.string().optional().describe("Best-guess location name"),
@@ -33,7 +39,7 @@ export const receiptDraftSchema = z.object({
   items: z.array(itemDraftSchema),
   merchant: z.string().optional(),
   purchaseDate: z.string().optional().describe("ISO date the receipt was dated"),
-  currency: currencyField,
+  currency: currencyField(),
 });
 
 export type ReceiptDraft = z.infer<typeof receiptDraftSchema>;
