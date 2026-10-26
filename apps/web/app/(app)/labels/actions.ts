@@ -1,6 +1,6 @@
 "use server";
 
-import { labelQueries } from "@homebox-ai/db";
+import { itemLabelQueries, labelQueries } from "@homebox-ai/db";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 import { requireSessionUser } from "@homebox-ai/supabase/server";
@@ -41,4 +41,13 @@ export async function deleteLabelAction(formData: FormData) {
   await labelQueries.deleteLabel(user.id, id);
   revalidatePath("/labels");
   revalidateTag(labelTag(user.id));
+}
+
+/** Tags or untags one thing — the labels pane's ✕ and its Undo. */
+export async function setItemTaggedAction(itemId: string, labelId: string, tagged: boolean) {
+  const user = await requireSessionUser();
+  if (tagged) await itemLabelQueries.addItemLabel(user.id, String(itemId), String(labelId));
+  else await itemLabelQueries.removeItemLabel(user.id, String(itemId), String(labelId));
+  revalidatePath("/labels");
+  revalidatePath("/items", "layout");
 }

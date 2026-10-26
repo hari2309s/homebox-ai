@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { itemLabels, items } from "../schema";
@@ -32,4 +32,14 @@ export function listAllItemLabelsForUser(userId: string) {
       .innerJoin(items, eq(itemLabels.itemId, items.id))
       .where(eq(items.ownerId, ownerId));
   });
+}
+
+export function addItemLabel(userId: string, itemId: string, labelId: string) {
+  return withRLS(userId, (tx) => tx.insert(itemLabels).values({ itemId, labelId }).onConflictDoNothing());
+}
+
+export function removeItemLabel(userId: string, itemId: string, labelId: string) {
+  return withRLS(userId, (tx) =>
+    tx.delete(itemLabels).where(and(eq(itemLabels.itemId, itemId), eq(itemLabels.labelId, labelId))),
+  );
 }
