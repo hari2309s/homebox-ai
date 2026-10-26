@@ -31,13 +31,22 @@ const RELATIVE_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
 
 const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
-function timeAgo(iso: string) {
+export function timeAgo(iso: string) {
   const diffSeconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000);
   for (const [unit, secondsInUnit] of RELATIVE_UNITS) {
     if (Math.abs(diffSeconds) >= secondsInUnit)
       return relativeTimeFormatter.format(-Math.round(diffSeconds / secondsInUnit), unit);
   }
   return relativeTimeFormatter.format(-diffSeconds, "second");
+}
+
+/** Compact "2H" / "3D" stamp for the desktop conversations rail. */
+export function shortAgo(iso: string) {
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (minutes < 60) return `${minutes}M`;
+  if (minutes < 60 * 24) return `${Math.round(minutes / 60)}H`;
+  if (minutes < 60 * 24 * 7) return `${Math.round(minutes / 1440)}D`;
+  return `${Math.round(minutes / 10080)}W`;
 }
 
 export function HistorySheet({ open, sessions, activeSessionId, loadingSessionId, onClose, onSelect, onNewChat }: HistorySheetProps) {
