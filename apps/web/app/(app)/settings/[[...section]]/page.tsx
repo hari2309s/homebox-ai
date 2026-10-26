@@ -203,7 +203,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
             </div>
           }
         >
-          <HouseholdSection />
+          <HouseholdSection selfEmail={email} selfName={displayName} />
         </SettingsSection>
 
         <SettingsSection slug="data" active={active}>

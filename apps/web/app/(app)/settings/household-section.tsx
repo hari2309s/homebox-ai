@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, ConfirmDialog, Spinner, StaggerItem, StaggerList, TapButton } from "@homebox-ai/ui";
-import { useEffect, useState } from "react";
+import { ConfirmDialog, Spinner } from "@homebox-ai/ui";
+import { useEffect, useId, useState } from "react";
 
 import {
   createInviteAction,
@@ -10,33 +10,126 @@ import {
   listPendingInvitesAction,
   removeMemberAction,
   revokeInviteAction,
+  setMemberRelationshipAction,
 } from "./actions/sharing";
 
-interface ShareStatus {
-  role: "owner" | "member";
-  ownerEmail?: string | null;
-  members: { userId: string; email: string | null }[];
-}
-
+type ShareStatus = Awaited<ReturnType<typeof getShareStatusAction>>;
 type PendingInvite = Awaited<ReturnType<typeof listPendingInvitesAction>>[number];
 
-export function HouseholdSection() {
+const RELATIONSHIPS = [
+  "Partner",
+  "Spouse",
+  "Child",
+  "Daughter",
+  "Son",
+  "Parent",
+  "Sibling",
+  "Grandparent",
+  "Housemate",
+  "Friend",
+];
+const AVATAR_COLORS = ["#5b7fa6", "#b0643f", "#8a7a4f", "#3f8a8a"];
+const SMALL = "cursor-pointer rounded-[9px] px-3 py-[7px] text-[12px] font-semibold disabled:opacity-50";
+
+function initialOf(text: string | null | undefined) {
+  return (text ?? "?").trim().charAt(0).toUpperCase() || "?";
+}
+
+function daysLeft(expiresAt: Date | string) {
+  const days = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86_400_000);
+  return days <= 0 ? "Expired" : `Expires in ${days} ${days === 1 ? "day" : "days"}`;
+}
+
+function RoleChip({ role }: { role: "owner" | "member" | "pending" }) {
+  const style =
+    role === "owner"
+      ? "bg-selected text-(--plan-ink)"
+      : role === "pending"
+        ? "bg-[#f6e7c4] text-[#6b4e10] dark:bg-[#2e2a1a] dark:text-[#e8d29a]"
+        : "bg-surface-soft text-body";
+  return <span className={`rounded-[6px] px-[7px] py-1 font-mono text-[10px] ${style}`}>{role.toUpperCase()}</span>;
+}
+
+function RelationshipInput({
+  value,
+  onSave,
+  label,
+}: {
+  value: string | null;
+  onSave: (next: string) => Promise<void>;
+  label: string;
+}) {
+  const listId = useId();
+  const [draft, setDraft] = useState(value ?? "");
+  const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
+  useEffect(() => setDraft(value ?? ""), [value]);
+
+  async function commit() {
+    if (draft.trim() === (value ?? "")) return;
+    setState("saving");
+    try {
+      await onSave(draft);
+      setState("saved");
+      setTimeout(() => setState("idle"), 1500);
+    } catch {
+      setState("idle");
+      setDraft(value ?? "");
+    }
+  }
+
+  return (
+    <span className="flex items-center gap-1">
+      <input
+        list={listId}
+        value={draft}
+        maxLength={40}
+        placeholder="Relationship"
+        aria-label={label}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            event.currentTarget.blur();
+          }
+        }}
+        className="w-[124px] rounded-[8px] border border-border bg-card px-2 py-[5px] text-[12px] text-ink outline-none placeholder:text-muted focus:border-accent"
+      />
+      <datalist id={listId}>
+        {RELATIONSHIPS.map((r) => (
+          <option key={r} value={r} />
+        ))}
+      </datalist>
+      <span aria-live="polite" className="w-4 text-accent">
+        {state === "saving" ? (
+          <Spinner size={12} />
+        ) : state === "saved" ? (
+          <span className="material-symbols-rounded text-[16px]">check</span>
+        ) : null}
+      </span>
+    </span>
+  );
+}
+
+export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; selfName: string }) {
   const [status, setStatus] = useState<ShareStatus | null>(null);
   const [invites, setInvites] = useState<PendingInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [relationship, setRelationship] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const [pendingRemoveMemberId, setPendingRemoveMemberId] = useState<string | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<{ userId: string; label: string } | null>(null);
   const [removingMember, setRemovingMember] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const inviteListId = useId();
 
   async function refresh() {
     const [nextStatus, nextInvites] = await Promise.all([getShareStatusAction(), listPendingInvitesAction()]);
     setStatus(nextStatus);
-    setInvites(nextInvites);
+    setInvites(nextInvites.filter((invite) => new Date(invite.expiresAt).getTime() > Date.now()));
   }
 
   useEffect(() => {
@@ -44,42 +137,6 @@ export function HouseholdSection() {
       .catch(() => setError("Couldn't load household info"))
       .finally(() => setLoading(false));
   }, []);
-
-  /** Shared busy/error/finally shape for the household actions below — each one only differs in the busy flag, the action itself, and what to reset once it settles. */
-  async function runBusy(
-    setBusy: (busy: boolean) => void,
-    action: () => Promise<void>,
-    fallbackMessage: string,
-    onSettled?: () => void,
-  ) {
-    setError(null);
-    setBusy(true);
-    try {
-      await action();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : fallbackMessage);
-    } finally {
-      setBusy(false);
-      onSettled?.();
-    }
-  }
-
-  async function handleInvite() {
-    setCreating(true);
-    setError(null);
-    try {
-      const invite = await createInviteAction();
-      if (!invite) throw new Error("Couldn't create an invite");
-      await refresh();
-      const link = inviteLink(invite.token);
-      await navigator.clipboard.writeText(link).catch(() => {});
-      setCopiedToken(invite.token);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't create an invite");
-    } finally {
-      setCreating(false);
-    }
-  }
 
   function inviteLink(token: string) {
     return `${window.location.origin}/join/${token}`;
@@ -90,57 +147,65 @@ export function HouseholdSection() {
     setCopiedToken(token);
   }
 
-  async function handleLeave() {
-    await runBusy(
-      setLeaving,
-      async () => {
-        await leaveHouseholdAction();
-        await refresh();
-      },
-      "Couldn't leave this household",
-      () => setLeaveConfirmOpen(false),
-    );
+  async function run(action: () => Promise<void>, fallback: string) {
+    setError(null);
+    try {
+      await action();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : fallback);
+    }
   }
 
-  async function handleRemoveMember() {
-    if (!pendingRemoveMemberId) return;
-    const formData = new FormData();
-    formData.set("memberUserId", pendingRemoveMemberId);
-    await runBusy(
-      setRemovingMember,
-      async () => {
-        await removeMemberAction(formData);
-        await refresh();
-      },
-      "Couldn't remove this member",
-      () => setPendingRemoveMemberId(null),
-    );
+  async function handleInvite() {
+    setCreating(true);
+    await run(async () => {
+      const invite = await createInviteAction(relationship);
+      if (!invite) throw new Error("Couldn't create an invite");
+      await refresh();
+      setRelationship("");
+      await copyLink(invite.token);
+    }, "Couldn't create an invite");
+    setCreating(false);
   }
 
-  if (loading) {
-    return <Spinner size={16} />;
-  }
-
-  if (!status) {
-    return <p className="text-sm text-accent-hover">{error ?? "Couldn't load household info"}</p>;
-  }
+  if (loading) return <Spinner size={16} />;
+  if (!status) return <p className="m-0 text-sm text-[#b0643f]">{error ?? "Couldn't load household info"}</p>;
 
   if (status.role === "member") {
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-body">
-          You&apos;re sharing {status.ownerEmail ?? "another account"}&apos;s inventory.
+        <p className="m-0 text-[14px] leading-normal text-body">
+          You&apos;re sharing <b className="text-ink">{status.ownerEmail ?? "another account"}</b>&apos;s household
+          {status.relationship ? ` as their ${status.relationship.toLowerCase()}` : ""}. You can see, add and move
+          anything in it.
         </p>
-        <Button type="button" onClick={() => setLeaveConfirmOpen(true)} className="self-start">
+        <button
+          type="button"
+          onClick={() => setLeaveConfirmOpen(true)}
+          className={`${SMALL} self-start border border-border bg-card text-[#b0643f]`}
+        >
           Leave household
-        </Button>
+        </button>
+        {error && (
+          <p role="alert" className="m-0 text-sm text-[#b0643f]">
+            {error}
+          </p>
+        )}
         <ConfirmDialog
           open={leaveConfirmOpen}
           title="Leave this household?"
           description="You'll go back to seeing only your own inventory."
           confirmLabel="Leave"
           confirming={leaving}
-          onConfirm={handleLeave}
+          onConfirm={async () => {
+            setLeaving(true);
+            await run(async () => {
+              await leaveHouseholdAction();
+              await refresh();
+            }, "Couldn't leave this household");
+            setLeaving(false);
+            setLeaveConfirmOpen(false);
+          }}
           onCancel={() => setLeaveConfirmOpen(false)}
         />
       </div>
@@ -149,88 +214,161 @@ export function HouseholdSection() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-sm text-body">Anyone you invite can see and edit your whole inventory.</p>
+      <ul className="m-0 flex list-none flex-col p-0" aria-label="Household members">
+        <li className="flex items-center gap-3 border-b border-border/40 py-3">
+          <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full bg-accent font-bold text-white">
+            {initialOf(selfName || selfEmail)}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14px] font-semibold text-ink">{selfName || selfEmail} (you)</span>
+            {selfName && <span className="block truncate text-[12px] text-muted">{selfEmail}</span>}
+          </span>
+          <RoleChip role="owner" />
+        </li>
 
-      {status.members.length > 0 && (
-        <StaggerList className="m-0 flex list-none flex-col gap-1.5 p-0">
-          {status.members.map((member) => (
-            <StaggerItem
-              key={member.userId}
-              hover
-              className="flex items-center justify-between gap-2 rounded-md bg-card px-3 py-2 text-sm"
-            >
-              <span className="text-ink">{member.email ?? member.userId}</span>
-              <TapButton
-                type="button"
-                onClick={() => setPendingRemoveMemberId(member.userId)}
-                className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover"
+        {status.members.map((member, i) => {
+          const label = member.name || member.email || "Family member";
+          return (
+            <li key={member.userId} className="flex flex-wrap items-center gap-3 border-b border-border/40 py-3">
+              <span
+                className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full font-bold text-white"
+                style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
               >
-                Remove
-              </TapButton>
-            </StaggerItem>
-          ))}
-        </StaggerList>
-      )}
+                {initialOf(label)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[14px] font-semibold text-ink">{label}</span>
+                <span className="block truncate text-[12px] text-muted">
+                  {member.name && member.email ? member.email : (member.relationship ?? "Member")}
+                </span>
+              </span>
+              <RelationshipInput
+                value={member.relationship}
+                label={`Relationship of ${label}`}
+                onSave={async (next) => {
+                  await run(async () => {
+                    await setMemberRelationshipAction(member.userId, next);
+                    await refresh();
+                  }, "Couldn't save the relationship");
+                }}
+              />
+              <RoleChip role="member" />
+              <button
+                type="button"
+                onClick={() => setPendingRemove({ userId: member.userId, label })}
+                aria-label={`Remove ${label}`}
+                className="flex cursor-pointer border-none bg-transparent p-0 text-muted hover:text-[#b0643f]"
+              >
+                <span aria-hidden className="material-symbols-rounded text-[18px]">
+                  person_remove
+                </span>
+              </button>
+            </li>
+          );
+        })}
 
-      {invites.length > 0 && (
-        <StaggerList className="m-0 flex list-none flex-col gap-1.5 p-0">
-          {invites.map((invite) => (
-            <StaggerItem
-              key={invite.id}
-              hover
-              className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm"
+        {invites.map((invite) => (
+          <li key={invite.id} className="flex flex-wrap items-center gap-3 border-b border-border/40 py-3">
+            <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full border-[1.5px] border-dashed border-border text-muted">
+              <span aria-hidden className="material-symbols-rounded text-[18px]">
+                mail
+              </span>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[14px] font-semibold text-ink">
+                Invite{invite.relationship ? ` for your ${invite.relationship.toLowerCase()}` : ""}
+              </span>
+              <span className="block truncate text-[12px] text-muted">{daysLeft(invite.expiresAt)}</span>
+            </span>
+            <RoleChip role="pending" />
+            <button
+              type="button"
+              onClick={() => copyLink(invite.token)}
+              className={`${SMALL} border border-border bg-card text-ink`}
             >
-              <span className="text-muted">Pending invite</span>
-              <div className="flex items-center gap-3">
-                <TapButton
-                  type="button"
-                  onClick={() => copyLink(invite.token)}
-                  className="cursor-pointer border-none bg-transparent text-xs font-semibold text-ink"
-                >
-                  {copiedToken === invite.token ? "Copied!" : "Copy link"}
-                </TapButton>
-                <TapButton
-                  type="button"
-                  disabled={revokingId === invite.id}
-                  onClick={() => {
-                    const formData = new FormData();
-                    formData.set("inviteId", invite.id);
-                    void runBusy(
-                      (busy) => setRevokingId(busy ? invite.id : null),
-                      async () => {
-                        await revokeInviteAction(formData);
-                        await refresh();
-                      },
-                      "Couldn't revoke this invite",
-                    );
-                  }}
-                  className="cursor-pointer border-none bg-transparent text-xs font-semibold text-accent-hover disabled:opacity-50"
-                >
-                  {revokingId === invite.id ? <Spinner size={12} /> : "Revoke"}
-                </TapButton>
-              </div>
-            </StaggerItem>
-          ))}
-        </StaggerList>
-      )}
+              {copiedToken === invite.token ? "Copied ✓" : "Copy link"}
+            </button>
+            <button
+              type="button"
+              disabled={revokingId === invite.id}
+              onClick={async () => {
+                setRevokingId(invite.id);
+                const formData = new FormData();
+                formData.set("inviteId", invite.id);
+                await run(async () => {
+                  await revokeInviteAction(formData);
+                  await refresh();
+                }, "Couldn't revoke this invite");
+                setRevokingId(null);
+              }}
+              className={`${SMALL} border-none bg-transparent text-[#b0643f]`}
+            >
+              {revokingId === invite.id ? <Spinner size={12} /> : "Revoke"}
+            </button>
+          </li>
+        ))}
+      </ul>
 
-      <Button type="button" onClick={handleInvite} loading={creating} className="self-start">
-        Invite a family member
-      </Button>
+      <div className="flex flex-col gap-2 pt-1">
+        <span className="text-[14px] font-semibold text-ink">Invite a family member</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            list={inviteListId}
+            value={relationship}
+            maxLength={40}
+            onChange={(event) => setRelationship(event.target.value)}
+            placeholder="Who are they? e.g. Partner"
+            aria-label="Their relationship to you"
+            className="min-w-0 flex-1 rounded-[10px] border border-border bg-card px-3 py-[9px] text-[14px] text-ink outline-none placeholder:text-muted focus:border-accent"
+          />
+          <datalist id={inviteListId}>
+            {RELATIONSHIPS.map((r) => (
+              <option key={r} value={r} />
+            ))}
+          </datalist>
+          <button
+            type="button"
+            onClick={handleInvite}
+            disabled={creating}
+            className="flex cursor-pointer items-center gap-[6px] rounded-[10px] border-none bg-accent px-4 py-[10px] text-[13px] font-semibold text-white disabled:opacity-60"
+          >
+            <span aria-hidden className="material-symbols-rounded text-[16px]">
+              link
+            </span>
+            {creating ? "Creating…" : "Create invite link"}
+          </button>
+        </div>
+        <span className="text-[12px] text-muted">
+          The link is copied for you to send. It works once and lasts 7 days. They can sign in or create an account from
+          it.
+        </span>
+      </div>
 
       {error && (
-        <p role="alert" className="text-sm text-accent-hover">
+        <p role="alert" className="m-0 rounded-xl bg-[#ecdccd] px-3 py-2 text-sm text-[#5a2e18]">
           {error}
         </p>
       )}
 
       <ConfirmDialog
-        open={pendingRemoveMemberId !== null}
-        title="Remove this person's access?"
+        open={pendingRemove !== null}
+        title={`Remove ${pendingRemove?.label ?? "this person"}?`}
+        description="They'll lose access to the household. Reminders assigned to them become unassigned."
         confirmLabel="Remove"
         confirming={removingMember}
-        onConfirm={handleRemoveMember}
-        onCancel={() => setPendingRemoveMemberId(null)}
+        onConfirm={async () => {
+          if (!pendingRemove) return;
+          setRemovingMember(true);
+          const formData = new FormData();
+          formData.set("memberUserId", pendingRemove.userId);
+          await run(async () => {
+            await removeMemberAction(formData);
+            await refresh();
+          }, "Couldn't remove this member");
+          setRemovingMember(false);
+          setPendingRemove(null);
+        }}
+        onCancel={() => setPendingRemove(null)}
       />
     </div>
   );

@@ -14,9 +14,18 @@ export async function listPendingInvitesAction() {
   return sharingQueries.listPendingInvites(user.id);
 }
 
-export async function createInviteAction() {
+export async function createInviteAction(relationship?: string) {
   const user = await requireSessionUser();
-  return sharingQueries.createInvite(user.id);
+  const invite = await sharingQueries.createInvite(user.id, relationship ?? null);
+  revalidatePath("/settings", "layout");
+  return invite;
+}
+
+export async function setMemberRelationshipAction(memberUserId: string, relationship: string) {
+  const user = await requireSessionUser();
+  if (!memberUserId) throw new Error("Missing member id");
+  await sharingQueries.setMemberRelationship(user.id, String(memberUserId), relationship);
+  revalidatePath("/", "layout");
 }
 
 export async function revokeInviteAction(formData: FormData) {
@@ -36,12 +45,12 @@ export async function removeMemberAction(formData: FormData) {
   if (!memberUserId) throw new Error("Missing member id");
 
   await sharingQueries.removeMember(user.id, memberUserId);
-  revalidatePath("/settings", "layout");
+  revalidatePath("/", "layout");
 }
 
 export async function leaveHouseholdAction() {
   const user = await requireSessionUser();
 
   await sharingQueries.leaveSharedHousehold(user.id);
-  revalidatePath("/settings", "layout");
+  revalidatePath("/", "layout");
 }

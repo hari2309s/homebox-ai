@@ -42,6 +42,8 @@ export const sharedAccess = pgTable("shared_access", {
   ownerId: uuid("owner_id")
     .notNull()
     .references(() => authUsers.id, { onDelete: "cascade" }),
+  /** How the member is related to the owner (e.g. "Partner", "Child"), free text set by the owner. */
+  relationship: text("relationship"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -51,6 +53,8 @@ export const sharedAccessInvites = pgTable("shared_access_invites", {
     .notNull()
     .references(() => authUsers.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
+  /** Relationship chosen when inviting; copied onto shared_access when the invite is accepted. */
+  relationship: text("relationship"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),

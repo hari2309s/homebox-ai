@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createSupabaseServerClient } from "@homebox-ai/supabase/server";
 
+import { JOIN_PATH, PENDING_JOIN_COOKIE } from "../../../lib/pending-join";
 import { safeRedirect } from "../../../lib/safe-redirect";
 
 /**
@@ -21,12 +22,17 @@ export async function GET(request: NextRequest) {
   // freshly-verified session off-site. safeRedirect() rejects anything that
   // isn't a same-origin relative path.
   const next = safeRedirect(searchParams.get("next"));
+  // A family member who signed up from an invite link goes back to that invite, not the home page.
+  const pendingJoin = decodeURIComponent(request.cookies.get(PENDING_JOIN_COOKIE)?.value ?? "");
+  const destination = !searchParams.get("next") && JOIN_PATH.test(pendingJoin) ? pendingJoin : next;
 
   if (tokenHash && type) {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (!error) {
-      return NextResponse.redirect(new URL(next, request.url));
+      const response = NextResponse.redirect(new URL(destination, request.url));
+      response.cookies.delete(PENDING_JOIN_COOKIE);
+      return response;
     }
   }
 

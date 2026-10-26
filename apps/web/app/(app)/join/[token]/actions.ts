@@ -1,7 +1,11 @@
 "use server";
 
 import { sharingQueries } from "@homebox-ai/db";
+import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+
+import { PENDING_JOIN_COOKIE } from "../../../../lib/pending-join";
 
 import { requireSessionUser } from "@homebox-ai/supabase/server";
 
@@ -11,6 +15,14 @@ export async function acceptInviteAction(formData: FormData) {
   const token = String(formData.get("token") ?? "").trim();
   if (!token) throw new Error("Missing invite token");
 
-  await sharingQueries.acceptInvite(token, user.id);
+  try {
+    await sharingQueries.acceptInvite(token, user.id);
+  } catch (err) {
+    // Show the reason on the invite page rather than Next's error screen.
+    const message = err instanceof Error ? err.message : "Couldn't join this household.";
+    redirect(`/join/${encodeURIComponent(token)}?error=${encodeURIComponent(message)}`);
+  }
+  (await cookies()).delete(PENDING_JOIN_COOKIE);
+  revalidatePath("/", "layout");
   redirect("/items");
 }

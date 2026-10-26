@@ -7,7 +7,18 @@ import { AnimatedHomeboxIcon } from "@homebox-ai/ui";
 
 import { acceptInviteAction } from "./actions";
 
-function ErrorCard({ icon, tag, tagColor, borderColor, bgColor, title, description, buttonLabel, buttonStyle, href }: {
+function ErrorCard({
+  icon,
+  tag,
+  tagColor,
+  borderColor,
+  bgColor,
+  title,
+  description,
+  buttonLabel,
+  buttonStyle,
+  href,
+}: {
   icon: string;
   tag: string;
   tagColor: string;
@@ -28,17 +39,19 @@ function ErrorCard({ icon, tag, tagColor, borderColor, bgColor, title, descripti
         className="flex h-[72px] w-[72px] items-center justify-center rounded-2xl border-2 border-dashed"
         style={{ background: bgColor, borderColor }}
       >
-        <span className="material-symbols-rounded text-[32px]" style={{ color: tagColor }}>{icon}</span>
+        <span className="material-symbols-rounded text-[32px]" style={{ color: tagColor }}>
+          {icon}
+        </span>
       </div>
-      <div className="font-mono text-[10px]" style={{ color: tagColor }}>{tag}</div>
+      <div className="font-mono text-[10px]" style={{ color: tagColor }}>
+        {tag}
+      </div>
       <div className="font-serif text-[24px] leading-tight text-ink">{title}</div>
       <div className="text-[14px] leading-relaxed text-muted">{description}</div>
       <Link
         href={href}
         className={`w-full rounded-xl py-[13px] text-center text-[15px] font-semibold no-underline ${
-          buttonStyle === "primary"
-            ? "bg-accent text-white"
-            : "border border-border bg-card text-ink"
+          buttonStyle === "primary" ? "bg-accent text-white" : "border border-border bg-card text-ink"
         }`}
       >
         {buttonLabel}
@@ -47,8 +60,14 @@ function ErrorCard({ icon, tag, tagColor, borderColor, bgColor, title, descripti
   );
 }
 
-export default async function JoinPage({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
+export default async function JoinPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const [{ token }, { error }] = await Promise.all([params, searchParams]);
   const [user, invite] = await Promise.all([getSessionUser(), sharingQueries.getInviteByToken(token)]);
 
   if (!invite) {
@@ -131,16 +150,31 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
     <div className="flex h-full flex-col items-center justify-center gap-5 p-6 text-center">
       <AnimatedHomeboxIcon size={96} />
       <div className="flex flex-col gap-[10px]">
-        <div className="font-mono text-[11px] text-accent">YOU&apos;RE INVITED</div>
-        <div className="font-serif text-[32px] leading-tight text-ink">
-          Join {invite.ownerEmail ?? "this"}&apos;s household
+        <div className="font-mono text-[11px] text-accent">
+          YOU&apos;RE INVITED{invite.relationship ? ` AS ${invite.relationship.toUpperCase()}` : ""}
         </div>
-        <p className="mx-auto max-w-xs text-[15px] leading-relaxed text-muted">
-          You&apos;ll see everything in the house, garden, garage and shed, and can add your own things.
+        <h1 className="m-0 font-serif text-[32px] font-normal leading-tight text-ink">
+          Join {invite.ownerName?.split(" ")[0] ?? invite.ownerEmail ?? "this"}&apos;s household
+        </h1>
+        <p className="mx-auto max-w-sm text-[15px] leading-relaxed text-muted">
+          {invite.ownerName && invite.ownerEmail
+            ? `${invite.ownerName} (${invite.ownerEmail})`
+            : (invite.ownerEmail ?? "They")}{" "}
+          invited you{invite.relationship ? ` as their ${invite.relationship.toLowerCase()}` : ""}. You&apos;ll see
+          everything in the house, garden, garage and shed, and can add your own things.
+        </p>
+        <p className="mx-auto max-w-sm text-[12px] leading-relaxed text-muted">
+          While you&apos;re in their household you see their things instead of your own. You can leave any time from
+          Settings.
         </p>
       </div>
 
       <div className="w-full max-w-sm">
+        {error && (
+          <p role="alert" className="mb-3 rounded-xl bg-[#ecdccd] px-3 py-2.5 text-left text-sm text-[#5a2e18]">
+            {error.slice(0, 200)}
+          </p>
+        )}
         <form action={acceptInviteAction} className="flex flex-col items-center gap-[10px]">
           <input type="hidden" name="token" value={token} />
           <SubmitButton className="w-full">Accept and join</SubmitButton>

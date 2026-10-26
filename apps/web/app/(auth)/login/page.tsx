@@ -1,14 +1,23 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { AnimatedHomeboxIcon, FormField, Input, PasswordInput, Spinner, StaggerItem, StaggerList } from "@homebox-ai/ui";
+import {
+  AnimatedHomeboxIcon,
+  FormField,
+  Input,
+  PasswordInput,
+  Spinner,
+  StaggerItem,
+  StaggerList,
+} from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { isPasswordValid, PASSWORD_MIN_LENGTH, PASSWORD_REQUIREMENTS_MESSAGE } from "../../../lib/password-policy";
 import { PasswordStrengthBar } from "../../../lib/password-strength-bar";
+import { JOIN_PATH, PENDING_JOIN_COOKIE } from "../../../lib/pending-join";
 import { safeRedirect } from "../../../lib/safe-redirect";
 
 const FEATURES = [
@@ -22,6 +31,14 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = safeRedirect(searchParams.get("redirectTo"));
+  const joining = JOIN_PATH.test(redirectTo);
+
+  // A new family member signing up has to confirm their email first, and that link lands in a fresh tab
+  // with no memory of the invite. Remember it so /auth/confirm can send them back to it.
+  useEffect(() => {
+    if (joining)
+      document.cookie = `${PENDING_JOIN_COOKIE}=${encodeURIComponent(redirectTo)}; path=/; max-age=${7 * 24 * 3600}; samesite=lax`;
+  }, [joining, redirectTo]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -122,11 +139,7 @@ function LoginForm() {
           transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.05 }}
           className="flex flex-col items-center gap-2.5 text-center"
         >
-          {mode === "sign-in" ? (
-            <AnimatedHomeboxIcon size={96} />
-          ) : (
-            <AnimatedHomeboxIcon size={48} />
-          )}
+          {mode === "sign-in" ? <AnimatedHomeboxIcon size={96} /> : <AnimatedHomeboxIcon size={48} />}
           <div>
             <h1 className="font-serif text-[30px] leading-none text-ink">Homebox</h1>
             {mode === "sign-in" && (
@@ -134,9 +147,7 @@ function LoginForm() {
                 Everything in your house, garden and garage, found in seconds.
               </p>
             )}
-            {mode === "sign-up" && (
-              <p className="mt-0.5 text-[13px] text-muted">Map your home, garden &amp; garage.</p>
-            )}
+            {mode === "sign-up" && <p className="mt-0.5 text-[13px] text-muted">Map your home, garden &amp; garage.</p>}
           </div>
         </motion.div>
 
@@ -148,17 +159,25 @@ function LoginForm() {
           transition={{ type: "spring", stiffness: 260, damping: 24, delay: 0.12 }}
           className="flex w-full flex-col gap-3"
         >
+          {joining && (
+            <p className="m-0 rounded-xl bg-selected px-3 py-2.5 text-center text-[13px] leading-snug text-(--plan-ink)">
+              Sign in, or create an account, to accept your household invite.
+            </p>
+          )}
+
           {/* Segmented tab */}
-          <div role="tablist" aria-label="Account mode" className="grid grid-cols-2 rounded-xl bg-surface-soft p-[3px] text-sm font-semibold text-center">
+          <div
+            role="tablist"
+            aria-label="Account mode"
+            className="grid grid-cols-2 rounded-xl bg-surface-soft p-[3px] text-sm font-semibold text-center"
+          >
             <button
               type="button"
               role="tab"
               aria-selected={mode === "sign-in"}
               onClick={() => switchMode("sign-in")}
               className={`cursor-pointer rounded-[9px] px-3 py-2.5 transition-all ${
-                mode === "sign-in"
-                  ? "bg-card text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]"
-                  : "bg-transparent text-muted"
+                mode === "sign-in" ? "bg-card text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]" : "bg-transparent text-muted"
               }`}
             >
               Sign in
@@ -169,9 +188,7 @@ function LoginForm() {
               aria-selected={mode === "sign-up"}
               onClick={() => switchMode("sign-up")}
               className={`cursor-pointer rounded-[9px] px-3 py-2.5 transition-all ${
-                mode === "sign-up"
-                  ? "bg-card text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]"
-                  : "bg-transparent text-muted"
+                mode === "sign-up" ? "bg-card text-ink shadow-[0_1px_2px_rgba(0,0,0,.08)]" : "bg-transparent text-muted"
               }`}
             >
               Create account

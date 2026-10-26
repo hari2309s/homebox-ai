@@ -47,7 +47,13 @@ async function emailsFor(userIds: string[]): Promise<Map<string, string | null>>
   return new Map(rows.map((row) => [row.id, row.email ?? null]));
 }
 
-export function createInvite(userId: string, expiresInDays = 7) {
+/** Trims a free-text relationship ("Partner", "Daughter", …) to something safe to store, or null when blank. */
+export function cleanRelationship(value: string | null | undefined): string | null {
+  const trimmed = (value ?? "").trim().replace(/\s+/g, " ").slice(0, 40);
+  return trimmed || null;
+}
+
+export function createInvite(userId: string, relationship?: string | null, expiresInDays = 7) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
     if (ownerId !== userId) {
@@ -55,7 +61,10 @@ export function createInvite(userId: string, expiresInDays = 7) {
     }
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
-    const [invite] = await tx.insert(sharedAccessInvites).values({ ownerId, token, expiresAt }).returning();
+    const [invite] = await tx
+      .insert(sharedAccessInvites)
+      .values({ ownerId, token, expiresAt, relationship: cleanRelationship(relationship) })
+      .returning();
     return invite;
   });
 }
@@ -81,7 +90,9 @@ export interface ShareStatus {
   /** "owner": this account anchors the household (possibly solo). "member": sharing someone else's data instead. */
   role: "owner" | "member";
   ownerEmail?: string | null;
-  members: { userId: string; email: string | null }[];
+  /** For a member: how the owner described them. */
+  relationship?: string | null;
+  members: { userId: string; email: string | null; name: string | null; relationship: string | null }[];
 }
 
 export function getShareStatus(userId: string): Promise<ShareStatus> {
@@ -91,14 +102,17 @@ export function getShareStatus(userId: string): Promise<ShareStatus> {
       // auth.users reads need the direct (non-RLS) connection — the RLS
       // transaction's role has no grant on that table (see emailsFor above).
       const ownerEmail = (await emailsFor([membership.ownerId])).get(membership.ownerId) ?? null;
-      return { role: "member", ownerEmail, members: [] };
+      return { role: "member", ownerEmail, relationship: membership.relationship, members: [] };
     }
 
     const memberRows = await tx.select().from(sharedAccess).where(eq(sharedAccess.ownerId, userId));
-    const emails = await emailsFor(memberRows.map((row) => row.memberUserId));
+    const ids = memberRows.map((row) => row.memberUserId);
+    const [emails, profiles] = await Promise.all([emailsFor(ids), getUserProfiles(ids)]);
     const members = memberRows.map((row) => ({
       userId: row.memberUserId,
       email: emails.get(row.memberUserId) ?? null,
+      name: profiles.get(row.memberUserId)?.name ?? null,
+      relationship: row.relationship,
     }));
     return { role: "owner", members };
   });
@@ -108,6 +122,8 @@ export interface HouseholdUser {
   userId: string;
   email: string | null;
   isSelf: boolean;
+  /** How this member is related to the owner; null for the owner and for members without one. */
+  relationship: string | null;
 }
 
 /**
@@ -122,10 +138,16 @@ export function listHouseholdUsers(userId: string): Promise<HouseholdUser[]> {
     const ownerId = await getEffectiveOwnerId(tx, userId);
     const memberRows = await tx.select().from(sharedAccess).where(eq(sharedAccess.ownerId, ownerId));
     const ids = [ownerId, ...memberRows.map((row) => row.memberUserId)];
+    const relationships = new Map(memberRows.map((row) => [row.memberUserId, row.relationship]));
     // auth.users reads need the direct (non-RLS) connection — the RLS
     // transaction's role has no grant on that table (see emailsFor above).
     const emails = await emailsFor(ids);
-    return ids.map((id) => ({ userId: id, email: emails.get(id) ?? null, isSelf: id === userId }));
+    return ids.map((id) => ({
+      userId: id,
+      email: emails.get(id) ?? null,
+      isSelf: id === userId,
+      relationship: relationships.get(id) ?? null,
+    }));
   });
 }
 
@@ -147,6 +169,21 @@ export function removeMember(userId: string, memberUserId: string) {
   });
 }
 
+/**
+ * shared_access has no UPDATE RLS policy (one broad enough for this would also let an owner rewrite
+ * member_user_id), so this uses the direct connection with the ownership check in the WHERE clause —
+ * userId always comes from the server-side session, never from the client.
+ */
+export async function setMemberRelationship(userId: string, memberUserId: string, relationship: string | null) {
+  const db = getDb();
+  const updated = await db
+    .update(sharedAccess)
+    .set({ relationship: cleanRelationship(relationship) })
+    .where(and(eq(sharedAccess.ownerId, userId), eq(sharedAccess.memberUserId, memberUserId)))
+    .returning();
+  if (updated.length === 0) throw new Error("Only the household owner can change that.");
+}
+
 export function leaveSharedHousehold(userId: string) {
   return withRLS(userId, async (tx) => {
     const [membership] = await tx.select().from(sharedAccess).where(eq(sharedAccess.memberUserId, userId));
@@ -163,6 +200,8 @@ export function leaveSharedHousehold(userId: string) {
 
 export interface InvitePreview {
   ownerEmail: string | null;
+  ownerName: string | null;
+  relationship: string | null;
   expired: boolean;
   alreadyAccepted: boolean;
 }
@@ -178,11 +217,13 @@ export async function getInviteByToken(token: string): Promise<InvitePreview | n
   const [invite] = await db.select().from(sharedAccessInvites).where(eq(sharedAccessInvites.token, token));
   if (!invite) return null;
 
-  const ownerEmailRows = await db.execute<{ email: string | null }>(
-    sql`select email from auth.users where id = ${invite.ownerId}`,
+  const ownerRows = await db.execute<{ email: string | null; name: string | null }>(
+    sql`select email, raw_user_meta_data->>'full_name' as name from auth.users where id = ${invite.ownerId}`,
   );
   return {
-    ownerEmail: ownerEmailRows[0]?.email ?? null,
+    ownerEmail: ownerRows[0]?.email ?? null,
+    ownerName: ownerRows[0]?.name ?? null,
+    relationship: invite.relationship,
     expired: invite.expiresAt.getTime() < Date.now(),
     alreadyAccepted: invite.acceptedAt != null,
   };
@@ -220,7 +261,9 @@ export async function acceptInvite(token: string, acceptingUserId: string) {
     // Replace any existing membership — a user can only share one other
     // owner's data at a time — rather than erroring on the primary key.
     await tx.delete(sharedAccess).where(eq(sharedAccess.memberUserId, acceptingUserId));
-    await tx.insert(sharedAccess).values({ memberUserId: acceptingUserId, ownerId: invite.ownerId });
+    await tx
+      .insert(sharedAccess)
+      .values({ memberUserId: acceptingUserId, ownerId: invite.ownerId, relationship: invite.relationship });
     await tx
       .update(sharedAccessInvites)
       .set({ acceptedAt: new Date(), acceptedByUserId: acceptingUserId })
