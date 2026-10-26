@@ -1,10 +1,14 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { isActive, PRIMARY_LINKS, TOOL_LINKS, type NavLink } from "./nav-links";
+
+// Loaded on demand so the barcode library stays out of every page's bundle.
+const ScanModal = dynamic(() => import("./scan/scan-modal"), { ssr: false });
 
 export interface SidebarMember {
   userId: string;
@@ -34,6 +38,7 @@ function MiniPlanLogo() {
 export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, householdLabel, members }: SidebarProps) {
   const pathname = usePathname();
   const searchRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -60,6 +65,15 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
         key={link.href}
         href={link.href}
         aria-current={active ? "page" : undefined}
+        onClick={
+          link.href === "/scan"
+            ? (event) => {
+                if (event.metaKey || event.ctrlKey || event.shiftKey) return;
+                event.preventDefault();
+                setScanning(true);
+              }
+            : undefined
+        }
         className={`flex items-center gap-[10px] rounded-[10px] px-[10px] no-underline transition-colors duration-150 ${
           main ? "h-10 text-[14px] font-semibold" : "h-9 text-[13px] font-medium"
         } ${active ? "bg-selected text-ink" : "text-body hover:bg-surface-soft"}`}
@@ -132,6 +146,7 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
           </div>
         </div>
       </Link>
+      {scanning && <ScanModal onClose={() => setScanning(false)} />}
     </aside>
   );
 }

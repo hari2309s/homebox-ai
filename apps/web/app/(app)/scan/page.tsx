@@ -6,8 +6,30 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { parseScanResult } from "../../../lib/scan-result";
+import { ScannerPanel } from "./scanner-panel";
 
 export default function ScanPage() {
+  const [desktop, setDesktop] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1024px)");
+    setDesktop(query.matches);
+    const onChange = (event: MediaQueryListEvent) => setDesktop(event.matches);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+
+  if (desktop === null) return null;
+  return desktop ? (
+    <div className="flex h-full items-center justify-center p-8">
+      <ScannerPanel />
+    </div>
+  ) : (
+    <MobileScanner />
+  );
+}
+
+function MobileScanner() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const handledRef = useRef(false);

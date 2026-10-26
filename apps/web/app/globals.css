@@ -257,3 +257,23 @@ body {
     --color-border: #d9dbd2 !important;
   }
 }
+
+/* Desktop barcode scanner's sweeping line. */
+@keyframes scan-line {
+  0%,
+  100% {
+    top: 8%;
+  }
+  50% {
+    top: 90%;
+  }
+}
+.scan-line {
+  animation: scan-line 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-line {
+    animation: none;
+    top: 50%;
+  }
+}
