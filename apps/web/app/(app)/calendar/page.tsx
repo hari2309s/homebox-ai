@@ -28,7 +28,7 @@ export default async function CalendarPage() {
       <div className="h-full lg:hidden">
         <CalendarView reminders={reminders} householdUsers={householdUsers} items={items} currentUserId={user.id} />
       </div>
-      <div className="hidden h-full lg:block">
+      <div data-full-bleed className="hidden h-full lg:block">
         <CalendarDesktop reminders={reminders} householdUsers={householdUsers} items={items} currentUserId={user.id} />
       </div>
     </>
