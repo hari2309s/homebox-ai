@@ -3,16 +3,29 @@ import type { Metadata, Viewport } from "next";
 import { Onest, Young_Serif, Red_Hat_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 
+import splashDevices from "../lib/splash-devices.json";
+
 import "./globals.css";
 
 const onest = Onest({ subsets: ["latin"], variable: "--font-onest", display: "swap" });
 const youngSerif = Young_Serif({ subsets: ["latin"], weight: "400", variable: "--font-young-serif", display: "swap" });
 const redHatMono = Red_Hat_Mono({ subsets: ["latin"], variable: "--font-red-hat-mono", display: "swap" });
 
+// One launch image per device size and colour scheme — iOS shows a blank screen without an exact match.
+const startupImage = (splashDevices as [number, number, number][]).flatMap(([w, h, dpr]) =>
+  (["light", "dark"] as const).map((scheme) => ({
+    url: `/splash/${scheme}-${w * dpr}x${h * dpr}.png`,
+    media: `(device-width: ${w}px) and (device-height: ${h}px) and (-webkit-device-pixel-ratio: ${dpr}) and (orientation: portrait) and (prefers-color-scheme: ${scheme})`,
+  })),
+);
+
 export const metadata: Metadata = {
   title: "Homebox AI — Know what you own, and where it is.",
-  description: "AI-native home inventory",
+  description: "Everything in your house, garden and garage, found in seconds.",
   manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Homebox", statusBarStyle: "default", startupImage },
+  // Next only emits the generic mobile-web-app-capable tag; iOS still reads the Apple one for launch images.
+  other: { "apple-mobile-web-app-capable": "yes" },
 };
 
 // Single static default (light) — the inline script below corrects this
@@ -46,7 +59,11 @@ const themeInitScript = `
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${onest.variable} ${youngSerif.variable} ${redHatMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${onest.variable} ${youngSerif.variable} ${redHatMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {/* Rendered directly, not just via `metadata`, so it doesn't blank out (browsers then show the URL) between dynamic-route navigations. */}
         <title>Homebox AI — Know what you own, and where it is.</title>

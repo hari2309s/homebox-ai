@@ -14,6 +14,9 @@ loadEnvConfig(path.join(process.cwd(), "..", ".."), process.env.NODE_ENV !== "pr
 const withSerwist = withSerwistInit({
   swSrc: "app/sw.ts",
   swDest: "public/sw.js",
+  // iOS launch screens (public/splash) are only fetched by iOS when the app is added to the home
+  // screen, so they're left out of the precache everyone else would download.
+  globPublicPatterns: ["*", "icons/**/*"],
 });
 
 const nextConfig: NextConfig = {
