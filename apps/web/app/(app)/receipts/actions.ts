@@ -17,6 +17,7 @@ import { normalizeCurrency } from "../../../lib/currency";
 import { runTracedGraph } from "../../../lib/traced-graph";
 
 const IMPORT_CONCURRENCY = 5;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function analyzeReceiptAction(formData: FormData): Promise<ReceiptDraft> {
   const user = await requireSessionUser();
@@ -35,10 +36,21 @@ export async function analyzeReceiptAction(formData: FormData): Promise<ReceiptD
 export async function importReceiptItemsAction(formData: FormData) {
   const user = await requireSessionUser();
 
-  const items = itemDraftSchema
-    .array()
-    .min(1, "No items to import")
-    .parse(JSON.parse(String(formData.get("items"))));
+  const raw: unknown = JSON.parse(String(formData.get("items")));
+  if (!Array.isArray(raw) || raw.length === 0) throw new Error("No items to import");
+  // Each line may carry its own location (desktop table); lines without one use the shared "put everything in".
+  const items = raw.map((entry) => {
+    const lineLocation = (entry as { locationId?: unknown } | null)?.locationId;
+    return {
+      ...itemDraftSchema.parse(entry),
+      lineLocationId:
+        lineLocation === null
+          ? null
+          : typeof lineLocation === "string" && UUID.test(lineLocation)
+            ? lineLocation
+            : undefined,
+    };
+  });
 
   const locationId = String(formData.get("locationId") ?? "").trim() || null;
   const purchaseDate = String(formData.get("purchaseDate") ?? "").trim() || undefined;
@@ -69,7 +81,7 @@ export async function importReceiptItemsAction(formData: FormData) {
       currency,
       purchasePrice: draft.purchasePrice,
       purchaseDate: draft.purchaseDate ?? purchaseDate,
-      locationId,
+      locationId: draft.lineLocationId !== undefined ? draft.lineLocationId : locationId,
     });
     if (!item) return;
 
