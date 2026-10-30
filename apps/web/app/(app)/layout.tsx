@@ -12,6 +12,7 @@ import { listLocationsCached } from "../../lib/cached-queries";
 import { needsOnboarding } from "../../lib/onboarding";
 import { JOIN_PATH } from "../../lib/pending-join";
 import { getForecast, weatherAlerts } from "../../lib/weather";
+import { FloatingNotificationBell } from "./notifications/notification-center";
 import { NotificationProvider } from "./notifications/notification-provider";
 import { PendingInviteBanner } from "./pending-invite-banner";
 import { Sidebar } from "./sidebar";
@@ -115,6 +116,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
         <BottomNav unreadChatCount={unreadChatCount} />
+        <FloatingNotificationBell />
         <NotificationProvider dueReminders={dueReminders} weatherAlerts={alerts} invite={inviteSeed} expiringWarranties={expiringWarranties} />
         {showInvite && pendingJoin && (
           <PendingInviteBanner

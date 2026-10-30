@@ -13,6 +13,7 @@ import {
   markRead,
   subscribe,
 } from "./notification-store";
+import { NotificationSheet } from "./notification-sheet";
 
 function timeAgo(iso: string): string {
   const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -180,36 +181,45 @@ export function NotificationBell() {
   );
 }
 
-/** Mobile bottom-nav bell icon — just the badge count for tapping. */
-export function NotificationBadge({ onClick }: { onClick: () => void }) {
+/**
+ * Floating bell for mobile + tablet (< lg). Opens the notification sheet.
+ * Positioned top-right on phone, top-left on tablet (md).
+ */
+export function FloatingNotificationBell() {
+  const [open, setOpen] = useState(false);
   const unread = useSyncExternalStore(subscribe, getUnreadCount, getUnreadCount);
 
   return (
-    <button
-      type="button"
-      aria-label={`Notifications${unread ? ` (${unread} unread)` : ""}`}
-      onClick={onClick}
-      className="relative flex cursor-pointer items-center justify-center border-none bg-transparent p-0"
-    >
-      <motion.span
-        key={unread}
-        initial={unread ? { rotate: -14 } : false}
-        animate={{ rotate: 0 }}
-        transition={{ type: "spring", stiffness: 500, damping: 12 }}
-        className="material-symbols-rounded text-[24px] text-muted"
-        style={{ fontVariationSettings: unread ? "'FILL' 1" : undefined }}
+    <>
+      <button
+        type="button"
+        aria-label={`Notifications${unread ? ` (${unread} unread)` : ""}`}
+        onClick={() => setOpen(true)}
+        className="fixed right-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card shadow-card md:left-4 md:right-auto lg:hidden"
       >
-        notifications
-      </motion.span>
-      {unread > 0 && (
         <motion.span
-          key="badge"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 500, damping: 20 }}
-          className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent"
-        />
-      )}
-    </button>
+          key={unread}
+          initial={unread ? { rotate: -14 } : false}
+          animate={{ rotate: 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 12 }}
+          className="material-symbols-rounded text-[20px] text-ink"
+          style={{ fontVariationSettings: unread ? "'FILL' 1" : undefined }}
+        >
+          notifications
+        </motion.span>
+        {unread > 0 && (
+          <motion.span
+            key="badge"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 20 }}
+            className="absolute -right-[2px] -top-[2px] flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-danger px-[4px] font-mono text-[10px] font-bold text-white"
+          >
+            {unread > 9 ? "9+" : unread}
+          </motion.span>
+        )}
+      </button>
+      <NotificationSheet open={open} onClose={() => setOpen(false)} />
+    </>
   );
 }

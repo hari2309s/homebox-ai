@@ -72,26 +72,35 @@ export function useNotifications({ dueReminders, weatherAlerts, invite, expiring
     const today = now.slice(0, 10);
     let toastDelay = 0;
 
+    // Helper: add to store and only toast if genuinely new + unread.
+    function seed(n: AppNotification, duration = 5000) {
+      const isNew = addNotification(n);
+      if (isNew) {
+        setTimeout(() => notify({ title: n.title, body: n.body, kind: n.kind, href: n.href, duration }), toastDelay);
+        toastDelay += 350;
+      }
+    }
+
     // --- Pending invite ---
     if (invite) {
-      const n: AppNotification = {
-        id: `invite:${invite.href}`,
-        kind: "invite",
-        title: `${invite.from} invited you`,
-        body: invite.relationship ? `Join as their ${invite.relationship.toLowerCase()}` : "Join their household",
-        href: invite.href,
-        timestamp: now,
-        read: false,
-      };
-      addNotification(n);
-      setTimeout(() => notify({ title: n.title, body: n.body, kind: "invite", href: invite.href, duration: 8000 }), toastDelay);
-      toastDelay += 400;
+      seed(
+        {
+          id: `invite:${invite.href}`,
+          kind: "invite",
+          title: `${invite.from} invited you`,
+          body: invite.relationship ? `Join as their ${invite.relationship.toLowerCase()}` : "Join their household",
+          href: invite.href,
+          timestamp: now,
+          read: false,
+        },
+        8000,
+      );
     }
 
     // --- Overdue and due-today reminders ---
     const urgent = dueReminders.filter((r) => r.status === "pending" && r.dueDate <= today);
     for (const r of urgent.slice(0, 5)) {
-      const n: AppNotification = {
+      seed({
         id: `reminder:${r.id}`,
         kind: "reminder",
         title: r.title,
@@ -99,10 +108,7 @@ export function useNotifications({ dueReminders, weatherAlerts, invite, expiring
         href: "/calendar",
         timestamp: now,
         read: false,
-      };
-      addNotification(n);
-      setTimeout(() => notify({ title: n.title, body: n.body, kind: "reminder", href: "/calendar" }), toastDelay);
-      toastDelay += 300;
+      });
     }
 
     // Rest of due-soon reminders go to the centre but don't toast.
@@ -121,34 +127,34 @@ export function useNotifications({ dueReminders, weatherAlerts, invite, expiring
 
     // --- Warranty expiry ---
     for (const w of expiringWarranties.slice(0, 5)) {
-      const n: AppNotification = {
-        id: `warranty:${w.id}`,
-        kind: "warranty",
-        title: `${w.name} warranty ${warrantyLabel(w.warrantyExpires)}`,
-        body: "Check if you need to extend or make a claim",
-        href: `/items/${w.id}`,
-        timestamp: now,
-        read: false,
-      };
-      addNotification(n);
-      setTimeout(() => notify({ title: n.title, body: n.body, kind: "warranty", href: n.href, duration: 6000 }), toastDelay);
-      toastDelay += 300;
+      seed(
+        {
+          id: `warranty:${w.id}`,
+          kind: "warranty",
+          title: `${w.name} warranty ${warrantyLabel(w.warrantyExpires)}`,
+          body: "Check if you need to extend or make a claim",
+          href: `/items/${w.id}`,
+          timestamp: now,
+          read: false,
+        },
+        6000,
+      );
     }
 
     // --- Weather alerts ---
     for (const alert of weatherAlerts.slice(0, 3)) {
-      const n: AppNotification = {
-        id: `weather:${alert.kind}:${alert.date}`,
-        kind: "weather",
-        title: alert.title,
-        body: alert.tip,
-        href: "/maintenance",
-        timestamp: now,
-        read: false,
-      };
-      addNotification(n);
-      setTimeout(() => notify({ title: n.title, body: n.body, kind: "weather", href: "/maintenance", duration: 6000 }), toastDelay);
-      toastDelay += 350;
+      seed(
+        {
+          id: `weather:${alert.kind}:${alert.date}`,
+          kind: "weather",
+          title: alert.title,
+          body: alert.tip,
+          href: "/maintenance",
+          timestamp: now,
+          read: false,
+        },
+        6000,
+      );
     }
   }, [dueReminders, weatherAlerts, invite, expiringWarranties]);
 }

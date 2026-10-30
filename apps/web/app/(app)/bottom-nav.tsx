@@ -6,8 +6,6 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { CHAT_LINK, HOME_LINK, isActive, ITEMS_LINK, PRIMARY_LINKS, SEASONS_LINK, TOOL_LINKS, type NavLink } from "./nav-links";
-import { NotificationBadge } from "./notifications/notification-center";
-import { NotificationSheet } from "./notifications/notification-sheet";
 
 function NavIcon({ name, filled, className }: { name: string; filled?: boolean; className?: string }) {
   return (
@@ -23,7 +21,6 @@ function NavIcon({ name, filled, className }: { name: string; filled?: boolean; 
 export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number }) {
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
 
   const activeToolLink = TOOL_LINKS.find((link) => isActive(pathname, link.href));
   const primaryLinks = activeToolLink ? [HOME_LINK, ITEMS_LINK, CHAT_LINK, activeToolLink] : PRIMARY_LINKS;
@@ -96,10 +93,6 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
 
       <div className="no-scrollbar flex">
         {primaryLinks.map((link) => renderLink(link))}
-        <div className="flex min-w-16 flex-1 flex-col items-center gap-[3px] py-[10px]">
-          <NotificationBadge onClick={() => setNotifOpen(true)} />
-          <span className="text-[11px] font-semibold text-muted">Alerts</span>
-        </div>
         <button
           type="button"
           onClick={() => setExpanded((current) => !current)}
@@ -121,7 +114,6 @@ export function BottomNav({ unreadChatCount = 0 }: { unreadChatCount?: number })
           </span>
         </button>
       </div>
-      <NotificationSheet open={notifOpen} onClose={() => setNotifOpen(false)} />
     </nav>
   );
 }
