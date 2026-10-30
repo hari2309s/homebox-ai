@@ -112,7 +112,7 @@ export function ThemeSwitcher({ variant = "full" }: { variant?: "compact" | "ful
     <div
       role="radiogroup"
       aria-label="Theme"
-      className={`relative grid grid-cols-3 rounded-[10px] bg-surface-soft p-[3px] ${compact ? "w-full" : "w-full max-w-[360px]"}`}
+      className="relative grid w-full grid-cols-3 rounded-[10px] bg-surface-soft p-[3px]"
     >
       {OPTIONS.map((option) => {
         const active = mounted && option.value === theme;
