@@ -46,15 +46,16 @@ const SUGGESTIONS = [
 const RAIL_DOTS = ["#3f6b45", "#b0643f", "#8a7a4f", "#5b7fa6"];
 
 function TypingDots() {
+  const colors = ["#c5c9bf", "#3f6b45", "#b0643f", "#8a7a4f"];
   return (
     <div className="flex items-center gap-1">
-      {[0, 1, 2].map((i) => (
+      {colors.map((color, i) => (
         <motion.span
-          key={i}
+          key={color}
           className="h-2 w-2 rounded-[2px]"
-          style={{ background: ["#3f6b45", "#b0643f", "#8a7a4f"][i] }}
-          animate={{ opacity: [0.3, 1, 0.3], y: [0, -3, 0] }}
-          transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
+          style={{ background: color }}
+          animate={{ opacity: [0.45, 1, 0.45], y: [0, -5, 0] }}
+          transition={{ duration: 1, repeat: Infinity, delay: i * 0.14, ease: "easeInOut" }}
         />
       ))}
     </div>

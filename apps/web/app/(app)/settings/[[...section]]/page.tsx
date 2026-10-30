@@ -78,6 +78,25 @@ const SECTIONS = [
   },
 ] as const;
 
+/** J10 mobile hub rows — colored icon backgrounds, subtitles, and optional danger styling. */
+const MOBILE_ROWS: {
+  slug: string;
+  icon: string;
+  title: string;
+  sub: string;
+  ibg: string;
+  ic: string;
+  bg?: string;
+  bd?: string;
+  tc?: string;
+}[] = [
+  { slug: "household", icon: "diversity_3", title: "Household", sub: "Your household members", ibg: "#dde6f0", ic: "#2c4767" },
+  { slug: "password", icon: "key", title: "Password", sub: "Change your password", ibg: "#e9e8e1", ic: "#1f2622" },
+  { slug: "appearance", icon: "contrast", title: "Appearance", sub: "Light, dark or system", ibg: "#f3eef6", ic: "#5a3d6b" },
+  { slug: "data", icon: "swap_vert", title: "Your data", sub: "Export or import JSON, CSV, ZIP", ibg: "#e7e1d0", ic: "#5a4f33" },
+  { slug: "danger", icon: "warning", title: "Danger zone", sub: "Delete account", bg: "#fbf1ec", bd: "#d9a58a", ibg: "#ecdccd", ic: "#7a3f22", tc: "#5a2e18" },
+];
+
 type Slug = (typeof SECTIONS)[number]["slug"];
 
 function SettingsSection({
@@ -100,13 +119,18 @@ function SettingsSection({
     <section
       id={slug}
       aria-labelledby={`${slug}-title`}
-      className={`flex scroll-mt-4 flex-col gap-2 lg:gap-[18px] ${slug === active ? "" : "lg:hidden"}`}
+      className={`flex scroll-mt-4 flex-col gap-2 lg:gap-[18px] ${slug === active ? "" : "hidden"}`}
     >
-      <div
-        className={`px-1 font-mono text-[10px] tracking-wide lg:hidden ${danger ? "text-danger" : "text-muted"}`}
-      >
-        {meta.eyebrow}
+      {/* Mobile back + eyebrow header */}
+      <div className="flex items-center gap-3 lg:hidden">
+        <Link href="/settings" className="flex items-center justify-center text-ink no-underline">
+          <span className="material-symbols-rounded">arrow_back</span>
+        </Link>
+        <span className={`font-mono text-[10px] tracking-wide ${danger ? "text-danger" : "text-muted"}`}>
+          {meta.eyebrow}
+        </span>
       </div>
+      {/* Desktop eyebrow + title */}
       <div className="hidden lg:block">
         <div className={`font-mono text-[10px] ${danger ? "text-danger" : "text-muted"}`}>
           {meta.eyebrow}
@@ -130,10 +154,89 @@ function SettingsSection({
   );
 }
 
+function UserCard({
+  displayName,
+  email,
+  avatarUrl,
+}: {
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+}) {
+  const initial = (displayName || email || "?").trim().charAt(0).toUpperCase();
+  return (
+    <Link
+      href="/settings/profile"
+      className="flex items-center gap-3 rounded-[14px] border border-border bg-card p-[10px_12px] no-underline"
+    >
+      <span className="flex h-12 w-12 flex-none items-center justify-center overflow-hidden rounded-full bg-[#dfe8d6]">
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- signed Storage URL
+          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="font-serif text-[20px] text-[#2c4d31]">{initial}</span>
+        )}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[15px] font-semibold text-ink">{displayName || email}</div>
+        {displayName && <div className="truncate text-[12px] text-muted">{email}</div>}
+      </div>
+      <span className="text-[13px] font-semibold text-accent">Edit</span>
+    </Link>
+  );
+}
+
+function MobileHub({
+  displayName,
+  email,
+  avatarUrl,
+}: {
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+}) {
+  return (
+    <div className="flex flex-col gap-2 p-4 lg:hidden">
+      <h1 className="m-0 px-[2px] pb-[6px] font-serif text-[28px] font-normal leading-none text-ink">Settings</h1>
+      <UserCard displayName={displayName} email={email} avatarUrl={avatarUrl} />
+      {MOBILE_ROWS.map((row) => (
+        <Link
+          key={row.slug}
+          href={`/settings/${row.slug}`}
+          className="flex min-h-[56px] items-center gap-3 rounded-[14px] border px-3 no-underline"
+          style={{
+            background: row.bg ?? "#fff",
+            borderColor: row.bd ?? "#d9dbd2",
+          }}
+        >
+          <span
+            className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px]"
+            style={{ background: row.ibg }}
+          >
+            <span className="material-symbols-rounded text-[18px]" style={{ color: row.ic }}>
+              {row.icon}
+            </span>
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[14px] font-semibold" style={{ color: row.tc ?? "#1f2622" }}>
+              {row.title}
+            </div>
+            <div className="truncate text-[12px] text-muted">{row.sub}</div>
+          </div>
+          <span className="material-symbols-rounded text-[#a3aba5]">expand_more</span>
+        </Link>
+      ))}
+      <div className="pb-4 pt-2 text-center font-mono text-[10px] text-muted">HOMEBOX · SETTINGS</div>
+    </div>
+  );
+}
+
 export default async function SettingsPage({ params }: { params: Promise<{ section?: string[] }> }) {
   const [{ section }, user] = await Promise.all([params, getSessionUser()]);
   if (!user) redirect("/login");
   if (section && (section.length > 1 || !SECTIONS.some((s) => s.slug === section[0]))) notFound();
+
+  const isHub = !section;
   const active = (section?.[0] ?? "profile") as Slug;
 
   const email = user.email ?? "";
@@ -143,6 +246,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
 
   return (
     <div data-full-bleed className="flex h-full flex-col lg:flex-row">
+      {/* Desktop sidebar nav — always visible on large screens */}
       <nav
         aria-label="Settings sections"
         className="hidden w-[240px] flex-none flex-col gap-1 border-r border-border px-4 py-7 lg:flex"
@@ -172,14 +276,15 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
         })}
       </nav>
 
+      {/* Mobile hub — shown when no section is selected */}
+      {isHub && <MobileHub displayName={displayName} email={email} avatarUrl={avatarUrl} />}
+
+      {/* Section content — on mobile only visible when a section is explicitly selected,
+          on desktop always visible (sidebar selects which one) */}
       <div
         data-scroll-container
-        className="flex min-w-0 flex-1 flex-col gap-[22px] overflow-y-auto p-4 lg:px-9 lg:py-7"
+        className={`min-w-0 flex-1 flex-col gap-[22px] overflow-y-auto p-4 lg:flex lg:px-9 lg:py-7 ${isHub ? "hidden" : "flex"}`}
       >
-        <div className="px-1 lg:hidden">
-          <h1 className="m-0 font-serif text-[30px] font-normal leading-none text-ink">Settings</h1>
-        </div>
-
         <SettingsSection slug="profile" active={active}>
           <AvatarUploadForm userId={user.id} currentAvatarUrl={avatarUrl} />
           <DisplayNameForm initialName={displayName} />
@@ -255,8 +360,6 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
         <SettingsSection slug="danger" active={active}>
           <DeleteAccountForm email={email} />
         </SettingsSection>
-
-        <div className="pb-4 text-center font-mono text-[10px] text-muted lg:hidden">HOMEBOX · SETTINGS</div>
       </div>
     </div>
   );

@@ -192,6 +192,9 @@ export function toastItemUpdated(name: string) {
 export function toastItemDeleted(name: string) {
   quickToast("activity", `${name} deleted`);
 }
+export function toastItemArchived(name: string) {
+  quickToast("activity", `${name} archived`);
+}
 
 // Item moved on plan
 export function toastItemMoved(name: string, placeName?: string) {

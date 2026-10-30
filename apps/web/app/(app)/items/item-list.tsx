@@ -1,10 +1,14 @@
 "use client";
 
-import { EmptyState } from "@homebox-ai/ui";
+import { EmptyState, SwipeableRow, type SwipeAction } from "@homebox-ai/ui";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
+import { useCallback, useState } from "react";
 
 import { formatCurrency } from "../../../lib/currency";
+import { toastItemArchived } from "../notifications/use-notifications";
+import { archiveItemAction } from "./actions";
 import { stripeFor } from "./item-summary";
 
 interface Item {
@@ -77,7 +81,74 @@ function ItemRow({
   );
 }
 
+function SwipeableItemRow({
+  item,
+  group,
+  locationNameById,
+  selected,
+  onSelect,
+  onArchive,
+}: {
+  item: Item;
+  group: ZoneGroup;
+  locationNameById: Map<string, string>;
+  selected: boolean;
+  onSelect: ItemListProps["onSelect"];
+  onArchive: (itemId: string, name: string) => void;
+}) {
+  const router = useRouter();
+
+  const actions: SwipeAction[] = [
+    {
+      icon: "move_item",
+      label: "Move",
+      bg: "#3a423d",
+      color: "#fbfaf6",
+      onAction: () => router.push(`/items/${item.id}?action=move`),
+    },
+    {
+      icon: "archive",
+      label: "Archive",
+      bg: "#d9a43a",
+      color: "#3a2a06",
+      onAction: () => onArchive(item.id, item.name),
+    },
+    {
+      icon: "delete",
+      label: "Delete",
+      bg: "#b0643f",
+      color: "#fff",
+      onAction: () => router.push(`/items/${item.id}?action=delete`),
+    },
+  ];
+
+  const fullSwipeAction: SwipeAction = {
+    icon: "archive",
+    label: "Archive",
+    bg: "#d9a43a",
+    color: "#3a2a06",
+    onAction: () => onArchive(item.id, item.name),
+  };
+
+  return (
+    <SwipeableRow actions={actions} fullSwipeAction={fullSwipeAction} fullSwipeLabel="Release to archive">
+      <div className="px-3">
+        <ItemRow item={item} group={group} locationNameById={locationNameById} selected={selected} onSelect={onSelect} />
+      </div>
+    </SwipeableRow>
+  );
+}
+
 export function ItemList({ groups, locationNameById, selectedId, onSelect }: ItemListProps) {
+  const [undoItem, setUndoItem] = useState<{ id: string; name: string } | null>(null);
+
+  const handleArchive = useCallback(async (itemId: string, name: string) => {
+    setUndoItem({ id: itemId, name });
+    await archiveItemAction(itemId);
+    toastItemArchived(name);
+    setTimeout(() => setUndoItem((prev) => (prev?.id === itemId ? null : prev)), 4000);
+  }, []);
+
   if (groups.length === 0) {
     return <EmptyState>No items match — try a different search.</EmptyState>;
   }
@@ -91,7 +162,9 @@ export function ItemList({ groups, locationNameById, selectedId, onSelect }: Ite
             <span className="flex-1 text-sm font-semibold text-ink">{group.zoneName}</span>
             <span className="font-mono text-[11px] text-muted">{group.items.length}</span>
           </div>
-          <div className="rounded-[14px] border border-border bg-card px-3 lg:rounded-none lg:border-0 lg:border-b lg:border-border/40 lg:bg-transparent lg:px-0 lg:last:border-b-0">
+
+          {/* Desktop: simple rows in a card */}
+          <div className="hidden rounded-[14px] border border-border bg-card px-3 lg:block lg:rounded-none lg:border-0 lg:border-b lg:border-border/40 lg:bg-transparent lg:px-0 lg:last:border-b-0">
             {group.items.map((item) => (
               <ItemRow
                 key={item.id}
@@ -103,8 +176,39 @@ export function ItemList({ groups, locationNameById, selectedId, onSelect }: Ite
               />
             ))}
           </div>
+
+          {/* Mobile: swipeable rows */}
+          <div className="overflow-hidden rounded-[14px] border border-border bg-card lg:hidden">
+            {group.items.map((item) => (
+              <SwipeableItemRow
+                key={item.id}
+                item={item}
+                group={group}
+                locationNameById={locationNameById}
+                selected={item.id === selectedId}
+                onSelect={onSelect}
+                onArchive={handleArchive}
+              />
+            ))}
+          </div>
         </div>
       ))}
+
+      {/* Undo snackbar */}
+      {undoItem && (
+        <div className="flex items-center gap-[10px] rounded-[14px] bg-inverse px-[14px] py-[14px] lg:hidden">
+          <span className="flex-1 text-[14px] text-inverse-ink">
+            &ldquo;{undoItem.name}&rdquo; archived
+          </span>
+          <button
+            type="button"
+            className="cursor-pointer border-none bg-transparent text-[14px] font-semibold text-accent"
+            onClick={() => setUndoItem(null)}
+          >
+            Undo
+          </button>
+        </div>
+      )}
     </div>
   );
 }

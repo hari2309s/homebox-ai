@@ -1,5 +1,5 @@
 import { PageLoader } from "@homebox-ai/ui";
 
 export default function ItemDetailLoading() {
-  return <PageLoader />;
+  return <PageLoader label="FINDING IT" />;
 }

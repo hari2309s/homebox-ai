@@ -14,7 +14,7 @@ export function Spinner({ size = 20, className, ...props }: SpinnerProps) {
       viewBox="0 0 24 24"
       fill="none"
       role="status"
-      aria-label="Loading"
+      aria-label="Working"
       className={`animate-spin ${className ?? ""}`}
       {...props}
     >

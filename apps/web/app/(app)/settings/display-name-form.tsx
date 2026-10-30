@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { Button, FormField, Input, Spinner } from "@homebox-ai/ui";
+import { Button, FormField, Input, WalkingDots } from "@homebox-ai/ui";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -41,7 +41,7 @@ export function DisplayNameForm({ initialName }: { initialName: string }) {
         />
       </FormField>
       <Button type="submit" disabled={pending || !name.trim()}>
-        {pending ? <Spinner size={16} /> : "Save"}
+        {pending ? <WalkingDots size={6} /> : "Save"}
       </Button>
       {error && (
         <p role="alert" className="text-sm text-accent-hover sm:basis-full">

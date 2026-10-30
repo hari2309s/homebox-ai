@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { Button, FormField, PasswordInput, Spinner } from "@homebox-ai/ui";
+import { Button, FormField, PasswordInput, WalkingDots } from "@homebox-ai/ui";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
@@ -95,7 +95,7 @@ export function PasswordForm() {
           disabled={pending || !currentPassword || !password || !confirmPassword}
           className="self-start"
         >
-          {pending ? <Spinner size={16} /> : "Update password"}
+          {pending ? <WalkingDots size={6} /> : "Update password"}
         </Button>
         {error && (
           <p role="alert" className="text-sm text-accent-hover">

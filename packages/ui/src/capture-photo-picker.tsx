@@ -2,7 +2,7 @@
 
 import type { ChangeEvent, RefObject } from "react";
 
-import { Spinner } from "./spinner";
+import { WalkingDots } from "./walking-dots";
 
 interface CapturePhotoPickerProps {
   previewUrl: string | null;
@@ -47,7 +47,7 @@ export function CapturePhotoPicker({
         )}
         {analyzing && (
           <div className="flex items-center gap-2 text-muted">
-            <Spinner size={16} />
+            <WalkingDots size={6} />
             <span className="text-sm">{analyzingLabel}</span>
           </div>
         )}

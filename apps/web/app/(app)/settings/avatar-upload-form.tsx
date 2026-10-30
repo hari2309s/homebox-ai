@@ -2,7 +2,7 @@
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
 import { uploadAvatar } from "@homebox-ai/supabase/storage";
-import { Spinner } from "@homebox-ai/ui";
+import { WalkingDots } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
@@ -140,7 +140,7 @@ export function AvatarUploadForm({ userId, currentAvatarUrl }: AvatarUploadFormP
           )}
           {uploading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-              <Spinner size={20} className="text-white" />
+              <WalkingDots size={6} />
             </div>
           )}
         </button>
@@ -248,8 +248,7 @@ export function AvatarUploadForm({ userId, currentAvatarUrl }: AvatarUploadFormP
                   disabled={uploading}
                   className="flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-bold text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:opacity-60"
                 >
-                  {uploading && <Spinner size={14} className="text-on-accent" />}
-                  {uploading ? "Saving…" : "Save"}
+                  {uploading ? <WalkingDots size={6} /> : "Save"}
                 </button>
               </div>
             </motion.div>

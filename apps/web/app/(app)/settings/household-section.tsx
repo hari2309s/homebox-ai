@@ -1,6 +1,6 @@
 "use client";
 
-import { ConfirmDialog, Spinner } from "@homebox-ai/ui";
+import { ConfirmDialog, WalkingDots } from "@homebox-ai/ui";
 import { useEffect, useId, useState } from "react";
 
 import { toastLeftHousehold, toastMemberRemoved } from "../notifications/use-notifications";
@@ -103,7 +103,7 @@ function RelationshipInput({
       </datalist>
       <span aria-live="polite" className="w-4 text-accent">
         {state === "saving" ? (
-          <Spinner size={12} />
+          <WalkingDots size={4} />
         ) : state === "saved" ? (
           <span className="material-symbols-rounded text-[16px]">check</span>
         ) : null}
@@ -169,7 +169,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
     setCreating(false);
   }
 
-  if (loading) return <Spinner size={16} />;
+  if (loading) return <WalkingDots size={8} />;
   if (!status) return <p className="m-0 text-sm text-clay">{error ?? "Couldn't load household info"}</p>;
 
   if (status.role === "member") {
@@ -306,7 +306,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
               }}
               className={`${SMALL} border-none bg-transparent text-clay`}
             >
-              {revokingId === invite.id ? <Spinner size={12} /> : "Revoke"}
+              {revokingId === invite.id ? <WalkingDots size={4} /> : "Revoke"}
             </button>
           </li>
         ))}

@@ -6,9 +6,9 @@ import {
   FormField,
   Input,
   PasswordInput,
-  Spinner,
   StaggerItem,
   StaggerList,
+  WalkingDots,
 } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -546,7 +546,7 @@ function LoginForm() {
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
             className="flex cursor-pointer items-center justify-center rounded-xl bg-accent px-3 py-[15px] text-base font-semibold text-on-accent transition-colors hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
           >
-            {pending ? <Spinner size={16} /> : mode === "sign-in" ? "Sign in" : "Create account"}
+            {pending ? <WalkingDots size={6} /> : mode === "sign-in" ? "Sign in" : "Create account"}
           </motion.button>
 
           {/* Terms (sign-up only) */}

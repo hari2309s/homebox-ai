@@ -1,6 +1,6 @@
 "use client";
 
-import { Spinner, TapButton } from "@homebox-ai/ui";
+import { TapButton, WalkingDots } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface ChatSession {
@@ -165,7 +165,7 @@ export function HistorySheet({ open, sessions, activeSessionId, loadingSessionId
                                 </span>
                               </span>
                               {loadingSessionId === session.sessionId ? (
-                                <Spinner size={14} className="flex-none text-muted" />
+                                <WalkingDots size={5} className="flex-none" />
                               ) : (
                                 <span className="flex-none font-mono text-[10px] text-muted">
                                   {shortAgo(session.lastMessageAt)}

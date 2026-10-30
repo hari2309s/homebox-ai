@@ -121,7 +121,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
 
       <div className="hidden min-w-0 flex-1 overflow-y-auto lg:block">
         {user && selected ? (
-          <Suspense key={selected} fallback={<div className="p-7 font-mono text-[10px] text-muted">LOADING…</div>}>
+          <Suspense key={selected} fallback={<div className="p-7 font-mono text-[10px] text-muted">FINDING IT</div>}>
             <ItemPane userId={user.id} itemId={selected} locations={locations} labels={labels} />
           </Suspense>
         ) : (

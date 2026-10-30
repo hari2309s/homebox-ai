@@ -1,7 +1,7 @@
 "use client";
 
 import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { Button, FormField, Input, Spinner } from "@homebox-ai/ui";
+import { Button, FormField, Input, WalkingDots } from "@homebox-ai/ui";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
             </p>
           )}
           <Button type="submit" disabled={pending}>
-            {pending ? <Spinner size={16} /> : "Send reset link"}
+            {pending ? <WalkingDots size={6} /> : "Send reset link"}
           </Button>
         </form>
       )}

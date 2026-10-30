@@ -7,6 +7,8 @@ import type { ReactNode } from "react";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
+import { InstallPrompt } from "@homebox-ai/ui";
+
 import { BottomNav } from "./bottom-nav";
 import { listLocationsCached } from "../../lib/cached-queries";
 import { needsOnboarding } from "../../lib/onboarding";
@@ -118,6 +120,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <BottomNav unreadChatCount={unreadChatCount} userName={userName} householdLabel={householdLabel} members={members} />
         <FloatingNotificationBell />
         <NotificationProvider dueReminders={dueReminders} weatherAlerts={alerts} invite={inviteSeed} expiringWarranties={expiringWarranties} />
+        <InstallPrompt />
         {showInvite && pendingJoin && (
           <PendingInviteBanner
             href={pendingJoin}

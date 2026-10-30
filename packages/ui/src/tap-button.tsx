@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import type { ComponentProps, ReactNode } from "react";
 
 import { cx } from "./form";
-import { Spinner } from "./spinner";
+import { WalkingDots } from "./walking-dots";
 
 /**
  * A bare `motion.button` with just hover/tap feedback baked in — no visual
@@ -53,7 +53,7 @@ export function TapButton({
       <span className={cx("inline-flex items-center gap-1.5", loading ? "invisible" : undefined)}>{children}</span>
       {loading && (
         <span className="absolute inset-0 flex items-center justify-center">
-          <Spinner size={12} />
+          <WalkingDots size={5} />
         </span>
       )}
     </motion.button>

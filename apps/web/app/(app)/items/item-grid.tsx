@@ -1,6 +1,6 @@
 "use client";
 
-import { EmptyState, Spinner } from "@homebox-ai/ui";
+import { EmptyState, WalkingDots } from "@homebox-ai/ui";
 import Link from "next/link";
 import type { MouseEvent } from "react";
 
@@ -49,7 +49,7 @@ function ItemCard({
           <img src={item.photoUrl} alt={item.name} className="aspect-[4/3] w-full object-cover" />
         ) : item.isLoadingPhoto ? (
           <div className="flex aspect-[4/3] w-full items-center justify-center text-muted">
-            <Spinner size={20} />
+            <WalkingDots size={6} />
           </div>
         ) : (
           <div className="flex aspect-[4/3] w-full items-center justify-center">

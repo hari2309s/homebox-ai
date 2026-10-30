@@ -4,5 +4,5 @@ import { PageLoader } from "@homebox-ai/ui";
 // doesn't define its own more specific loading.tsx — one file covers
 // items/locations/labels/chat/capture/receipts/maintenance.
 export default function Loading() {
-  return <PageLoader />;
+  return <PageLoader label="WALKING THE PLOT" />;
 }

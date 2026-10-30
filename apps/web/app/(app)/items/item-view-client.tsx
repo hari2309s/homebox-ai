@@ -1,5 +1,6 @@
 "use client";
 
+import { PullToRefresh } from "@homebox-ai/ui";
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -239,7 +240,12 @@ export function ItemViewClient({
           </div>
         </div>
       </div>
-      <div className="flex flex-col px-4 pt-[14px] lg:px-5 lg:pt-3">
+      <PullToRefresh
+        onRefresh={async () => { router.refresh(); }}
+        pullLabel="RELEASE TO WALK THE PLOT"
+        refreshLabel="GATHERING THINGS"
+        className="flex flex-col px-4 pt-[14px] lg:px-5 lg:pt-3"
+      >
         {view === "list" ? (
           <ItemList
             groups={groupedByZone}
@@ -255,7 +261,7 @@ export function ItemViewClient({
             onSelect={handleSelect}
           />
         )}
-      </div>
+      </PullToRefresh>
     </>
   );
 }

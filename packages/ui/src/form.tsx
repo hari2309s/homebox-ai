@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import type { ComponentProps, ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 
-import { Spinner } from "./spinner";
+import { WalkingDots } from "./walking-dots";
 
 // Exported for password-input.tsx, which needs this same field chrome but
 // can't just render `<Input>` — it has to inject a show/hide button inside
@@ -78,7 +78,7 @@ export function Button({
       <span className={cx("inline-flex items-center gap-2", loading ? "invisible" : undefined)}>{children}</span>
       {loading && (
         <span className="absolute inset-0 flex items-center justify-center">
-          <Spinner size={16} />
+          <WalkingDots size={6} />
         </span>
       )}
     </motion.button>
