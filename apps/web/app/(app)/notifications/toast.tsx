@@ -11,14 +11,14 @@ import { NOTIFICATION_ICON, NOTIFICATION_TONE, type NotificationKind } from "../
 export function Toaster() {
   return (
     <SonnerToaster
-      position="top-right"
+      position="top-center"
       offset={16}
       gap={8}
       visibleToasts={4}
       toastOptions={{
         unstyled: true,
         className:
-          "flex items-start gap-3 w-full max-w-[380px] rounded-[14px] border border-border bg-card p-3 shadow-[8px_12px_24px_-10px_rgba(31,38,34,.35)] text-body font-sans",
+          "w-[min(380px,calc(100vw-32px))] rounded-[14px] border border-border bg-card p-3 shadow-[8px_12px_24px_-10px_rgba(31,38,34,.35)] text-body font-sans",
       }}
     />
   );
