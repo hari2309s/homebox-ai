@@ -197,6 +197,13 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
   );
   const dangerContent = <DeleteAccountForm email={email} />;
 
+  const profileContent = (
+    <>
+      <AvatarUploadForm userId={user.id} currentAvatarUrl={avatarUrl} />
+      <DisplayNameForm initialName={displayName} />
+    </>
+  );
+
   const accordionRows: AccordionRow[] = [
     { slug: "household", icon: "diversity_3", title: "Household", sub: householdSub, ibg: "#dde6f0", ic: "#2c4767", content: householdContent },
     { slug: "password", icon: "key", title: "Password", sub: "Change your password", ibg: "#e9e8e1", ic: "#1f2622", content: passwordContent },
@@ -242,6 +249,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
         displayName={displayName}
         email={email}
         avatarUrl={avatarUrl}
+        profileContent={profileContent}
         rows={accordionRows}
       />
 
