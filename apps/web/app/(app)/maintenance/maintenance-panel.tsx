@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { formatDate } from "../../../lib/date";
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
+import { toastSuggestionAccepted } from "../notifications/use-notifications";
 import { AcceptedHistory, type AcceptedSuggestion } from "./accepted-history";
 import { WeatherCard, WeatherNote, type MaintainWeather } from "./weather-card";
 import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
@@ -59,6 +60,7 @@ export function MaintenancePanel({ items, householdUsers, currentUserId, accepte
     try {
       await createReminderFromSuggestionAction(formData);
       setAcceptedIndexes((prev) => new Set(prev).add(index));
+      toastSuggestionAccepted(suggestion.name);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't add this reminder");
     } finally {

@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { isActive, PRIMARY_LINKS, TOOL_LINKS, type NavLink } from "./nav-links";
+import { NotificationBell } from "./notifications/notification-center";
 import { ThemeSwitcher } from "./theme-switcher";
 
 // Loaded on demand so the barcode library stays out of every page's bundle.
@@ -120,10 +121,10 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
       <div className="flex-1" />
 
       <div className="flex items-center gap-2 px-[10px] pb-2">
+        <NotificationBell />
+        <div className="flex-1" />
         <span className="font-mono text-[9px] text-faint">THEME</span>
-        <div className="flex-1">
-          <ThemeSwitcher variant="compact" />
-        </div>
+        <ThemeSwitcher variant="compact" />
       </div>
       <Link href="/settings/household" className="flex items-center gap-2 border-t border-border p-[10px] no-underline">
         <span className="flex">

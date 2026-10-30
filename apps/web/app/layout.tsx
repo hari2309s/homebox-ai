@@ -4,6 +4,7 @@ import { Onest, Young_Serif, Red_Hat_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 
 import splashDevices from "../lib/splash-devices.json";
+import { Toaster } from "./(app)/notifications/toast";
 
 import "./globals.css";
 
@@ -78,6 +79,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Disables transform/layout animations app-wide for prefers-reduced-motion,
             without every motion.* usage needing its own check. */}
         <MotionConfig reducedMotion="user">{children}</MotionConfig>
+        <Toaster />
       </body>
     </html>
   );

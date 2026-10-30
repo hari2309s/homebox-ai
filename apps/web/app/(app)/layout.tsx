@@ -1,6 +1,6 @@
 export const maxDuration = 60;
 
-import { chatQueries, itemQueries, reminderQueries, sharingQueries } from "@homebox-ai/db";
+import { chatQueries, homeQueries, itemQueries, reminderQueries, sharingQueries } from "@homebox-ai/db";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
@@ -11,6 +11,8 @@ import { BottomNav } from "./bottom-nav";
 import { listLocationsCached } from "../../lib/cached-queries";
 import { needsOnboarding } from "../../lib/onboarding";
 import { JOIN_PATH } from "../../lib/pending-join";
+import { getForecast, weatherAlerts } from "../../lib/weather";
+import { NotificationProvider } from "./notifications/notification-provider";
 import { PendingInviteBanner } from "./pending-invite-banner";
 import { Sidebar } from "./sidebar";
 
@@ -77,6 +79,24 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     !pendingInvite.alreadyAccepted &&
     pendingInvite.ownerEmail !== user.email;
 
+  // --- Notification seeds (reminders, weather, invite) ---
+  const dueReminders = reminders
+    .filter((r) => r.status === "pending" && r.dueDate <= dueCutoff)
+    .map((r) => ({ id: r.id, title: r.title, itemName: r.itemName, dueDate: r.dueDate, status: r.status }));
+
+  const home = await homeQueries.getHomeLocation(user.id);
+  const forecast = home ? await getForecast(home.latitude, home.longitude) : null;
+  const alerts = forecast ? weatherAlerts(forecast.days) : [];
+
+  const inviteSeed =
+    showInvite && pendingJoin
+      ? {
+          from: pendingInvite.ownerName?.split(" ")[0] ?? pendingInvite.ownerEmail ?? "Someone",
+          relationship: pendingInvite.relationship,
+          href: pendingJoin,
+        }
+      : null;
+
   return (
     <div id="app-shell" className="mx-auto flex h-dvh w-full max-w-lg bg-surface md:max-w-[672px] lg:max-w-none">
       <Sidebar
@@ -92,6 +112,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
         <BottomNav unreadChatCount={unreadChatCount} />
+        <NotificationProvider dueReminders={dueReminders} weatherAlerts={alerts} invite={inviteSeed} />
         {showInvite && pendingJoin && (
           <PendingInviteBanner
             href={pendingJoin}

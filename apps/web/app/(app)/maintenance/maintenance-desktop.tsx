@@ -6,6 +6,7 @@ import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
 import { assigneeInitial, colorForAssignee } from "../calendar/calendar-utils";
+import { toastSuggestionAccepted } from "../notifications/use-notifications";
 import { AcceptedHistory, type AcceptedSuggestion } from "./accepted-history";
 import { WeatherCard, WeatherNote, type MaintainWeather } from "./weather-card";
 import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
@@ -249,6 +250,7 @@ export function MaintenanceDesktop({
     try {
       await createReminderFromSuggestionAction(formData);
       setAdded((prev) => new Set(prev).add(index));
+      toastSuggestionAccepted(suggestion.name);
       setLocalScheduled((prev) => [
         ...prev,
         {
