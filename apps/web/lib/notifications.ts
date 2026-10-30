@@ -4,7 +4,15 @@
  * colour tone, and default behaviour.
  */
 
-export type NotificationKind = "reminder" | "weather" | "invite" | "suggestion" | "info";
+export type NotificationKind =
+  | "reminder"
+  | "weather"
+  | "invite"
+  | "suggestion"
+  | "warranty"
+  | "household"
+  | "activity"
+  | "info";
 
 export interface AppNotification {
   id: string;
@@ -24,6 +32,9 @@ export const NOTIFICATION_ICON: Record<NotificationKind, string> = {
   weather: "partly_cloudy_day",
   invite: "diversity_3",
   suggestion: "auto_fix_high",
+  warranty: "verified_user",
+  household: "group",
+  activity: "inventory_2",
   info: "info",
 };
 
@@ -33,6 +44,9 @@ export const NOTIFICATION_TONE: Record<NotificationKind, string> = {
   weather: "bg-surface-soft text-[#5b7fa6]",
   invite: "bg-selected text-accent",
   suggestion: "bg-selected text-accent",
+  warranty: "bg-danger-soft text-danger",
+  household: "bg-selected text-accent",
+  activity: "bg-surface-soft text-body",
   info: "bg-surface-soft text-body",
 };
 

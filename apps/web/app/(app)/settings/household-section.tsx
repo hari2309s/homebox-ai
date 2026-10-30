@@ -3,6 +3,7 @@
 import { ConfirmDialog, Spinner } from "@homebox-ai/ui";
 import { useEffect, useId, useState } from "react";
 
+import { toastLeftHousehold, toastMemberRemoved } from "../notifications/use-notifications";
 import {
   createInviteAction,
   getShareStatusAction,
@@ -202,6 +203,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
             setLeaving(true);
             await run(async () => {
               await leaveHouseholdAction();
+              toastLeftHousehold();
               await refresh();
             }, "Couldn't leave this household");
             setLeaving(false);
@@ -364,6 +366,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
           formData.set("memberUserId", pendingRemove.userId);
           await run(async () => {
             await removeMemberAction(formData);
+            toastMemberRemoved(pendingRemove.label);
             await refresh();
           }, "Couldn't remove this member");
           setRemovingMember(false);

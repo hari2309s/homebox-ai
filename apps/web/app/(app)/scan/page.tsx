@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { parseScanResult } from "../../../lib/scan-result";
+import { toastScanResult } from "../notifications/use-notifications";
 import { ScannerPanel } from "./scanner-panel";
 
 export default function ScanPage() {
@@ -48,6 +49,7 @@ function MobileScanner() {
         controls?.stop();
 
         const parsed = parseScanResult(result.getText(), window.location.origin);
+        toastScanResult(result.getText(), parsed.type === "item");
         router.push(
           parsed.type === "item" ? `/items/${parsed.itemId}` : `/items?q=${encodeURIComponent(parsed.query)}`,
         );

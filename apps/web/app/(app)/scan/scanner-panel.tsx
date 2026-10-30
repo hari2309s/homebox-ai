@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { parseScanResult } from "../../../lib/scan-result";
+import { toastScanResult } from "../notifications/use-notifications";
 
 /**
  * Desktop scanner: webcam viewfinder plus an always-focused number field, so a USB/Bluetooth barcode gun
@@ -26,6 +27,7 @@ export function ScannerPanel({ onClose }: { onClose?: () => void }) {
     if (!trimmed || handledRef.current) return;
     handledRef.current = true;
     const parsed = parseScanResult(trimmed, window.location.origin);
+    toastScanResult(trimmed, parsed.type === "item");
     onClose?.();
     router.push(
       parsed.type === "item" ? `/items?selected=${parsed.itemId}` : `/items?q=${encodeURIComponent(parsed.query)}`,

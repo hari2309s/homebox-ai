@@ -4,6 +4,7 @@ import { ConfirmDialog, Input, Select, SubmitButton, TapButton } from "@homebox-
 import { useMemo, useState } from "react";
 
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
+import { toastReminderCompleted, toastReminderReopened } from "../notifications/use-notifications";
 import {
   Reminder,
   Item,
@@ -63,10 +64,11 @@ export function CalendarView({
     setVisibleMonth((current) => new Date(current.getFullYear(), current.getMonth() + delta, 1));
   }
 
-  async function runAction(action: (formData: FormData) => Promise<void>, formData: FormData, fallbackError: string) {
+  async function runAction(action: (formData: FormData) => Promise<void>, formData: FormData, fallbackError: string, onSuccess?: () => void) {
     setError(null);
     try {
       await action(formData);
+      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : fallbackError);
     }
@@ -247,8 +249,8 @@ export function CalendarView({
                 assignee={assigneeLabel(reminder.assignedToUserId, householdUsers)}
                 assigneeInitial={assigneeInitial(reminder.assignedToUserId, householdUsers)}
                 assigneeColor={colorForAssignee(reminder.assignedToUserId)}
-                onComplete={(formData) => runAction(completeReminderAction, formData, "Couldn't update this reminder")}
-                onReopen={(formData) => runAction(reopenReminderAction, formData, "Couldn't update this reminder")}
+                onComplete={(formData) => runAction(completeReminderAction, formData, "Couldn't update this reminder", () => toastReminderCompleted(reminder.title))}
+                onReopen={(formData) => runAction(reopenReminderAction, formData, "Couldn't update this reminder", () => toastReminderReopened(reminder.title))}
                 onDelete={(formData) => runAction(deleteReminderAction, formData, "Couldn't delete this reminder")}
               />
             ))}

@@ -1,13 +1,12 @@
 import { itemQueries } from "@homebox-ai/db";
-import { Input, Select, SubmitButton } from "@homebox-ai/ui";
 import { Suspense } from "react";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { listLabelsCached, listLocationsCached } from "../../../lib/cached-queries";
-import { createItemAction } from "./actions";
 import { EmptyPane, ItemPane } from "./item-pane";
 import { ItemViewClient } from "./item-view-client";
+import { QuickAddForm } from "./quick-add-form";
 
 interface ItemsPageProps {
   searchParams: Promise<{ q?: string; locationId?: string; location?: string; archived?: string; selected?: string }>;
@@ -109,25 +108,14 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
         />
 
         <div className="sticky bottom-0 mt-auto border-t border-border/70 bg-surface/80 p-4 backdrop-blur-lg lg:px-5">
-          <form action={createItemAction} className="flex gap-2">
-            <Input name="name" placeholder="Quick add…" aria-label="New thing name" required className="flex-1" />
-            <Select
-              name="locationId"
-              defaultValue={effectiveLocationId ?? ""}
-              aria-label="Location"
-              className="max-w-[140px]"
-            >
-              <option value="">No location</option>
-              {locations.map((location) => (
-                <option key={location.id} value={location.id}>
-                  {location.name}
-                </option>
-              ))}
-            </Select>
-            <SubmitButton className="!px-4" aria-label="Add thing">
-              <span className="material-symbols-rounded text-[18px]">add</span>
-            </SubmitButton>
-          </form>
+          <QuickAddForm
+            defaultLocationId={effectiveLocationId ?? ""}
+            locationOptions={locations.map((location) => (
+              <option key={location.id} value={location.id}>
+                {location.name}
+              </option>
+            ))}
+          />
         </div>
       </div>
 

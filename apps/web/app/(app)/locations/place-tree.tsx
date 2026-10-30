@@ -4,6 +4,7 @@ import { Input, Select, SubmitButton } from "@homebox-ai/ui";
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition, type DragEvent } from "react";
 
+import { toastLocationCreated } from "../notifications/use-notifications";
 import { reparentPlaceAction } from "../plan-actions";
 import { createLocationAction } from "./actions";
 
@@ -270,6 +271,7 @@ export function PlaceTree({ places: serverPlaces, selectedId }: { places: TreePl
           setError(null);
           try {
             await createLocationAction(formData);
+            toastLocationCreated(String(formData.get("name") ?? ""));
           } catch (err) {
             setError(err instanceof Error ? err.message : "Couldn't add that place");
           }

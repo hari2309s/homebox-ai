@@ -37,6 +37,7 @@ import {
 } from "../../lib/plan-layout";
 import { PlaceShape, ShapeIcon } from "../../lib/plan-shape";
 import { KIND_STYLE, LABEL_INK } from "../../lib/plan-styles";
+import { toastItemMoved } from "./notifications/use-notifications";
 import {
   createPlaceAction,
   createThingAction,
@@ -518,7 +519,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
       const target = innermostAt(places, x, y);
       const locationId = target?.id ?? null;
       setThings((prev) => prev.map((t) => (t.id === thing.id ? { ...t, planX: x, planY: y, locationId } : t)));
-      void run(() => moveThingAction({ id: thing.id, locationId, x, y }), "Couldn't move that thing");
+      void run(() => moveThingAction({ id: thing.id, locationId, x, y }).then(() => toastItemMoved(thing.name, target?.name)), "Couldn't move that thing");
     }
   }
 

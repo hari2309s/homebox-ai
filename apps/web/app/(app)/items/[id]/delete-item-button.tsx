@@ -4,6 +4,7 @@ import { ConfirmDialog, TapButton } from "@homebox-ai/ui";
 import { unstable_rethrow } from "next/navigation";
 import { useState } from "react";
 
+import { toastItemDeleted } from "../../notifications/use-notifications";
 import { deleteItemAction } from "../actions";
 
 const FLOATING =
@@ -31,6 +32,7 @@ export function DeleteItemButton({
     formData.set("itemId", itemId);
     try {
       await deleteItemAction(formData);
+      toastItemDeleted(itemName);
     } catch (err) {
       unstable_rethrow(err);
       setError(err instanceof Error ? err.message : "Couldn't delete this item");

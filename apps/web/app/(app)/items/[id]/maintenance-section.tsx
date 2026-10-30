@@ -4,6 +4,7 @@ import { ConfirmDialog, Input, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { formatCurrency } from "../../../../lib/currency";
+import { toastMaintenanceLogged } from "../../notifications/use-notifications";
 import { addMaintenanceEntryAction, deleteMaintenanceEntryAction, updateMaintenanceEntryAction } from "../actions";
 
 interface MaintenanceEntry {
@@ -35,7 +36,13 @@ export function MaintenanceSection({
         </ul>
       )}
 
-      <form action={addMaintenanceEntryAction} className="flex flex-col gap-2 border-t border-border/40 pt-3">
+      <form
+        action={async (formData) => {
+          await addMaintenanceEntryAction(formData);
+          toastMaintenanceLogged(String(formData.get("name") ?? ""));
+        }}
+        className="flex flex-col gap-2 border-t border-border/40 pt-3"
+      >
         <input type="hidden" name="itemId" value={itemId} />
         <Input name="name" placeholder="What was done" aria-label="What was done" required />
         <div className="grid grid-cols-[minmax(0,1fr)_96px] gap-2">

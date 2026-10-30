@@ -2,10 +2,14 @@
 
 import { useEffect, useRef } from "react";
 
-import { notificationId, type AppNotification } from "../../../lib/notifications";
+import { notificationId, type AppNotification, type NotificationKind } from "../../../lib/notifications";
 import type { WeatherAlert } from "../../../lib/weather";
 import { addNotification } from "./notification-store";
 import { notify } from "./toast";
+
+// ---------------------------------------------------------------------------
+// Seed types — passed from the server layout
+// ---------------------------------------------------------------------------
 
 export interface ReminderSeed {
   id: string;
@@ -21,14 +25,22 @@ export interface InviteSeed {
   href: string;
 }
 
-export interface NotificationSeedProps {
-  /** Reminders due within the next week. */
-  dueReminders: ReminderSeed[];
-  /** Weather alerts for the home location. */
-  weatherAlerts: WeatherAlert[];
-  /** Pending household invite (if any). */
-  invite: InviteSeed | null;
+export interface WarrantySeed {
+  id: string;
+  name: string;
+  warrantyExpires: string | null;
 }
+
+export interface NotificationSeedProps {
+  dueReminders: ReminderSeed[];
+  weatherAlerts: WeatherAlert[];
+  invite: InviteSeed | null;
+  expiringWarranties: WarrantySeed[];
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function dueLabel(dateKey: string): string {
   const today = new Date().toISOString().slice(0, 10);
@@ -39,12 +51,18 @@ function dueLabel(dateKey: string): string {
   return `due ${dateKey}`;
 }
 
-/**
- * Seeds the notification store from server-rendered data on first mount, and
- * fires sonner toasts for anything urgent. Only runs once per mount (or when
- * the seed data identity changes).
- */
-export function useNotifications({ dueReminders, weatherAlerts, invite }: NotificationSeedProps) {
+function warrantyLabel(dateKey: string | null): string {
+  if (!dateKey) return "expiring soon";
+  const today = new Date().toISOString().slice(0, 10);
+  if (dateKey <= today) return "expired";
+  return `expires ${dateKey}`;
+}
+
+// ---------------------------------------------------------------------------
+// Seed hook — runs once per mount
+// ---------------------------------------------------------------------------
+
+export function useNotifications({ dueReminders, weatherAlerts, invite, expiringWarranties }: NotificationSeedProps) {
   const seeded = useRef(false);
 
   useEffect(() => {
@@ -66,17 +84,7 @@ export function useNotifications({ dueReminders, weatherAlerts, invite }: Notifi
         read: false,
       };
       addNotification(n);
-      setTimeout(
-        () =>
-          notify({
-            title: n.title,
-            body: n.body,
-            kind: "invite",
-            href: invite.href,
-            duration: 8000,
-          }),
-        toastDelay,
-      );
+      setTimeout(() => notify({ title: n.title, body: n.body, kind: "invite", href: invite.href, duration: 8000 }), toastDelay);
       toastDelay += 400;
     }
 
@@ -93,16 +101,7 @@ export function useNotifications({ dueReminders, weatherAlerts, invite }: Notifi
         read: false,
       };
       addNotification(n);
-      setTimeout(
-        () =>
-          notify({
-            title: n.title,
-            body: n.body,
-            kind: "reminder",
-            href: "/calendar",
-          }),
-        toastDelay,
-      );
+      setTimeout(() => notify({ title: n.title, body: n.body, kind: "reminder", href: "/calendar" }), toastDelay);
       toastDelay += 300;
     }
 
@@ -120,6 +119,22 @@ export function useNotifications({ dueReminders, weatherAlerts, invite }: Notifi
       });
     }
 
+    // --- Warranty expiry ---
+    for (const w of expiringWarranties.slice(0, 5)) {
+      const n: AppNotification = {
+        id: `warranty:${w.id}`,
+        kind: "warranty",
+        title: `${w.name} warranty ${warrantyLabel(w.warrantyExpires)}`,
+        body: "Check if you need to extend or make a claim",
+        href: `/items/${w.id}`,
+        timestamp: now,
+        read: false,
+      };
+      addNotification(n);
+      setTimeout(() => notify({ title: n.title, body: n.body, kind: "warranty", href: n.href, duration: 6000 }), toastDelay);
+      toastDelay += 300;
+    }
+
     // --- Weather alerts ---
     for (const alert of weatherAlerts.slice(0, 3)) {
       const n: AppNotification = {
@@ -132,33 +147,106 @@ export function useNotifications({ dueReminders, weatherAlerts, invite }: Notifi
         read: false,
       };
       addNotification(n);
-      setTimeout(
-        () =>
-          notify({
-            title: n.title,
-            body: n.body,
-            kind: "weather",
-            href: "/maintenance",
-            duration: 6000,
-          }),
-        toastDelay,
-      );
+      setTimeout(() => notify({ title: n.title, body: n.body, kind: "weather", href: "/maintenance", duration: 6000 }), toastDelay);
       toastDelay += 350;
     }
-  }, [dueReminders, weatherAlerts, invite]);
+  }, [dueReminders, weatherAlerts, invite, expiringWarranties]);
 }
 
-/** Fire a one-off toast when a suggestion is accepted (not seed-based). */
-export function toastSuggestionAccepted(title: string) {
+// ---------------------------------------------------------------------------
+// One-shot toast helpers — called from client components after actions
+// ---------------------------------------------------------------------------
+
+function quickToast(kind: NotificationKind, title: string, body?: string, href?: string) {
   const n: AppNotification = {
     id: notificationId(),
-    kind: "suggestion",
-    title: "Reminder created",
-    body: title,
-    href: "/calendar",
+    kind,
+    title,
+    body,
+    href,
     timestamp: new Date().toISOString(),
     read: false,
   };
   addNotification(n);
-  notify({ title: n.title, body: n.body, kind: "suggestion", href: "/calendar" });
+  notify({ title, body, kind, href });
+}
+
+// Maintenance suggestions
+export function toastSuggestionAccepted(title: string) {
+  quickToast("suggestion", "Reminder created", title, "/calendar");
+}
+
+// Item CRUD
+export function toastItemCreated(name: string) {
+  quickToast("activity", `${name} added`, undefined, "/items");
+}
+export function toastItemUpdated(name: string) {
+  quickToast("activity", `${name} updated`);
+}
+export function toastItemDeleted(name: string) {
+  quickToast("activity", `${name} deleted`);
+}
+
+// Item moved on plan
+export function toastItemMoved(name: string, placeName?: string) {
+  quickToast("activity", `${name} moved`, placeName ? `Now in ${placeName}` : undefined);
+}
+
+// Maintenance entries
+export function toastMaintenanceLogged(entryName: string) {
+  quickToast("activity", "Maintenance logged", entryName);
+}
+
+// Locations
+export function toastLocationCreated(name: string) {
+  quickToast("activity", `${name} added`, undefined, "/locations");
+}
+export function toastLocationUpdated(name: string) {
+  quickToast("activity", `${name} updated`);
+}
+export function toastLocationDeleted(name: string) {
+  quickToast("activity", `${name} removed`);
+}
+
+// Labels
+export function toastLabelCreated(name: string) {
+  quickToast("activity", `Label "${name}" created`, undefined, "/labels");
+}
+export function toastLabelUpdated(name: string) {
+  quickToast("activity", `Label "${name}" updated`);
+}
+export function toastLabelDeleted(name: string) {
+  quickToast("activity", `Label "${name}" removed`);
+}
+
+// Household
+export function toastMemberJoined(name: string) {
+  quickToast("household", `${name} joined your household`);
+}
+export function toastMemberRemoved(name: string) {
+  quickToast("household", `${name} was removed from the household`);
+}
+export function toastLeftHousehold() {
+  quickToast("household", "You left the household");
+}
+
+// Reminders
+export function toastReminderCreated(title: string) {
+  quickToast("reminder", "Reminder created", title, "/calendar");
+}
+export function toastReminderCompleted(title: string) {
+  quickToast("reminder", "Marked done", title, "/calendar");
+}
+export function toastReminderReopened(title: string) {
+  quickToast("reminder", "Reopened", title, "/calendar");
+}
+
+// Barcode scan
+export function toastScanResult(text: string, found: boolean) {
+  quickToast("info", found ? "Item found" : "Searching", text);
+}
+
+// Onboarding
+export function toastOnboardingComplete() {
+  quickToast("info", "You're all set!", "Your home is ready to use");
 }

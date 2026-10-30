@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { LABEL_SWATCHES, labelChip } from "../../../lib/label-colors";
+import { toastLabelDeleted, toastLabelUpdated } from "../notifications/use-notifications";
 import { deleteLabelAction, setItemTaggedAction, updateLabelAction } from "./actions";
 
 export interface TaggedThing {
@@ -60,6 +61,7 @@ export function LabelPane({
     formData.set("color", color);
     try {
       await updateLabelAction(formData);
+      toastLabelUpdated(name.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save this label");
     } finally {
@@ -73,6 +75,7 @@ export function LabelPane({
     formData.set("id", id);
     try {
       await deleteLabelAction(formData);
+      toastLabelDeleted(initialName);
       router.replace("/labels", { scroll: false });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't delete this label");

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
+import { toastReminderCompleted, toastReminderCreated, toastReminderReopened } from "../notifications/use-notifications";
 import { completeReminderAction, createReminderAction, deleteReminderAction, reopenReminderAction } from "./actions";
 import {
   assigneeInitial,
@@ -80,10 +81,11 @@ export function CalendarDesktop({
     setSelectedKey(todayKey);
   }
 
-  async function runAction(action: (formData: FormData) => Promise<void>, formData: FormData, fallback: string) {
+  async function runAction(action: (formData: FormData) => Promise<void>, formData: FormData, fallback: string, onSuccess?: () => void) {
     setError(null);
     try {
       await action(formData);
+      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : fallback);
     }
@@ -93,6 +95,7 @@ export function CalendarDesktop({
     setError(null);
     try {
       await createReminderAction(formData);
+      toastReminderCreated(String(formData.get("title") ?? ""));
       setFormOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't add this reminder");
@@ -260,8 +263,8 @@ export function CalendarDesktop({
                 assignee={assigneeLabel(reminder.assignedToUserId, householdUsers)}
                 assigneeInitial={assigneeInitial(reminder.assignedToUserId, householdUsers)}
                 assigneeColor={colorForAssignee(reminder.assignedToUserId)}
-                onComplete={(fd) => runAction(completeReminderAction, fd, "Couldn't update this reminder")}
-                onReopen={(fd) => runAction(reopenReminderAction, fd, "Couldn't update this reminder")}
+                onComplete={(fd) => runAction(completeReminderAction, fd, "Couldn't update this reminder", () => toastReminderCompleted(reminder.title))}
+                onReopen={(fd) => runAction(reopenReminderAction, fd, "Couldn't update this reminder", () => toastReminderReopened(reminder.title))}
                 onDelete={(fd) => runAction(deleteReminderAction, fd, "Couldn't delete this reminder")}
               />
             ))}

@@ -10,6 +10,7 @@ import {
 } from "@homebox-ai/ui";
 import { useState } from "react";
 
+import { toastLocationDeleted, toastLocationUpdated } from "../notifications/use-notifications";
 import { deleteLocationAction, updateLocationAction } from "./actions";
 
 interface LocationRecord {
@@ -113,6 +114,7 @@ function LocationNode({
     formData.set("id", location.id);
     try {
       await deleteLocationAction(formData);
+      toastLocationDeleted(location.name);
       setConfirmOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't delete this location");
@@ -133,6 +135,7 @@ function LocationNode({
             setError(null);
             try {
               await updateLocationAction(formData);
+              toastLocationUpdated(String(formData.get("name") ?? ""));
               setEditing(false);
             } catch (err) {
               setError(err instanceof Error ? err.message : "Couldn't save that change");

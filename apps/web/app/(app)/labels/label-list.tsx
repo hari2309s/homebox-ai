@@ -3,6 +3,7 @@
 import { ConfirmDialog, EmptyState, Input, SubmitButton, TapButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
+import { toastLabelDeleted, toastLabelUpdated } from "../notifications/use-notifications";
 import { deleteLabelAction, updateLabelAction } from "./actions";
 
 interface LabelRecord {
@@ -59,6 +60,7 @@ function LabelChip({ label }: { label: LabelRecord }) {
     formData.set("id", label.id);
     try {
       await deleteLabelAction(formData);
+      toastLabelDeleted(label.name);
       setConfirmOpen(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't delete this label");
@@ -78,6 +80,7 @@ function LabelChip({ label }: { label: LabelRecord }) {
               setError(null);
               try {
                 await updateLabelAction(formData);
+                toastLabelUpdated(String(formData.get("name") ?? ""));
                 setEditing(false);
               } catch (err) {
                 setError(err instanceof Error ? err.message : "Couldn't save that change");

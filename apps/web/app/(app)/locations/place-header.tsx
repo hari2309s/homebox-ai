@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { toastLocationDeleted, toastLocationUpdated } from "../notifications/use-notifications";
 import { reparentPlaceAction } from "../plan-actions";
 import { deleteLocationAction, updateLocationAction } from "./actions";
 
@@ -36,6 +37,7 @@ export function PlaceHeader({
     setError(null);
     try {
       await updateLocationAction(formData);
+      toastLocationUpdated(String(formData.get("name") ?? ""));
       setMode("view");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't rename this place");
@@ -49,6 +51,7 @@ export function PlaceHeader({
     formData.set("id", id);
     try {
       await deleteLocationAction(formData);
+      toastLocationDeleted(name);
       router.replace("/locations", { scroll: false });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't delete this place");

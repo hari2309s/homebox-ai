@@ -7,6 +7,7 @@ import { DEFAULT_ZONES, PLOT_SIZES, ZONE_OPTIONS, type PlotSize, type ZoneOption
 import { inferKind, layoutPlan, PLOT_H, PLOT_W, type PlanKind } from "../../../lib/plan-layout";
 import { PlaceShape } from "../../../lib/plan-shape";
 import { LABEL_INK } from "../../../lib/plan-styles";
+import { toastOnboardingComplete } from "../../(app)/notifications/use-notifications";
 import { createInviteAction } from "../../(app)/settings/actions/sharing";
 import { completeOnboardingAction, createZonesAction, saveHouseholdAction } from "./actions";
 
@@ -183,6 +184,7 @@ export function OnboardingFlow({
   async function finish(href: string) {
     await run(async () => {
       await completeOnboardingAction();
+      toastOnboardingComplete();
       router.replace(href);
     });
   }

@@ -4,6 +4,7 @@ import { FormField, Input, Select, SubmitButton } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { currencyLabel, SUPPORTED_CURRENCIES } from "../../../../lib/currency";
+import { toastItemUpdated } from "../../notifications/use-notifications";
 import { updateItemAction } from "../actions";
 
 interface ItemEditFormProps {
@@ -48,6 +49,7 @@ export function ItemEditForm({ item, locations, labels, otherItems, selectedLabe
     setError(null);
     try {
       await updateItemAction(formData);
+      toastItemUpdated(String(formData.get("name") ?? ""));
       onSaved?.();
     } catch (err) {
       // e.g. setting "Part of item" to one of this item's own sub-items — a

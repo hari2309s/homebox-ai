@@ -79,12 +79,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     !pendingInvite.alreadyAccepted &&
     pendingInvite.ownerEmail !== user.email;
 
-  // --- Notification seeds (reminders, weather, invite) ---
+  // --- Notification seeds (reminders, weather, invite, warranties) ---
   const dueReminders = reminders
     .filter((r) => r.status === "pending" && r.dueDate <= dueCutoff)
     .map((r) => ({ id: r.id, title: r.title, itemName: r.itemName, dueDate: r.dueDate, status: r.status }));
 
-  const home = await homeQueries.getHomeLocation(user.id);
+  const [home, expiringWarranties] = await Promise.all([
+    homeQueries.getHomeLocation(user.id),
+    itemQueries.listUpcomingWarrantyExpirations(user.id, 30),
+  ]);
   const forecast = home ? await getForecast(home.latitude, home.longitude) : null;
   const alerts = forecast ? weatherAlerts(forecast.days) : [];
 
@@ -112,7 +115,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </div>
         <BottomNav unreadChatCount={unreadChatCount} />
-        <NotificationProvider dueReminders={dueReminders} weatherAlerts={alerts} invite={inviteSeed} />
+        <NotificationProvider dueReminders={dueReminders} weatherAlerts={alerts} invite={inviteSeed} expiringWarranties={expiringWarranties} />
         {showInvite && pendingJoin && (
           <PendingInviteBanner
             href={pendingJoin}
