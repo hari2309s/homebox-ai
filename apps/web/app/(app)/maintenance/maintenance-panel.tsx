@@ -7,6 +7,7 @@ import { useState } from "react";
 import { formatDate } from "../../../lib/date";
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
 import { AcceptedHistory, type AcceptedSuggestion } from "./accepted-history";
+import { WeatherCard, WeatherNote, type MaintainWeather } from "./weather-card";
 import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
 
 interface MaintenancePanelProps {
@@ -14,6 +15,7 @@ interface MaintenancePanelProps {
   householdUsers: HouseholdUser[];
   currentUserId: string;
   accepted: AcceptedSuggestion[];
+  weather: MaintainWeather;
 }
 
 const SUGGESTION_STYLES: { icon: string; bg: string; fg: string }[] = [
@@ -22,7 +24,7 @@ const SUGGESTION_STYLES: { icon: string; bg: string; fg: string }[] = [
   { icon: "cleaning_services", bg: "#ecdccd", fg: "#b0643f" },
 ];
 
-export function MaintenancePanel({ items, householdUsers, currentUserId, accepted }: MaintenancePanelProps) {
+export function MaintenancePanel({ items, householdUsers, currentUserId, accepted, weather }: MaintenancePanelProps) {
   const [itemId, setItemId] = useState("");
   const [suggestions, setSuggestions] = useState<MaintenanceSuggestion | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +53,7 @@ export function MaintenancePanel({ items, householdUsers, currentUserId, accepte
     formData.set("itemId", itemId);
     formData.set("title", suggestion.name);
     formData.set("dueDate", suggestion.recommendedDate);
-    formData.set("description", suggestion.reason);
+    formData.set("description", suggestion.weather ? `${suggestion.reason}\n\nWeather: ${suggestion.weather}` : suggestion.reason);
     formData.set("assignedToUserId", assignees[index] ?? currentUserId);
     setPendingIndexes((prev) => new Set(prev).add(index));
     try {
@@ -79,6 +81,8 @@ export function MaintenancePanel({ items, householdUsers, currentUserId, accepte
             PICK A THING · I&apos;LL SUGGEST A ROUTINE
           </div>
         </div>
+
+        <WeatherCard weather={weather} />
 
         {/* Item picker + suggest button */}
         <div className="flex gap-2">
@@ -154,6 +158,11 @@ export function MaintenancePanel({ items, householdUsers, currentUserId, accepte
                       <div className="flex-1">
                         <div className="text-[15px] font-semibold text-ink">{suggestion.name}</div>
                         <div className="mt-0.5 text-[13px] leading-snug text-muted">{suggestion.reason}</div>
+                        {suggestion.weather && (
+                          <div className="mt-2">
+                            <WeatherNote note={suggestion.weather} />
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-[6px]">

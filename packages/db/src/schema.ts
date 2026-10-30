@@ -273,3 +273,18 @@ export const itemActivity = pgTable("item_activity", {
   itemId: uuid("item_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// Household-wide settings, one row per owner (members read and edit their owner's row, like every other
+// table here). Holds the home's location, which the weather forecast and weather-aware maintenance use.
+export const homeSettings = pgTable("home_settings", {
+  ownerId: uuid("owner_id")
+    .primaryKey()
+    .references(() => authUsers.id, { onDelete: "cascade" }),
+  /** Display name of the picked place, e.g. "Leeds, England, United Kingdom". */
+  placeName: text("place_name"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
+  /** IANA zone of the home, so forecast days line up with the household's calendar. */
+  timezone: text("timezone"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

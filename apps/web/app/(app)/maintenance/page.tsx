@@ -1,11 +1,13 @@
 import { EmptyState } from "@homebox-ai/ui";
-import { itemQueries, reminderQueries, sharingQueries } from "@homebox-ai/db";
+import { homeQueries, itemQueries, reminderQueries, sharingQueries } from "@homebox-ai/db";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { listLocationsCached } from "../../../lib/cached-queries";
+import { getForecast, weatherAlerts } from "../../../lib/weather";
 import { locationPath, stripeFor, zoneIndexOf } from "../items/item-summary";
 import type { AcceptedSuggestion } from "./accepted-history";
+import type { MaintainWeather } from "./weather-card";
 import { MaintenanceDesktop } from "./maintenance-desktop";
 import { MaintenancePanel } from "./maintenance-panel";
 
@@ -20,11 +22,12 @@ export default async function MaintenancePage() {
     );
   }
 
-  const [items, householdUsers, reminders, locations] = await Promise.all([
+  const [items, householdUsers, reminders, locations, home] = await Promise.all([
     itemQueries.searchItems(user.id),
     sharingQueries.listHouseholdUsers(user.id),
     reminderQueries.listReminders(user.id),
     listLocationsCached(user.id),
+    homeQueries.getHomeLocation(user.id),
   ]);
 
   if (items.length === 0) {
@@ -40,6 +43,19 @@ export default async function MaintenancePage() {
       </div>
     );
   }
+
+  const forecast = home ? await getForecast(home.latitude, home.longitude) : null;
+  const weather: MaintainWeather = !home
+    ? { status: "no-location" }
+    : !forecast
+      ? { status: "unavailable", placeName: home.placeName }
+      : {
+          status: "ok",
+          placeName: home.placeName,
+          current: forecast.current,
+          days: forecast.days,
+          alerts: weatherAlerts(forecast.days),
+        };
 
   const accepted: AcceptedSuggestion[] = reminders
     .filter((r) => r.source === "suggestion")
@@ -65,6 +81,7 @@ export default async function MaintenancePage() {
           householdUsers={householdUsers}
           currentUserId={user.id}
           accepted={accepted}
+          weather={weather}
         />
       </div>
       <div className="hidden lg:block">
@@ -89,6 +106,7 @@ export default async function MaintenancePage() {
           householdUsers={householdUsers}
           currentUserId={user.id}
           accepted={accepted}
+          weather={weather}
         />
       </div>
     </>

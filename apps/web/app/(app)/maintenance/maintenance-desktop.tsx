@@ -7,6 +7,7 @@ import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
 import { assigneeInitial, colorForAssignee } from "../calendar/calendar-utils";
 import { AcceptedHistory, type AcceptedSuggestion } from "./accepted-history";
+import { WeatherCard, WeatherNote, type MaintainWeather } from "./weather-card";
 import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
 
 export interface CareItem {
@@ -184,12 +185,14 @@ export function MaintenanceDesktop({
   householdUsers,
   currentUserId,
   accepted,
+  weather,
 }: {
   items: CareItem[];
   reminders: CareReminder[];
   householdUsers: HouseholdUser[];
   currentUserId: string;
   accepted: AcceptedSuggestion[];
+  weather: MaintainWeather;
 }) {
   const [item, setItem] = useState<CareItem | null>(null);
   const [suggestions, setSuggestions] = useState<MaintenanceSuggestion | null>(null);
@@ -237,7 +240,10 @@ export function MaintenanceDesktop({
     formData.set("itemId", item.id);
     formData.set("title", suggestion.name);
     formData.set("dueDate", suggestion.recommendedDate);
-    formData.set("description", suggestion.reason);
+    formData.set(
+      "description",
+      suggestion.weather ? `${suggestion.reason}\n\nWeather: ${suggestion.weather}` : suggestion.reason,
+    );
     formData.set("assignedToUserId", assignee);
     setPending((prev) => new Set(prev).add(index));
     try {
@@ -303,6 +309,8 @@ export function MaintenanceDesktop({
           </button>
         </div>
       </div>
+
+      <WeatherCard weather={weather} />
 
       {error && (
         <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
@@ -370,6 +378,7 @@ export function MaintenanceDesktop({
                   </div>
                   <div className="font-serif text-[19px] leading-[1.2] text-ink">{suggestion.name}</div>
                   <p className="m-0 flex-1 text-[14px] leading-normal text-body">{suggestion.reason}</p>
+                  {suggestion.weather && <WeatherNote note={suggestion.weather} />}
                   <div className="flex items-center gap-[6px]">
                     <label className="relative flex min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-border px-[10px] py-[6px] text-[13px] text-ink">
                       <span

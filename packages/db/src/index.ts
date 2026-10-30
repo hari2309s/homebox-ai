@@ -14,3 +14,4 @@ export * as reminderQueries from "./queries/reminders";
 export * as chatQueries from "./queries/chat";
 export * as sharingQueries from "./queries/sharing";
 export * as notifierQueries from "./queries/notifiers";
+export * as homeQueries from "./queries/home";

@@ -1,3 +1,4 @@
+import { homeQueries } from "@homebox-ai/db";
 import { getSessionUser } from "@homebox-ai/supabase/server";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -7,6 +8,7 @@ import { AvatarUploadForm } from "../avatar-upload-form";
 import { CsvImportForm } from "../csv-import-form";
 import { DeleteAccountForm } from "../delete-account-form";
 import { DisplayNameForm } from "../display-name-form";
+import { HomeLocationForm } from "../home-location-form";
 import { HouseholdSection } from "../household-section";
 import { PasswordForm } from "../password-form";
 import { ThemeSwitcher } from "../../theme-switcher";
@@ -137,6 +139,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
   const email = user.email ?? "";
   const displayName = typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "";
   const avatarUrl = typeof user.user_metadata?.avatar_url === "string" ? user.user_metadata.avatar_url : null;
+  const home = await homeQueries.getHomeLocation(user.id);
 
   return (
     <div data-full-bleed className="flex h-full flex-col lg:flex-row">
@@ -219,6 +222,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
           }
         >
           <HouseholdSection selfEmail={email} selfName={displayName} />
+          <HomeLocationForm current={home?.placeName ?? null} />
         </SettingsSection>
 
         <SettingsSection slug="data" active={active}>
