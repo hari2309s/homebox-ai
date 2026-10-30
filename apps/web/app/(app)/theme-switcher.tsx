@@ -23,8 +23,10 @@ const ICON_VARIANTS: Record<Theme, Variants> = {
 };
 
 type ViewTransitionDocument = Document & {
-  startViewTransition?: (update: () => void) => { ready: Promise<void> };
+  startViewTransition?: (update: () => void) => { finished: Promise<void> };
 };
+
+const REVEAL_MS = 560;
 
 export function ThemeSwitcher({ variant = "full" }: { variant?: "compact" | "full" }) {
   const [theme, setTheme] = useState<Theme>("system");
@@ -60,6 +62,7 @@ export function ThemeSwitcher({ variant = "full" }: { variant?: "compact" | "ful
 
   function choose(next: Theme, event: MouseEvent<HTMLButtonElement>) {
     if (next === theme || busyRef.current) return;
+    const root = document.documentElement;
     const commit = () => {
       storeTheme(next);
       applyTheme(next);
@@ -67,32 +70,39 @@ export function ThemeSwitcher({ variant = "full" }: { variant?: "compact" | "ful
       window.dispatchEvent(new Event(THEME_EVENT));
     };
 
+    // Colour transitions stay off until the new palette has painted, so nothing fades between themes.
+    root.setAttribute("data-theme-switching", "");
+    const done = () => {
+      root.removeAttribute("data-theme-switching");
+      root.removeAttribute("data-theme-reveal");
+      busyRef.current = false;
+    };
+
     const doc = document as ViewTransitionDocument;
     const looksDifferent = resolveTheme(next) !== resolveTheme(theme);
     if (!looksDifferent || reduceMotion || !doc.startViewTransition) {
       commit();
+      requestAnimationFrame(() => requestAnimationFrame(done));
       return;
     }
 
-    // Reveal the new theme as a circle growing from the button that was pressed.
+    // Reveal the new theme as a circle growing from the button that was pressed (see globals.css).
     const box = event.currentTarget.getBoundingClientRect();
     const x = box.left + box.width / 2;
     const y = box.top + box.height / 2;
     const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    root.style.setProperty("--reveal-x", `${x}px`);
+    root.style.setProperty("--reveal-y", `${y}px`);
+    root.style.setProperty("--reveal-r", `${radius}px`);
+    root.setAttribute("data-theme-reveal", "");
     busyRef.current = true;
-    const transition = doc.startViewTransition(() => flushSync(commit));
-    transition.ready
-      .then(() => {
-        document.documentElement.animate(
-          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-          { duration: 560, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)", pseudoElement: "::view-transition-new(root)" },
-        );
-      })
-      .catch(() => {})
+    const fallback = setTimeout(done, REVEAL_MS + 400);
+    doc
+      .startViewTransition(() => flushSync(commit))
+      .finished.catch(() => {})
       .finally(() => {
-        setTimeout(() => {
-          busyRef.current = false;
-        }, 560);
+        clearTimeout(fallback);
+        done();
       });
   }
 

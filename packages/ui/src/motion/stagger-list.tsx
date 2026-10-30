@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { Children, cloneElement, isValidElement } from "react";
 import type { ComponentProps, ReactElement, ReactNode } from "react";
 
@@ -11,7 +11,7 @@ const STEP = 0.07;
 // linearly with index forever.
 const MAX_STAGGER_INDEX = 12;
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 10, scale: 0.98 },
   show: (index: number) => ({
     opacity: 1,

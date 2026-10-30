@@ -359,12 +359,33 @@ body {
   }
 }
 
-/* Theme switcher: the new theme is revealed with a growing circle (clip-path set from JS), so the
-   default cross-fade of the page snapshot is turned off. */
+/* Theme switcher: the new theme is revealed with a circle growing from the pressed button, so the
+   default cross-fade of the page snapshot is turned off. The reveal is plain CSS (not started from JS
+   once the transition is ready) so it applies from the very first frame — otherwise the whole new theme
+   flashes before the circle starts. --reveal-x/y/r are set on <html> by the switcher. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+}
+:root[data-theme-reveal]::view-transition-new(root) {
+  animation: theme-reveal 560ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0px at var(--reveal-x) var(--reveal-y));
+  }
+  to {
+    clip-path: circle(var(--reveal-r) at var(--reveal-x) var(--reveal-y));
+  }
+}
+
+/* While the theme changes, colour transitions (buttons, rows, inputs…) would fade from the old palette
+   to the new one at their own speeds — a visible flicker. Switching is instant underneath the reveal. */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
 }
 
 /* Google's icon stylesheet is unlayered, so its `display: inline-block` beats Tailwind's layered utilities —
