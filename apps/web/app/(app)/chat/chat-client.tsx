@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatedHomeboxIcon, TapButton } from "@homebox-ai/ui";
+import { TapButton } from "@homebox-ai/ui";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import type { FormEvent, KeyboardEvent } from "react";
@@ -37,7 +37,12 @@ interface ChatSession {
   hasUnread: boolean;
 }
 
-const SUGGESTIONS = ["Where's my passport?", "What's in the garage?", "Anything expiring soon?"];
+const SUGGESTIONS = [
+  { q: "What needs doing before the frost?", c: "#3f6b45" },
+  { q: "Where's the long-handled fish net?", c: "#3f8a8a" },
+  { q: "Which warranties end this year?", c: "#5b7fa6" },
+  { q: "What's in the garage I never use?", c: "#b0643f" },
+];
 const RAIL_DOTS = ["#3f6b45", "#b0643f", "#8a7a4f", "#5b7fa6"];
 
 function TypingDots() {
@@ -56,7 +61,7 @@ function TypingDots() {
   );
 }
 
-export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCount: number }) {
+export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCount: number; zoneCount: number; userName?: string }) {
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -320,29 +325,22 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile header */}
         <div className="flex items-center gap-3 border-b border-border px-5 py-3 lg:hidden">
-          {" "}
-          <AnimatedHomeboxIcon size={44} />
+          <Link href="/" className="flex items-center justify-center text-ink no-underline">
+            <span className="material-symbols-rounded">arrow_back</span>
+          </Link>
           <div className="flex-1">
             <div className="font-serif text-[19px] text-ink">Ask the house</div>
             <div className="font-mono text-[10px] tracking-wide text-accent">
-              {sessions.length > 0 ? `${sessions.length} CONVERSATIONS` : "NEW CONVERSATION"}
+              KNOWS {itemCount} {itemCount === 1 ? "THING" : "THINGS"} · {zoneCount} {zoneCount === 1 ? "ZONE" : "ZONES"}
             </div>
           </div>
           <TapButton
             type="button"
-            onClick={startNewChat}
-            aria-label="New chat"
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card text-ink"
-          >
-            <span className="material-symbols-rounded text-[18px]">add</span>
-          </TapButton>
-          <TapButton
-            type="button"
             onClick={() => setHistoryOpen(true)}
             aria-label="History"
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border border-border bg-card text-ink"
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[10px] border-none bg-transparent text-ink"
           >
-            <span className="material-symbols-rounded text-[18px]">history</span>
+            <span className="material-symbols-rounded text-[20px]">history</span>
           </TapButton>
         </div>
 
@@ -363,18 +361,26 @@ export function ChatClient({ itemCount, zoneCount }: { itemCount: number; zoneCo
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-5 py-[18px] lg:py-6">
           <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col gap-[14px] lg:max-w-[680px] lg:gap-4">
             {messages.length === 0 ? (
-              <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-                <AnimatedHomeboxIcon size={64} />
-                <p className="text-sm text-muted">Ask about any room or the yard…</p>
-                <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-1 flex-col gap-[22px] pt-9 lg:items-center lg:justify-center lg:pt-0 lg:text-center">
+                <div className="flex flex-col gap-2">
+                  <div className="font-serif text-[30px] leading-tight text-ink lg:text-[32px]">
+                    What are you looking for, {userName.split(" ")[0]}?
+                  </div>
+                  <div className="text-[14px] leading-relaxed text-muted lg:max-w-[400px]">
+                    Ask about anything in the house, garden, garage or shed. I can also move things and set reminders.
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
                   {SUGGESTIONS.map((s) => (
                     <TapButton
-                      key={s}
+                      key={s.q}
                       type="button"
-                      onClick={() => sendMessage(s)}
-                      className="cursor-pointer rounded-full bg-selected px-[13px] py-[7px] text-[13px] font-semibold text-moss-ink"
+                      onClick={() => sendMessage(s.q)}
+                      className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-border bg-card px-[14px] py-3 text-left lg:px-4"
                     >
-                      {s}
+                      <span className="h-[10px] w-[10px] flex-none rounded-[3px]" style={{ background: s.c }} />
+                      <span className="flex-1 text-[15px] text-ink">{s.q}</span>
+                      <span className="material-symbols-rounded text-[18px] text-faint">north_west</span>
                     </TapButton>
                   ))}
                 </div>

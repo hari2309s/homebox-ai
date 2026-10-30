@@ -195,7 +195,7 @@ export function FloatingNotificationBell() {
         type="button"
         aria-label={`Notifications${unread ? ` (${unread} unread)` : ""}`}
         onClick={() => setOpen(true)}
-        className="fixed right-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card shadow-card md:left-4 md:right-auto lg:hidden"
+        className="fixed right-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-[10px] border border-border bg-card shadow-card md:left-4 md:right-auto lg:hidden"
       >
         <motion.span
           key={unread}

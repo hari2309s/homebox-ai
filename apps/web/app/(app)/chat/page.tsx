@@ -11,5 +11,8 @@ export default async function ChatPage() {
     ? await Promise.all([itemQueries.countItems(user.id), listLocationsCached(user.id)])
     : [0, []];
 
-  return <ChatClient itemCount={itemCount} zoneCount={locations.filter((l) => !l.parentId).length} />;
+  const fullName = typeof user?.user_metadata?.full_name === "string" ? user.user_metadata.full_name.trim() : "";
+  const userName = fullName || (user?.email?.split("@")[0] ?? "You");
+
+  return <ChatClient itemCount={itemCount} zoneCount={locations.filter((l) => !l.parentId).length} userName={userName} />;
 }

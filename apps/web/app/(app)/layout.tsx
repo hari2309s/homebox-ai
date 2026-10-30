@@ -115,7 +115,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         <div className="app-content flex-1 overflow-y-auto lg:px-[max(0px,calc((100%-1048px)/2))] lg:has-[[data-full-bleed]]:px-0">
           {children}
         </div>
-        <BottomNav unreadChatCount={unreadChatCount} />
+        <BottomNav unreadChatCount={unreadChatCount} userName={userName} householdLabel={householdLabel} members={members} />
         <FloatingNotificationBell />
         <NotificationProvider dueReminders={dueReminders} weatherAlerts={alerts} invite={inviteSeed} expiringWarranties={expiringWarranties} />
         {showInvite && pendingJoin && (
