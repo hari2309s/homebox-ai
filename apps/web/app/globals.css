@@ -366,3 +366,9 @@ body {
   animation: none;
   mix-blend-mode: normal;
 }
+
+/* Google's icon stylesheet is unlayered, so its `display: inline-block` beats Tailwind's layered utilities —
+   icons that are their own centred badge (`material-symbols-rounded flex …`) need flex restored. */
+.material-symbols-rounded.flex {
+  display: flex;
+}

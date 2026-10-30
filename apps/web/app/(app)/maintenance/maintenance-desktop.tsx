@@ -360,8 +360,8 @@ export function MaintenanceDesktop({
                   <div className="flex items-center gap-[10px]">
                     <span
                       aria-hidden
-                      className="material-symbols-rounded flex h-8 w-8 items-center justify-center rounded-full text-[18px]"
-                      style={{ background: style.bg, color: style.fg }}
+                      className="material-symbols-rounded flex h-8 w-8 items-center justify-center rounded-full"
+                      style={{ background: style.bg, color: style.fg, fontSize: 18 }}
                     >
                       {style.icon}
                     </span>

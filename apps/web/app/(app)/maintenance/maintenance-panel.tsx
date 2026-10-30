@@ -146,8 +146,8 @@ export function MaintenancePanel({ items, householdUsers, currentUserId, accepte
                   >
                     <div className="flex items-start gap-[10px]">
                       <span
-                        className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg material-symbols-rounded text-[18px]"
-                        style={{ background: style.bg, color: style.fg }}
+                        className="material-symbols-rounded flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg"
+                        style={{ background: style.bg, color: style.fg, fontSize: 18 }}
                       >
                         {style.icon}
                       </span>
