@@ -11,6 +11,7 @@ export interface CreateReminderInput {
   description?: string;
   dueDate: string;
   assignedToUserId?: string;
+  source?: "manual" | "suggestion";
 }
 
 /** All reminders for the household, joined with the linked item's name (if any), soonest first. */
@@ -27,6 +28,7 @@ export function listReminders(userId: string) {
         dueDate: reminders.dueDate,
         assignedToUserId: reminders.assignedToUserId,
         status: reminders.status,
+        source: reminders.source,
         completedAt: reminders.completedAt,
         createdBy: reminders.createdBy,
         createdAt: reminders.createdAt,

@@ -29,6 +29,14 @@ export async function createReminderFromSuggestionAction(formData: FormData) {
   if (!itemId || !title || !dueDate) throw new Error("Missing suggestion details");
   await assertAssignableToHousehold(user.id, assignedToUserId);
 
-  await reminderQueries.createReminder(user.id, { itemId, title, dueDate, description, assignedToUserId });
+  await reminderQueries.createReminder(user.id, {
+    itemId,
+    title,
+    dueDate,
+    description,
+    assignedToUserId,
+    source: "suggestion",
+  });
   revalidatePath("/calendar");
+  revalidatePath("/maintenance");
 }

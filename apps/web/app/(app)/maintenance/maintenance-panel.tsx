@@ -6,12 +6,14 @@ import { useState } from "react";
 
 import { formatDate } from "../../../lib/date";
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
+import { AcceptedHistory, type AcceptedSuggestion } from "./accepted-history";
 import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
 
 interface MaintenancePanelProps {
   items: { id: string; name: string }[];
   householdUsers: HouseholdUser[];
   currentUserId: string;
+  accepted: AcceptedSuggestion[];
 }
 
 const SUGGESTION_STYLES: { icon: string; bg: string; fg: string }[] = [
@@ -20,7 +22,7 @@ const SUGGESTION_STYLES: { icon: string; bg: string; fg: string }[] = [
   { icon: "cleaning_services", bg: "#ecdccd", fg: "#b0643f" },
 ];
 
-export function MaintenancePanel({ items, householdUsers, currentUserId }: MaintenancePanelProps) {
+export function MaintenancePanel({ items, householdUsers, currentUserId, accepted }: MaintenancePanelProps) {
   const [itemId, setItemId] = useState("");
   const [suggestions, setSuggestions] = useState<MaintenanceSuggestion | null>(null);
   const [loading, setLoading] = useState(false);
@@ -194,6 +196,8 @@ export function MaintenancePanel({ items, householdUsers, currentUserId }: Maint
         ) : (
           !loading && <EmptyState>Choose an item above to get maintenance and warranty suggestions.</EmptyState>
         )}
+
+        <AcceptedHistory entries={accepted} householdUsers={householdUsers} title="HISTORY" />
       </div>
     </div>
   );

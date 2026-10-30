@@ -5,6 +5,7 @@ import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { listLocationsCached } from "../../../lib/cached-queries";
 import { locationPath, stripeFor, zoneIndexOf } from "../items/item-summary";
+import type { AcceptedSuggestion } from "./accepted-history";
 import { MaintenanceDesktop } from "./maintenance-desktop";
 import { MaintenancePanel } from "./maintenance-panel";
 
@@ -40,10 +41,31 @@ export default async function MaintenancePage() {
     );
   }
 
+  const accepted: AcceptedSuggestion[] = reminders
+    .filter((r) => r.source === "suggestion")
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .map((r) => ({
+      id: r.id,
+      itemId: r.itemId,
+      itemName: r.itemName,
+      title: r.title,
+      dueDate: r.dueDate,
+      assignedToUserId: r.assignedToUserId,
+      acceptedBy: r.createdBy,
+      acceptedAt: r.createdAt.toISOString(),
+      completedAt: r.completedAt?.toISOString() ?? null,
+      status: r.status,
+    }));
+
   return (
     <>
       <div className="h-full lg:hidden">
-        <MaintenancePanel items={items} householdUsers={householdUsers} currentUserId={user.id} />
+        <MaintenancePanel
+          items={items}
+          householdUsers={householdUsers}
+          currentUserId={user.id}
+          accepted={accepted}
+        />
       </div>
       <div className="hidden lg:block">
         <MaintenanceDesktop
@@ -66,6 +88,7 @@ export default async function MaintenancePage() {
           }))}
           householdUsers={householdUsers}
           currentUserId={user.id}
+          accepted={accepted}
         />
       </div>
     </>

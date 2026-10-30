@@ -6,6 +6,7 @@ import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
 import { assigneeInitial, colorForAssignee } from "../calendar/calendar-utils";
+import { AcceptedHistory, type AcceptedSuggestion } from "./accepted-history";
 import { createReminderFromSuggestionAction, getMaintenanceSuggestionsAction } from "./actions";
 
 export interface CareItem {
@@ -182,11 +183,13 @@ export function MaintenanceDesktop({
   reminders,
   householdUsers,
   currentUserId,
+  accepted,
 }: {
   items: CareItem[];
   reminders: CareReminder[];
   householdUsers: HouseholdUser[];
   currentUserId: string;
+  accepted: AcceptedSuggestion[];
 }) {
   const [item, setItem] = useState<CareItem | null>(null);
   const [suggestions, setSuggestions] = useState<MaintenanceSuggestion | null>(null);
@@ -450,6 +453,8 @@ export function MaintenanceDesktop({
           )}
         </div>
       )}
+
+      <AcceptedHistory entries={accepted} householdUsers={householdUsers} />
     </div>
   );
 }

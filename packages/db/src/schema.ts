@@ -197,6 +197,8 @@ export const chatMessages = pgTable(
 );
 
 export const reminderStatus = pgEnum("reminder_status", ["pending", "done"]);
+// Where a reminder came from — "suggestion" ones were accepted from the maintenance assistant.
+export const reminderSource = pgEnum("reminder_source", ["manual", "suggestion"]);
 
 export const reminders = pgTable(
   "reminders",
@@ -213,6 +215,7 @@ export const reminders = pgTable(
     // Who should handle it — any member of the household (see shared_access above), or null if unassigned.
     assignedToUserId: uuid("assigned_to_user_id").references(() => authUsers.id, { onDelete: "set null" }),
     status: reminderStatus("status").notNull().default("pending"),
+    source: reminderSource("source").notNull().default("manual"),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     // Set once the reminder-check notifier has nudged its recipient(s) in chat,
     // so the daily cron doesn't re-notify every run (mirrors items.warrantyNotifiedAt).
