@@ -106,6 +106,13 @@
       "when": 1793346049223,
       "tag": "0014_absurd_shiver_man",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1793348410637,
+      "tag": "0015_remarkable_sprite",
+      "breakpoints": true
     }
   ]
 }

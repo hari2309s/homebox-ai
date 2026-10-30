@@ -70,6 +70,8 @@ export const locations = pgTable("locations", {
   parentId: uuid("parent_id").references((): AnyPgColumn => locations.id, { onDelete: "set null" }),
   /** How the place is drawn on the site plan (house, garden, garage, room, bed, …); null lets the app infer it from the name. */
   planKind: text("plan_kind"),
+  /** Outline on the site plan (rect, oval, pill, lshape, triangle, hexagon); null uses the kind's default. */
+  planShape: text("plan_shape"),
   /** Plot-space rectangle on the site plan. All four are null until the place is drawn or moved there. */
   planX: doublePrecision("plan_x"),
   planY: doublePrecision("plan_y"),

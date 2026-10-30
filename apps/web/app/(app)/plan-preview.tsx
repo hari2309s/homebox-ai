@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import { boundsOf, descendantIds, type PlacedPlace } from "../../lib/plan-layout";
-import { KIND_STYLE, LABEL_INK } from "../../lib/plan-styles";
+import { PlaceShape } from "../../lib/plan-shape";
+import { LABEL_INK } from "../../lib/plan-styles";
 
 interface PreviewThing {
   id: string;
@@ -55,22 +56,21 @@ export function PlanPreview({
     >
       <div className="relative h-full max-w-full" style={{ aspectRatio: `${view.w} / ${view.h}` }}>
         {zonePlaces.map((place) => {
-          const k = KIND_STYLE[place.kind];
           const focused = place.id === focusId;
           const dimmed = !focusTree.has(place.id) && place.id !== root.id;
           return (
             <div
               key={place.id}
-              className={`absolute ${k.className} ${focused ? "outline outline-2 outline-offset-2 outline-accent" : ""}`}
+              className={`absolute ${focused ? "rounded-[12px] outline outline-2 outline-offset-2 outline-accent" : ""}`}
               style={{
                 ...pct(place.rect.x, place.rect.y),
                 width: `${(place.rect.w / view.w) * 100}%`,
                 height: `${(place.rect.h / view.h) * 100}%`,
-                ...k.style,
                 opacity: dimmed ? 0.5 : 1,
                 zIndex: 1 + place.depth,
               }}
             >
+              <PlaceShape kind={place.kind} shape={place.shape} w={place.rect.w} h={place.rect.h} radius={14} />
               <span
                 className={`absolute left-2 top-[6px] right-2 truncate font-mono text-[10px] ${LABEL_INK[place.kind] ?? "text-body"}`}
               >

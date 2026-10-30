@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { locationPath } from "./items/item-summary";
-import { PLAN_KINDS, type PlacedPlace, type PlanKind, type Rect } from "../../lib/plan-layout";
+import { PLAN_KINDS, PLAN_SHAPES, type PlacedPlace, type PlanKind, type PlanShape, type Rect } from "../../lib/plan-layout";
+import { ShapeIcon } from "../../lib/plan-shape";
 import type { PlanThing } from "./plan-canvas";
 
 interface PlanPanelProps {
@@ -16,7 +17,7 @@ interface PlanPanelProps {
   counts: Map<string, number>;
   onClose: () => void;
   onZoom: (rect: Rect) => void;
-  onRename: (id: string, name: string, kind: PlanKind) => Promise<void>;
+  onRename: (id: string, name: string, kind: PlanKind, shape: PlanShape) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onAddThingHere: () => void;
   onAddPlaceInside: () => void;
@@ -82,6 +83,7 @@ function PlacePanel({
 }: PlanPanelProps & { place: PlacedPlace }) {
   const [name, setName] = useState(place.name);
   const [kind, setKind] = useState<PlanKind>(place.kind);
+  const [shape, setShape] = useState<PlanShape>(place.shape);
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -89,9 +91,10 @@ function PlacePanel({
   useEffect(() => {
     setName(place.name);
     setKind(place.kind);
-  }, [place.id, place.name, place.kind]);
+    setShape(place.shape);
+  }, [place.id, place.name, place.kind, place.shape]);
 
-  const dirty = name.trim() !== place.name || kind !== place.kind;
+  const dirty = name.trim() !== place.name || kind !== place.kind || shape !== place.shape;
   const subPlaces = places.filter((p) => p.parentId === place.id);
   const here = things.filter((t) => t.locationId === place.id);
   const total = counts.get(place.id) ?? 0;
@@ -100,7 +103,7 @@ function PlacePanel({
   async function save() {
     if (!name.trim()) return;
     setSaving(true);
-    await onRename(place.id, name.trim(), kind);
+    await onRename(place.id, name.trim(), kind, shape);
     setSaving(false);
   }
 
@@ -148,6 +151,26 @@ function PlacePanel({
                 }`}
               >
                 {k.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1" role="radiogroup" aria-label="Shape">
+            {PLAN_SHAPES.map((option) => (
+              <button
+                key={option.shape}
+                type="button"
+                role="radio"
+                aria-checked={shape === option.shape}
+                aria-label={option.label}
+                title={option.label}
+                onClick={() => setShape(option.shape)}
+                className={`flex h-8 flex-1 cursor-pointer items-center justify-center rounded-[8px] ${
+                  shape === option.shape
+                    ? "border border-transparent bg-selected text-ink"
+                    : "border border-border bg-transparent text-muted hover:text-ink"
+                }`}
+              >
+                <ShapeIcon shape={option.shape} />
               </button>
             ))}
           </div>

@@ -21,6 +21,111 @@ export function isPlanKind(value: string | null | undefined): value is PlanKind 
   return PLAN_KINDS.some((k) => k.kind === value);
 }
 
+/** Outline a place is drawn with, inside its rect. */
+export const PLAN_SHAPES = [
+  { shape: "rect", label: "Rectangle" },
+  { shape: "oval", label: "Oval" },
+  { shape: "pill", label: "Pill" },
+  { shape: "lshape", label: "L-shape" },
+  { shape: "triangle", label: "Triangle" },
+  { shape: "hexagon", label: "Hexagon" },
+] as const;
+
+export type PlanShape = (typeof PLAN_SHAPES)[number]["shape"];
+
+export function isPlanShape(value: string | null | undefined): value is PlanShape {
+  return PLAN_SHAPES.some((s) => s.shape === value);
+}
+
+/** Shape used when a place hasn't had one picked. */
+export function defaultShape(kind: PlanKind): PlanShape {
+  return kind === "pond" || kind === "tree" ? "oval" : "rect";
+}
+
+type Point = [number, number];
+
+/** Closed polygon with each corner rounded by up to `r` (never more than half the shorter adjoining edge). */
+function roundedPolygon(points: Point[], r: number): string {
+  const n = points.length;
+  const parts: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const [px, py] = points[i]!;
+    const [ax, ay] = points[(i - 1 + n) % n]!;
+    const [bx, by] = points[(i + 1) % n]!;
+    const la = Math.hypot(ax - px, ay - py);
+    const lb = Math.hypot(bx - px, by - py);
+    const t = Math.min(r, la / 2, lb / 2);
+    const start: Point = [px + ((ax - px) / la) * t, py + ((ay - py) / la) * t];
+    const end: Point = [px + ((bx - px) / lb) * t, py + ((by - py) / lb) * t];
+    parts.push(`${i === 0 ? "M" : "L"}${start[0]},${start[1]}`, `Q${px},${py} ${end[0]},${end[1]}`);
+  }
+  return `${parts.join(" ")} Z`;
+}
+
+/** SVG path for `shape` filling a w×h box (origin top-left), with corners rounded by `r`. */
+export function shapePath(shape: PlanShape, w: number, h: number, r: number): string {
+  switch (shape) {
+    case "oval": {
+      const rx = w / 2;
+      const ry = h / 2;
+      return `M0,${ry} A${rx},${ry} 0 1 0 ${w},${ry} A${rx},${ry} 0 1 0 0,${ry} Z`;
+    }
+    case "pill":
+      return roundedPolygon(
+        [
+          [0, 0],
+          [w, 0],
+          [w, h],
+          [0, h],
+        ],
+        Math.min(w, h) / 2,
+      );
+    case "lshape":
+      return roundedPolygon(
+        [
+          [0, 0],
+          [w * 0.5, 0],
+          [w * 0.5, h * 0.5],
+          [w, h * 0.5],
+          [w, h],
+          [0, h],
+        ],
+        r,
+      );
+    case "triangle":
+      return roundedPolygon(
+        [
+          [w / 2, 0],
+          [w, h],
+          [0, h],
+        ],
+        r,
+      );
+    case "hexagon":
+      return roundedPolygon(
+        [
+          [w * 0.25, 0],
+          [w * 0.75, 0],
+          [w, h / 2],
+          [w * 0.75, h],
+          [w * 0.25, h],
+          [0, h / 2],
+        ],
+        r,
+      );
+    default:
+      return roundedPolygon(
+        [
+          [0, 0],
+          [w, 0],
+          [w, h],
+          [0, h],
+        ],
+        r,
+      );
+  }
+}
+
 export interface Rect {
   x: number;
   y: number;
@@ -33,6 +138,7 @@ export interface PlanLocationInput {
   name: string;
   parentId: string | null;
   planKind: string | null;
+  planShape?: string | null;
   planX: number | null;
   planY: number | null;
   planW: number | null;
@@ -44,6 +150,7 @@ export interface PlacedPlace {
   name: string;
   parentId: string | null;
   kind: PlanKind;
+  shape: PlanShape;
   rect: Rect;
   /** False when the rect is a suggestion the user hasn't saved yet (drawn with dashed walls). */
   stored: boolean;
@@ -152,6 +259,7 @@ export function layoutPlan(locations: PlanLocationInput[]): PlacedPlace[] {
       name: l.name,
       parentId: parent?.id ?? null,
       kind,
+      shape: isPlanShape(l.planShape) ? l.planShape : defaultShape(kind),
       rect,
       stored,
       depth: parent ? parent.depth + 1 : 0,

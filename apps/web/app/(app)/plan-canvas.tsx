@@ -20,17 +20,22 @@ import {
   fitView,
   innermostAt,
   layoutPlan,
+  defaultShape,
   PLAN_KINDS,
+  PLAN_SHAPES,
   PLOT_H,
   PLOT_W,
   rectFromPoints,
+  shapePath,
   suggestedKinds,
   type PlacedPlace,
   type PlanKind,
   type PlanLocationInput,
+  type PlanShape,
   type Rect,
   type View,
 } from "../../lib/plan-layout";
+import { PlaceShape, ShapeIcon } from "../../lib/plan-shape";
 import { KIND_STYLE, LABEL_INK } from "../../lib/plan-styles";
 import {
   createPlaceAction,
@@ -55,7 +60,7 @@ type Tool = "select" | "place" | "thing";
 export type PlanSelection = { type: "place"; id: string } | { type: "thing"; id: string } | null;
 
 type Draft =
-  | { type: "place"; rect: Rect; parentId: string | null; kind: PlanKind }
+  | { type: "place"; rect: Rect; parentId: string | null; kind: PlanKind; shape: PlanShape }
   | { type: "thing"; x: number; y: number; locationId: string | null };
 
 type Corner = "nw" | "ne" | "sw" | "se";
@@ -120,6 +125,8 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [drawRect, setDrawRect] = useState<Rect | null>(null);
+  // Shape the Place tool draws; null means "whatever suits the kind" (ovals for ponds and trees).
+  const [drawShape, setDrawShape] = useState<PlanShape | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -164,12 +171,27 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
   // Until the user pans or zooms, the view keeps re-fitting so the drawing fills the canvas at any window size.
   const viewTouchedRef = useRef(false);
 
+  // "focus" frames one place (the phone's first view); "all" fits the whole drawing.
+  const fitModeRef = useRef<"focus" | "all">("focus");
+
   const fitAll = useCallback(() => {
     if (!size.w || !size.h) return;
     viewTouchedRef.current = false;
+    fitModeRef.current = "all";
     const v = fitView(contentBounds(), size.w, size.h, 16);
     setView(v.scale > FIT_MAX_SCALE ? centredAt(contentBounds(), size, FIT_MAX_SCALE) : v);
   }, [contentBounds, size]);
+
+  // The whole plot is too busy to read on a phone, so it opens on the house (or the biggest place) instead.
+  const autoFit = useCallback(() => {
+    const tops = places.filter((p) => !p.parentId);
+    const focus =
+      tops.find((p) => p.kind === "house") ?? [...tops].sort((a, b) => b.rect.w * b.rect.h - a.rect.w * a.rect.h)[0];
+    if (fitModeRef.current === "all" || size.w >= 640 || tops.length < 2 || !focus) return fitAll();
+    viewTouchedRef.current = false;
+    const v = fitView(focus.rect, size.w, size.h, 48);
+    setView(v.scale > 3 ? centredAt(focus.rect, size, 3) : v);
+  }, [places, size, fitAll]);
 
   useLayoutEffect(() => {
     const el = containerRef.current;
@@ -183,8 +205,8 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
   }, []);
 
   useEffect(() => {
-    if (size.w && size.h && (!viewRef.current || !viewTouchedRef.current)) fitAll();
-  }, [size, fitAll]);
+    if (size.w && size.h && (!viewRef.current || !viewTouchedRef.current)) autoFit();
+  }, [size, autoFit]);
 
   const toWorld = useCallback((clientX: number, clientY: number) => {
     const box = containerRef.current!.getBoundingClientRect();
@@ -485,7 +507,8 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
       const rect = clampToPlot(g.current);
       if (rect.w < 16 || rect.h < 16) return;
       const parent = containerFor(places, rect);
-      setDraft({ type: "place", rect, parentId: parent?.id ?? null, kind: suggestedKinds(parent?.kind ?? null)[0]! });
+      const kind = suggestedKinds(parent?.kind ?? null)[0]!;
+      setDraft({ type: "place", rect, parentId: parent?.id ?? null, kind, shape: drawShape ?? defaultShape(kind) });
       setDraftName("");
     } else if (g.type === "thing" && g.moved) {
       const thing = things.find((t) => t.id === g.id);
@@ -518,7 +541,8 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
     setBusy(true);
     if (draft.type === "place") {
       const created = await run(
-        () => createPlaceAction({ name, parentId: draft.parentId, kind: draft.kind, rect: draft.rect }),
+        () =>
+          createPlaceAction({ name, parentId: draft.parentId, kind: draft.kind, shape: draft.shape, rect: draft.rect }),
         "Couldn't add that place",
       );
       if (created.ok) {
@@ -531,6 +555,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
             name,
             parentId: draft.parentId,
             kind: draft.kind,
+            shape: draft.shape,
             rect: draft.rect,
             stored: true,
             depth: parent ? parent.depth + 1 : 0,
@@ -565,11 +590,14 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
     );
   }
 
-  async function renamePlace(id: string, name: string, kind: PlanKind) {
+  async function renamePlace(id: string, name: string, kind: PlanKind, shape: PlanShape) {
     const place = placeById.get(id);
     if (!place) return;
-    setPlaces((prev) => prev.map((p) => (p.id === id ? { ...p, name, kind } : p)));
-    await run(() => updatePlaceAction({ id, name, parentId: place.parentId, kind }), "Couldn't rename that place");
+    setPlaces((prev) => prev.map((p) => (p.id === id ? { ...p, name, kind, shape } : p)));
+    await run(
+      () => updatePlaceAction({ id, name, parentId: place.parentId, kind, shape }),
+      "Couldn't rename that place",
+    );
   }
 
   async function deletePlace(id: string) {
@@ -694,20 +722,24 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
               const showLabel = box.width > 34 && box.height > 18;
               const label = place.name.toUpperCase();
               const ink = LABEL_INK[place.kind] ?? "text-body";
+              // Corner-anchored labels only fit inside shapes that have a square top-left corner.
+              const labelAt =
+                k.label === "inside" && place.shape !== "rect" && place.shape !== "lshape" ? "center" : k.label;
               return (
                 <div
                   key={place.id}
                   data-place-id={place.id}
                   title={`${place.name} · ${count} ${count === 1 ? "thing" : "things"}`}
-                  className={`absolute ${k.className} ${empty ? "!border-dashed" : ""} ${!place.stored ? "opacity-80" : ""} ${
-                    selected || hovered ? "outline outline-2 outline-offset-2 outline-accent" : ""
+                  className={`pointer-events-none absolute ${!place.stored ? "opacity-80" : ""} ${
+                    selected || hovered ? "rounded-[12px] outline outline-2 outline-offset-2 outline-accent" : ""
                   }`}
-                  style={{ ...box, ...k.style, zIndex: 10 + place.depth }}
+                  style={{ ...box, zIndex: 10 + place.depth }}
                 >
-                  {place.kind === "garage" && box.width > 40 && (
-                    <span className="pointer-events-none absolute -bottom-[3px] left-[13%] right-[13%] h-[7px] bg-(--plan-garage-door)" />
+                  <PlaceShape kind={place.kind} shape={place.shape} w={box.width} h={box.height} dashed={empty} />
+                  {place.kind === "garage" && place.shape === "rect" && box.width > 40 && (
+                    <span className="pointer-events-none absolute -bottom-[3px] left-[13%] right-[13%] h-[7px] rounded-[2px] bg-(--plan-garage-door)" />
                   )}
-                  {showLabel && k.label === "inside" && (
+                  {showLabel && labelAt === "inside" && (
                     <span
                       className={`pointer-events-none absolute left-[10px] top-2 right-2 font-mono text-[10px] leading-tight ${ink}`}
                     >
@@ -715,21 +747,25 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
                       {box.height > 48 && box.width > 50 && <b className="font-sans text-[18px] text-ink">{count}</b>}
                     </span>
                   )}
-                  {showLabel && k.label === "center" && (
-                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center px-2 text-center font-mono text-[10px] text-[#1f4a4a]">
+                  {showLabel && labelAt === "center" && (
+                    <span
+                      className={`pointer-events-none absolute inset-0 flex items-center justify-center px-2 text-center font-mono text-[10px] ${ink} ${
+                        place.shape === "triangle" ? "pt-[30%]" : ""
+                      }`}
+                    >
                       <span className="truncate">
                         {label} · {count}
                       </span>
                     </span>
                   )}
-                  {k.label === "above" && (
+                  {labelAt === "above" && (
                     <span
                       className={`pointer-events-none absolute -top-[18px] left-0 max-w-full truncate font-mono text-[10px] ${ink}`}
                     >
                       {label} · {count}
                     </span>
                   )}
-                  {k.label === "below" && box.width > 24 && (
+                  {labelAt === "below" && box.width > 24 && (
                     <span
                       className={`pointer-events-none absolute left-0 top-full mt-[6px] w-max max-w-[160px] truncate font-mono text-[10px] ${ink}`}
                     >
@@ -747,7 +783,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
                       <span
                         key={corner}
                         data-handle={corner}
-                        className="absolute h-[10px] w-[10px] rounded-[2px] border-2 border-accent bg-card"
+                        className="pointer-events-auto absolute z-10 h-[10px] w-[10px] rounded-[2px] border-2 border-accent bg-card"
                         style={{
                           left: corner.includes("w") ? -7 : undefined,
                           right: corner.includes("e") ? -7 : undefined,
@@ -789,12 +825,28 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
                 );
               })}
 
-            {(drawRect || draft?.type === "place") && (
-              <div
-                className="pointer-events-none absolute z-[70] rounded-[4px] border-2 border-dashed border-accent bg-[color-mix(in_srgb,var(--color-accent)_10%,transparent)]"
-                style={screen(drawRect ?? (draft as { rect: Rect }).rect)}
-              />
-            )}
+            {(drawRect || draft?.type === "place") &&
+              (() => {
+                const box = screen(drawRect ?? (draft as { rect: Rect }).rect);
+                const shape = draft?.type === "place" ? draft.shape : (drawShape ?? "rect");
+                return (
+                  <svg
+                    aria-hidden
+                    className="pointer-events-none absolute z-[70] overflow-visible"
+                    style={box}
+                    viewBox={`0 0 ${Math.max(1, box.width)} ${Math.max(1, box.height)}`}
+                  >
+                    <path
+                      d={shapePath(shape, Math.max(1, box.width - 2), Math.max(1, box.height - 2), 10)}
+                      transform="translate(1 1)"
+                      fill="color-mix(in srgb, var(--color-accent) 10%, transparent)"
+                      stroke="var(--color-accent)"
+                      strokeWidth={2}
+                      strokeDasharray="6 4"
+                    />
+                  </svg>
+                );
+              })()}
             {draft?.type === "thing" && (
               <span
                 className="pointer-events-none absolute z-[70] h-[18px] w-[18px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-dashed border-accent"
@@ -842,10 +894,39 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
           ))}
         </div>
 
+        {tool === "place" && (
+          <div
+            data-plan-ui
+            role="radiogroup"
+            aria-label="Shape to draw"
+            className="absolute left-3 top-[54px] z-[80] flex rounded-[10px] border border-border bg-card p-[3px] shadow-[0_1px_3px_rgba(31,38,34,.12)]"
+          >
+            {PLAN_SHAPES.map(({ shape, label }) => {
+              const active = (drawShape ?? "rect") === shape;
+              return (
+                <button
+                  key={shape}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  aria-label={label}
+                  title={label}
+                  onClick={() => setDrawShape(shape)}
+                  className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-[8px] border-none ${
+                    active ? "bg-selected text-ink" : "bg-transparent text-muted hover:text-ink"
+                  }`}
+                >
+                  <ShapeIcon shape={shape} />
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {unsavedCount > 0 && (
           <div
             data-plan-ui
-            className="absolute left-3 top-[54px] z-[80] flex items-center gap-2 sm:left-auto sm:right-3 sm:top-3 rounded-[10px] border border-border bg-card py-[5px] pl-3 pr-[5px] text-[12px] text-body shadow-[0_1px_3px_rgba(31,38,34,.12)]"
+            className={`absolute left-3 top-[54px] z-[80] items-center gap-2 sm:left-auto ${tool === "place" ? "hidden sm:flex" : "flex"} sm:right-3 sm:top-3 rounded-[10px] border border-border bg-card py-[5px] pl-3 pr-[5px] text-[12px] text-body shadow-[0_1px_3px_rgba(31,38,34,.12)]`}
           >
             <span className="hidden sm:inline">
               {unsavedCount} {unsavedCount === 1 ? "place" : "places"} in a suggested spot
@@ -944,7 +1025,7 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
             className="absolute z-[90] flex w-[260px] flex-col gap-[10px] rounded-[14px] border border-border bg-card p-3 shadow-[8px_12px_24px_-10px_rgba(31,38,34,.4)]"
             style={{
               left: Math.max(8, Math.min(size.w - 268, draftAnchor.left + draftAnchor.width + 12)),
-              top: Math.max(8, Math.min(size.h - (draft.type === "place" ? 230 : 150), draftAnchor.top)),
+              top: Math.max(8, Math.min(size.h - (draft.type === "place" ? 272 : 150), draftAnchor.top)),
             }}
           >
             <div>
@@ -978,7 +1059,9 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
                       type="button"
                       role="radio"
                       aria-checked={active}
-                      onClick={() => setDraft({ ...draft, kind })}
+                      onClick={() =>
+                        setDraft({ ...draft, kind, shape: drawShape ?? defaultShape(kind) })
+                      }
                       className={`flex cursor-pointer items-center gap-1 rounded-full px-[10px] py-1 text-[12px] font-semibold ${
                         active
                           ? "border border-transparent bg-selected text-ink"
@@ -992,6 +1075,28 @@ export function PlanWorkspace({ locations, things: initialThings, alertPlaceIds,
                     </button>
                   );
                 })}
+              </div>
+            )}
+            {draft.type === "place" && (
+              <div className="flex gap-1" role="radiogroup" aria-label="Shape">
+                {PLAN_SHAPES.map(({ shape, label }) => (
+                  <button
+                    key={shape}
+                    type="button"
+                    role="radio"
+                    aria-checked={draft.shape === shape}
+                    aria-label={label}
+                    title={label}
+                    onClick={() => setDraft({ ...draft, shape })}
+                    className={`flex h-8 flex-1 cursor-pointer items-center justify-center rounded-[8px] ${
+                      draft.shape === shape
+                        ? "border border-transparent bg-selected text-ink"
+                        : "border border-border bg-card text-muted hover:text-ink"
+                    }`}
+                  >
+                    <ShapeIcon shape={shape} />
+                  </button>
+                ))}
               </div>
             )}
             <div className="flex gap-2">

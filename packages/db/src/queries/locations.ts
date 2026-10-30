@@ -14,6 +14,7 @@ export function listLocations(userId: string) {
 
 export interface LocationPlan {
   planKind?: string | null;
+  planShape?: string | null;
   planX?: number | null;
   planY?: number | null;
   planW?: number | null;

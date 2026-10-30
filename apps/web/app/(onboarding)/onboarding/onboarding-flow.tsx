@@ -5,7 +5,8 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import { DEFAULT_ZONES, PLOT_SIZES, ZONE_OPTIONS, type PlotSize, type ZoneOption } from "../../../lib/onboarding";
 import { inferKind, layoutPlan, PLOT_H, PLOT_W, type PlanKind } from "../../../lib/plan-layout";
-import { KIND_STYLE, LABEL_INK } from "../../../lib/plan-styles";
+import { PlaceShape } from "../../../lib/plan-shape";
+import { LABEL_INK } from "../../../lib/plan-styles";
 import { createInviteAction } from "../../(app)/settings/actions/sharing";
 import { completeOnboardingAction, createZonesAction, saveHouseholdAction } from "./actions";
 
@@ -109,19 +110,20 @@ function MiniPlan({
     >
       {placed.map((place, i) => {
         const isPreview = preview !== null && i === all.length - 1;
-        const k = KIND_STYLE[place.kind];
         return (
           <div
             key={`${place.name}-${isPreview ? "preview" : "zone"}`}
-            className={`zone-in absolute ${isPreview ? "rounded-[4px] border-2 border-dashed border-accent bg-transparent" : k.className}`}
+            className={`zone-in absolute ${isPreview ? "rounded-[8px] border-2 border-dashed border-accent bg-transparent" : ""}`}
             style={{
               left: `${(place.rect.x / PLOT_W) * 100}%`,
               top: `${(place.rect.y / PLOT_H) * 100}%`,
               width: `${(place.rect.w / PLOT_W) * 100}%`,
               height: `${(place.rect.h / PLOT_H) * 100}%`,
-              ...(isPreview ? {} : k.style),
             }}
           >
+            {!isPreview && (
+              <PlaceShape kind={place.kind} shape={place.shape} w={place.rect.w} h={place.rect.h} radius={28} />
+            )}
             <span
               className={`absolute left-[5px] top-[4px] right-1 truncate font-mono text-[9px] ${isPreview ? "text-(--plan-ink)" : (LABEL_INK[place.kind] ?? "text-body")}`}
             >

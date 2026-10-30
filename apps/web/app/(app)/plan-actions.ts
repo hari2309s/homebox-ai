@@ -7,7 +7,7 @@ import { requireSessionUser } from "@homebox-ai/supabase/server";
 
 import { locationTag } from "../../lib/cached-queries";
 import { fitPlaceIntoParent } from "../../lib/plan-fit-server";
-import { clampToPlot, isPlanKind, PLOT_H, PLOT_W, type Rect } from "../../lib/plan-layout";
+import { clampToPlot, isPlanKind, isPlanShape, PLOT_H, PLOT_W, type Rect } from "../../lib/plan-layout";
 
 function finite(value: unknown, label: string): number {
   const n = Number(value);
@@ -95,13 +95,20 @@ export async function reparentPlaceAction(id: string, parentId: string | null) {
   afterPlaceChange(user.id);
 }
 
-export async function createPlaceAction(input: { name: string; parentId: string | null; kind: string; rect: Rect }) {
+export async function createPlaceAction(input: {
+  name: string;
+  parentId: string | null;
+  kind: string;
+  shape?: string;
+  rect: Rect;
+}) {
   const user = await requireSessionUser();
   const r = validRect(input.rect);
   const [location] = await locationQueries.createLocation(user.id, {
     name: cleanName(input.name),
     parentId: input.parentId || null,
     planKind: isPlanKind(input.kind) ? input.kind : null,
+    planShape: isPlanShape(input.shape) ? input.shape : null,
     planX: r.x,
     planY: r.y,
     planW: r.w,
@@ -112,14 +119,24 @@ export async function createPlaceAction(input: { name: string; parentId: string 
   return { id: location.id };
 }
 
-export async function updatePlaceAction(input: { id: string; name: string; parentId: string | null; kind: string }) {
+export async function updatePlaceAction(input: {
+  id: string;
+  name: string;
+  parentId: string | null;
+  kind: string;
+  shape?: string;
+}) {
   const user = await requireSessionUser();
   await locationQueries.updateLocation(user.id, input.id, {
     name: cleanName(input.name),
     parentId: input.parentId || null,
   });
   await locationQueries.updateLocationPlans(user.id, [
-    { id: input.id, planKind: isPlanKind(input.kind) ? input.kind : null },
+    {
+      id: input.id,
+      planKind: isPlanKind(input.kind) ? input.kind : null,
+      ...(input.shape !== undefined ? { planShape: isPlanShape(input.shape) ? input.shape : null } : {}),
+    },
   ]);
   afterPlaceChange(user.id);
 }

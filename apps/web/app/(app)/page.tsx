@@ -90,6 +90,7 @@ export default async function DashboardPage() {
     name: l.name,
     parentId: l.parentId,
     planKind: l.planKind,
+    planShape: l.planShape,
     planX: l.planX,
     planY: l.planY,
     planW: l.planW,

@@ -9,6 +9,8 @@ import {
   innermostAt,
   intersects,
   layoutPlan,
+  PLAN_SHAPES,
+  shapePath,
   type PlanLocationInput,
 } from "./plan-layout";
 
@@ -167,5 +169,37 @@ describe("fitSubtreeInto", () => {
     expect(garage.w).toBeLessThanOrEqual(100);
     expect(garage.h).toBeLessThanOrEqual(100);
     expect(fit.rects.get("bench")!.w).toBeCloseTo(160 * (garage.w / 200));
+  });
+});
+
+describe("shapes", () => {
+  it("defaults ponds and trees to ovals and everything else to rectangles, unless one was picked", () => {
+    const placed = layoutPlan([
+      loc("p", "Pond", null, [0, 0, 80, 60], "pond"),
+      loc("h", "House", null, [100, 0, 200, 150], "house"),
+      { ...loc("g", "Garden", null, [400, 0, 200, 150], "garden"), planShape: "hexagon" },
+      { ...loc("x", "Shed", null, [700, 0, 80, 80], "shed"), planShape: "nonsense" },
+    ]);
+    const shapeOf = (id: string) => placed.find((p) => p.id === id)!.shape;
+    expect(shapeOf("p")).toBe("oval");
+    expect(shapeOf("h")).toBe("rect");
+    expect(shapeOf("g")).toBe("hexagon");
+    expect(shapeOf("x")).toBe("rect");
+  });
+
+  it("draws every shape as a closed path that stays inside its box", () => {
+    for (const { shape } of PLAN_SHAPES) {
+      const d = shapePath(shape, 120, 80, 10);
+      expect(d.trim().endsWith("Z")).toBe(true);
+      expect(d).not.toMatch(/NaN|Infinity/);
+      const nums = [...d.matchAll(/-?\d+(?:\.\d+)?/g)].map((m) => Number(m[0]));
+      if (shape === "oval") continue;
+      expect(Math.min(...nums)).toBeGreaterThanOrEqual(0);
+      expect(Math.max(...nums)).toBeLessThanOrEqual(120);
+    }
+  });
+
+  it("never rounds a corner by more than half its shortest edge", () => {
+    expect(shapePath("rect", 10, 10, 50)).not.toMatch(/-/);
   });
 });
