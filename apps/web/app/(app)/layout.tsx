@@ -115,7 +115,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         members={members}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <MobileHeader />
+        <MobileHeader userName={userName} />
         <div className="app-content flex-1 overflow-y-auto lg:px-[max(0px,calc((100%-1048px)/2))] lg:has-[[data-full-bleed]]:px-0">
           {children}
         </div>
