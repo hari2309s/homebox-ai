@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatedHomeboxIcon } from "@homebox-ai/ui";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,16 +25,6 @@ interface SidebarProps {
   userName: string;
   householdLabel: string;
   members: SidebarMember[];
-}
-
-function MiniPlanLogo() {
-  return (
-    <div className="relative h-9 w-9 flex-none overflow-hidden rounded-[9px] bg-selected">
-      <span className="absolute left-1 top-[15px] h-[17px] w-[18px] rounded-[2px] border-[1.5px] border-ink bg-rail" />
-      <span className="absolute left-6 top-[18px] h-[14px] w-[9px] rounded-[2px] border-[1.5px] border-danger bg-danger-soft" />
-      <span className="absolute left-[21px] top-[3px] h-[11px] w-[11px] rounded-full bg-[#7fa572]" />
-    </div>
-  );
 }
 
 export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, householdLabel, members }: SidebarProps) {
@@ -99,7 +90,7 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
       className="hidden w-[232px] flex-none flex-col gap-[2px] border-r border-border bg-rail px-3 py-5 lg:flex"
     >
       <Link href="/" className="flex items-center gap-[10px] px-2 pb-4 no-underline">
-        <MiniPlanLogo />
+        <AnimatedHomeboxIcon size={36} />
         <div className="min-w-0">
           <div className="font-serif text-[18px] leading-none text-ink">Homebox</div>
           <div className="mt-[3px] truncate font-mono text-[9px] uppercase text-muted">{householdLabel}</div>
