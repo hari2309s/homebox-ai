@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { formatDate } from "../../../lib/date";
 import type { HouseholdUser } from "../../../lib/household";
 import { assigneeInitial, assigneeLabel, colorForAssignee, toDateKey } from "../calendar/calendar-utils";
 
@@ -19,14 +18,25 @@ export interface AcceptedSuggestion {
   status: "pending" | "done";
 }
 
+/** "Nov 12", or "Nov 12, 2025" outside the current year, from a `YYYY-MM-DD` key. */
+function shortDate(dateKey: string): string {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  if (!y || !m || !d) return dateKey;
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: y === new Date().getFullYear() ? undefined : "numeric",
+  }).format(new Date(y, m - 1, d));
+}
+
 function dayOf(iso: string): string {
-  return formatDate(toDateKey(new Date(iso)));
+  return shortDate(toDateKey(new Date(iso)));
 }
 
 function StatusChip({ entry }: { entry: AcceptedSuggestion }) {
   if (entry.status === "done") {
     return (
-      <span className="rounded-full bg-selected px-2 py-[3px] font-mono text-[10px] text-moss-ink">
+      <span className="flex-none whitespace-nowrap rounded-full bg-selected px-2 py-[3px] font-mono text-[10px] text-moss-ink">
         DONE{entry.completedAt ? ` · ${dayOf(entry.completedAt).toUpperCase()}` : ""}
       </span>
     );
@@ -34,9 +44,9 @@ function StatusChip({ entry }: { entry: AcceptedSuggestion }) {
   const overdue = entry.dueDate < toDateKey(new Date());
   return (
     <span
-      className={`rounded-full px-2 py-[3px] font-mono text-[10px] ${overdue ? "bg-danger-soft text-danger-ink" : "bg-surface-soft text-body"}`}
+      className={`flex-none whitespace-nowrap rounded-full px-2 py-[3px] font-mono text-[10px] ${overdue ? "bg-danger-soft text-danger-ink" : "bg-surface-soft text-body"}`}
     >
-      {overdue ? "OVERDUE" : "DUE"} · {formatDate(entry.dueDate).toUpperCase()}
+      {overdue ? "OVERDUE" : "DUE"} · {shortDate(entry.dueDate).toUpperCase()}
     </span>
   );
 }
@@ -81,7 +91,7 @@ export function AcceptedHistory({
                 >
                   {entry.title}
                 </span>
-                <span className="block truncate text-[12px] text-muted">
+                <span className="mt-px block text-[12px] leading-snug text-muted">
                   {entry.itemId && entry.itemName ? (
                     <Link href={`/items/${entry.itemId}`} className="text-body no-underline hover:underline">
                       {entry.itemName}
