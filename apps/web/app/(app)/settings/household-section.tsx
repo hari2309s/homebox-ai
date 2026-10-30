@@ -232,7 +232,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
         {status.members.map((member, i) => {
           const label = member.name || member.email || "Family member";
           return (
-            <li key={member.userId} className="flex flex-wrap items-center gap-3 border-b border-border/40 py-3">
+            <li key={member.userId} className="flex items-center gap-3 border-b border-border/40 py-3">
               <span
                 className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full font-bold text-white"
                 style={{ background: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
@@ -245,16 +245,18 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
                   {member.name && member.email ? member.email : (member.relationship ?? "Member")}
                 </span>
               </span>
-              <RelationshipInput
-                value={member.relationship}
-                label={`Relationship of ${label}`}
-                onSave={async (next) => {
-                  await run(async () => {
-                    await setMemberRelationshipAction(member.userId, next);
-                    await refresh();
-                  }, "Couldn't save the relationship");
-                }}
-              />
+              <span className="hidden sm:flex">
+                <RelationshipInput
+                  value={member.relationship}
+                  label={`Relationship of ${label}`}
+                  onSave={async (next) => {
+                    await run(async () => {
+                      await setMemberRelationshipAction(member.userId, next);
+                      await refresh();
+                    }, "Couldn't save the relationship");
+                  }}
+                />
+              </span>
               <RoleChip role="member" />
               <button
                 type="button"
@@ -271,7 +273,7 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
         })}
 
         {invites.map((invite) => (
-          <li key={invite.id} className="flex flex-wrap items-center gap-3 border-b border-border/40 py-3">
+          <li key={invite.id} className="flex items-center gap-3 border-b border-border/40 py-3">
             <span className="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full border-[1.5px] border-dashed border-border text-muted">
               <span aria-hidden className="material-symbols-rounded text-[18px]">
                 mail
@@ -314,26 +316,28 @@ export function HouseholdSection({ selfEmail, selfName }: { selfEmail: string; s
 
       <div className="flex flex-col gap-2 pt-1">
         <span className="text-[14px] font-semibold text-ink">Invite a family member</span>
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            list={inviteListId}
-            value={relationship}
-            maxLength={40}
-            onChange={(event) => setRelationship(event.target.value)}
-            placeholder="Who are they? e.g. Partner"
-            aria-label="Their relationship to you"
-            className="min-w-0 flex-1 rounded-[10px] border border-border bg-card px-3 py-[9px] text-[14px] text-ink outline-none placeholder:text-muted focus:border-accent"
-          />
-          <datalist id={inviteListId}>
-            {RELATIONSHIPS.map((r) => (
-              <option key={r} value={r} />
-            ))}
-          </datalist>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-1">
+            <input
+              list={inviteListId}
+              value={relationship}
+              maxLength={40}
+              onChange={(event) => setRelationship(event.target.value)}
+              placeholder="Who are they? e.g. Partner"
+              aria-label="Their relationship to you"
+              className="min-w-0 flex-1 rounded-[10px] border border-border bg-card px-3 py-[9px] text-[14px] text-ink outline-none placeholder:text-muted focus:border-accent"
+            />
+            <datalist id={inviteListId}>
+              {RELATIONSHIPS.map((r) => (
+                <option key={r} value={r} />
+              ))}
+            </datalist>
+          </div>
           <button
             type="button"
             onClick={handleInvite}
             disabled={creating}
-            className="flex cursor-pointer items-center gap-[6px] rounded-[10px] border-none bg-accent px-4 py-[10px] text-[13px] font-semibold text-on-accent disabled:opacity-60"
+            className="flex shrink-0 cursor-pointer items-center justify-center gap-[6px] rounded-[10px] border-none bg-accent px-4 py-[10px] text-[13px] font-semibold text-on-accent disabled:opacity-60"
           >
             <span aria-hidden className="material-symbols-rounded text-[16px]">
               link

@@ -14,7 +14,7 @@ import { listLocationsCached } from "../../lib/cached-queries";
 import { needsOnboarding } from "../../lib/onboarding";
 import { JOIN_PATH } from "../../lib/pending-join";
 import { getForecast, weatherAlerts } from "../../lib/weather";
-import { FloatingNotificationBell } from "./notifications/notification-center";
+import { MobileHeader } from "./mobile-header";
 import { NotificationProvider } from "./notifications/notification-provider";
 import { PendingInviteBanner } from "./pending-invite-banner";
 import { Sidebar } from "./sidebar";
@@ -60,6 +60,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const dueCount = reminders.filter((r) => r.status === "pending" && r.dueDate <= dueCutoff).length;
   const members = householdUsers.map((person, i) => ({
     userId: person.userId,
+    name: person.isSelf ? userName : (person.name ?? person.email?.split("@")[0] ?? "?"),
     initial: (person.isSelf ? userName : (person.name ?? person.email ?? "?")).charAt(0).toUpperCase(),
     color: MEMBER_COLORS[i % MEMBER_COLORS.length]!,
   }));
@@ -114,11 +115,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         members={members}
       />
       <div className="flex min-w-0 flex-1 flex-col">
+        <MobileHeader />
         <div className="app-content flex-1 overflow-y-auto lg:px-[max(0px,calc((100%-1048px)/2))] lg:has-[[data-full-bleed]]:px-0">
           {children}
         </div>
         <BottomNav unreadChatCount={unreadChatCount} userName={userName} householdLabel={householdLabel} members={members} />
-        <FloatingNotificationBell />
         <NotificationProvider dueReminders={dueReminders} weatherAlerts={alerts} invite={inviteSeed} expiringWarranties={expiringWarranties} />
         <InstallPrompt />
         {showInvite && pendingJoin && (

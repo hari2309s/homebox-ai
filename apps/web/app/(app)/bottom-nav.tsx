@@ -31,6 +31,7 @@ function NavIcon({ name, filled, className }: { name: string; filled?: boolean; 
 
 export interface BottomNavMember {
   userId: string;
+  name: string;
   initial: string;
   color: string;
 }
@@ -122,9 +123,9 @@ export function BottomNav({ unreadChatCount = 0, userName, householdLabel, membe
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14px] font-semibold text-ink">{householdLabel}</span>
-                    <span className="block text-[12px] text-muted">
+                    <span className="block truncate text-[12px] text-muted">
                       {members.length > 1
-                        ? members.map((m) => m.initial).join(", ")
+                        ? members.map((m) => m.name.split(" ")[0]).join(", ")
                         : "Invite someone"}
                     </span>
                   </span>
