@@ -52,12 +52,12 @@ export function PlaceShape({
 
 /** Small outline of a shape for pickers. */
 export function ShapeIcon({ shape, size = 18 }: { shape: PlanShape; size?: number }) {
-  const w = shape === "rect" || shape === "pill" || shape === "lshape" ? 20 : 16;
+  const w = shape === "oval" || shape === "triangle" ? 16 : 20;
   const h = shape === "pill" ? 10 : 16;
   return (
     <svg aria-hidden width={size} height={size} viewBox="-2 -2 24 20" className="block">
       <path
-        d={shapePath(shape, w, h, 3)}
+        d={shapePath(shape, w, h, 1.5)}
         transform={`translate(${(20 - w) / 2} ${(16 - h) / 2})`}
         fill="currentColor"
         fillOpacity={0.18}
