@@ -16,8 +16,6 @@ import { sql } from "drizzle-orm";
 
 config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../.env.local") });
 
-import { createClient } from "@supabase/supabase-js";
-
 import {
   getDb,
   homeQueries,
@@ -33,11 +31,10 @@ import {
 // ── Demo credentials (keep in sync with the login page) ────────────────
 export const DEMO_EMAIL = "demo@homebox.app";
 export const DEMO_PASSWORD = "TryHomebox2024!";
-const DEMO_NAME = "Hari";
+const DEMO_NAME = "Sam";
 
 const HOUSEHOLD = [
-  { email: "dora.demo@homebox.app", name: "Dora", relationship: "Partner" },
-  { email: "kamala.demo@homebox.app", name: "Kamala", relationship: "Parent" },
+  { email: "rosie.demo@homebox.app", name: "Rosie", relationship: "Partner" },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -45,43 +42,52 @@ const HOUSEHOLD = [
 const dayKey = (offsetDays: number) =>
   new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
 
-// ── Supabase admin (service role) ──────────────────────────────────────
+// ── Supabase Auth Admin (via fetch + raw SQL) ─────────────────────────
 
-function getAdminClient() {
+function getAuthConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY must be set");
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+  return { url, key };
 }
 
-async function ensureUser(
-  admin: Awaited<ReturnType<typeof getAdminClient>>,
-  email: string,
-  fullName: string,
-  password?: string,
-): Promise<string> {
-  // Try to find existing user
-  const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  const existing = list?.users?.find((u) => u.email === email);
+async function ensureUser(email: string, fullName: string, password?: string): Promise<string> {
+  const db = getDb();
+  const { url, key } = getAuthConfig();
+  const headers = { Authorization: `Bearer ${key}`, apikey: key, "Content-Type": "application/json" };
+
+  // Check if user already exists via raw SQL
+  const rows = await db.execute<{ id: string; raw_user_meta_data: Record<string, unknown> }>(
+    sql`SELECT id, raw_user_meta_data FROM auth.users WHERE email = ${email}`,
+  );
+  const existing = rows[0];
+
   if (existing) {
-    // Update metadata to ensure onboarded_at is set
-    await admin.auth.admin.updateUserById(existing.id, {
-      user_metadata: { ...existing.user_metadata, full_name: fullName, onboarded_at: new Date().toISOString() },
-      ...(password ? { password } : {}),
-    });
+    // Update metadata via Admin REST API
+    const meta = { ...(existing.raw_user_meta_data ?? {}), full_name: fullName, onboarded_at: new Date().toISOString() };
+    const body: Record<string, unknown> = { user_metadata: meta };
+    if (password) body.password = password;
+    const res = await fetch(`${url}/auth/v1/admin/users/${existing.id}`, { method: "PUT", headers, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error(`Failed to update ${email}: ${await res.text()}`);
     console.log(`  Found existing user: ${email} → ${existing.id}`);
     return existing.id;
   }
 
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password: password ?? `Member${Date.now()}!`,
-    email_confirm: true,
-    user_metadata: { full_name: fullName, onboarded_at: new Date().toISOString() },
+  // Create user via Admin REST API
+  const res = await fetch(`${url}/auth/v1/admin/users`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      email,
+      password: password ?? `Member${Date.now()}!`,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, onboarded_at: new Date().toISOString() },
+    }),
   });
-  if (error) throw new Error(`Failed to create ${email}: ${error.message}`);
-  console.log(`  Created user: ${email} → ${data.user.id}`);
-  return data.user.id;
+  if (!res.ok) throw new Error(`Failed to create ${email}: ${await res.text()}`);
+  const data = await res.json();
+  console.log(`  Created user: ${email} → ${data.id}`);
+  return data.id;
 }
 
 // ── Wipe ────────────────────────────────────────────────────────────────
@@ -183,7 +189,7 @@ interface ItemSeed {
   notes?: string;
   archived?: boolean;
   care?: { daysAgo: number; name: string; cost?: string; description?: string }[];
-  reminder?: { inDays: number; title: string; description?: string };
+  reminder?: { inDays: number; title: string; description?: string; assignTo?: "sam" | "rosie" };
 }
 
 const ITEMS: ItemSeed[] = [
@@ -194,7 +200,7 @@ const ITEMS: ItemSeed[] = [
     price: "599.00", currency: "EUR", boughtDaysAgo: 540, from: "MediaMarkt Antwerp",
     warrantyInDays: 190, pin: true,
     care: [{ daysAgo: 90, name: "Descaled", cost: "6.00" }],
-    reminder: { inDays: 5, title: "Descale espresso machine", description: "Run the descaling cycle." },
+    reminder: { inDays: 5, title: "Descale espresso machine", description: "Run the descaling cycle.", assignTo: "rosie" },
   },
   {
     name: "Stand Mixer", place: "Kitchen", labels: ["Kitchen", "Appliances"],
@@ -213,7 +219,7 @@ const ITEMS: ItemSeed[] = [
     brand: "Siemens", model: "SN65ZX49CE", serial: "SIE-SN65-77123",
     price: "1049.00", currency: "EUR", boughtDaysAgo: 750, from: "Vanden Borre",
     warrantyInDays: -20, pin: true,
-    reminder: { inDays: 14, title: "Run dishwasher cleaning cycle" },
+    reminder: { inDays: 14, title: "Run dishwasher cleaning cycle", assignTo: "rosie" },
   },
   {
     name: "Knife Set", place: "Kitchen", labels: ["Kitchen"],
@@ -236,7 +242,7 @@ const ITEMS: ItemSeed[] = [
     name: "Fire Extinguisher", place: "Kitchen", labels: ["Safety"],
     quantity: 2, brand: "Gloria", model: "6kg ABC",
     price: "69.00", currency: "EUR", boughtDaysAgo: 800,
-    reminder: { inDays: 60, title: "Inspect fire extinguishers" },
+    reminder: { inDays: 60, title: "Inspect fire extinguishers", assignTo: "rosie" },
   },
 
   // ── Living Room ──
@@ -288,7 +294,7 @@ const ITEMS: ItemSeed[] = [
     brand: "Emma", model: "Premium King", price: "999.00", currency: "EUR",
     boughtDaysAgo: 600, from: "Emma.be", warrantyInDays: 3050, pin: true,
     notes: "10-year warranty. Rotate 180° every 3 months.",
-    reminder: { inDays: 20, title: "Rotate mattress" },
+    reminder: { inDays: 20, title: "Rotate mattress", assignTo: "sam" },
   },
   {
     name: "Bed Frame", place: "Master Bedroom", labels: ["Furniture"],
@@ -302,18 +308,17 @@ const ITEMS: ItemSeed[] = [
     care: [{ daysAgo: 120, name: "Replaced HEPA filter", cost: "59.00" }],
   },
 
-  // ── Guest Room (Kamala's room when visiting) ──
+  // ── Guest Room ──
   {
     name: "Sofa Bed", place: "Guest Room", labels: ["Furniture"],
     brand: "IKEA", model: "Friheten", price: "549.00", currency: "EUR",
     boughtDaysAgo: 800, from: "IKEA Wilrijk", pin: true,
-    notes: "Kamala's room when she visits from Chennai.",
   },
   {
     name: "Sewing Machine", place: "Guest Room", labels: ["Appliances"],
     brand: "Brother", model: "CS7000X", price: "229.00", currency: "EUR",
     boughtDaysAgo: 400, warrantyInDays: 1430,
-    notes: "Dora's. Extra bobbins in the drawer underneath.",
+    notes: "Rosie's. Extra bobbins in the drawer underneath.",
   },
 
   // ── Home Office ──
@@ -348,8 +353,8 @@ const ITEMS: ItemSeed[] = [
   },
   {
     name: "Passports", place: "Home Office", labels: ["Valuable"],
-    quantity: 3, parent: "Fireproof Safe",
-    description: "Hari, Dora, and Kamala's passports in blue folder.",
+    quantity: 2, parent: "Fireproof Safe",
+    description: "Sam and Rosie's passports in blue folder.",
   },
 
   // ── Hallway ──
@@ -357,13 +362,13 @@ const ITEMS: ItemSeed[] = [
     name: "Smoke Detectors", place: "Hallway", labels: ["Safety"],
     quantity: 4, brand: "Nest", model: "Protect",
     price: "476.00", currency: "EUR", boughtDaysAgo: 800, warrantyInDays: -70,
-    reminder: { inDays: 7, title: "Test smoke detectors" },
+    reminder: { inDays: 7, title: "Test smoke detectors", assignTo: "sam" },
   },
   {
     name: "Smart Lock", place: "Hallway", labels: ["Electronics", "Safety"],
     brand: "Nuki", model: "Smart Lock 4.0 Pro",
     price: "279.00", currency: "EUR", boughtDaysAgo: 400, warrantyInDays: 330, pin: true,
-    notes: "Master code shared with Dora. Guest code for Kamala's visits.",
+    notes: "Master code shared with Rosie.",
   },
 
   // ── Bathroom ──
@@ -375,7 +380,7 @@ const ITEMS: ItemSeed[] = [
   {
     name: "First Aid Kit", place: "Bathroom", labels: ["Safety"],
     price: "24.00", currency: "EUR", boughtDaysAgo: 365,
-    reminder: { inDays: 30, title: "Restock first aid kit" },
+    reminder: { inDays: 30, title: "Restock first aid kit", assignTo: "rosie" },
   },
 
   // ── Laundry ──
@@ -385,7 +390,7 @@ const ITEMS: ItemSeed[] = [
     price: "1099.00", currency: "EUR", boughtDaysAgo: 800, from: "Coolblue",
     warrantyInDays: -70, pin: true,
     care: [{ daysAgo: 60, name: "Cleaned door gasket" }],
-    reminder: { inDays: 10, title: "Run washing machine tub clean" },
+    reminder: { inDays: 10, title: "Run washing machine tub clean", assignTo: "sam" },
   },
   {
     name: "Dryer", place: "Laundry", labels: ["Appliances"],
@@ -421,20 +426,20 @@ const ITEMS: ItemSeed[] = [
     brand: "Gazelle", model: "Chamonix C7", serial: "GAZ-C7-992017",
     price: "1299.00", currency: "EUR", boughtDaysAgo: 500, insured: true, pin: true,
     care: [{ daysAgo: 60, name: "Tuned gears and brakes", cost: "55.00" }],
-    reminder: { inDays: 45, title: "Bike annual service" },
+    reminder: { inDays: 45, title: "Bike annual service", assignTo: "sam" },
   },
   {
     name: "E-Bike", place: "Garage", labels: ["Sports & Fitness", "Outdoor", "Valuable", "Electronics"],
     brand: "VanMoof", model: "S5", serial: "VM-S5-ASY-77142",
     price: "2498.00", currency: "EUR", boughtDaysAgo: 320, from: "VanMoof Antwerp",
     warrantyInDays: 410, insured: true, pin: true,
-    notes: "Dora's daily commuter.",
+    notes: "Rosie's daily commuter.",
   },
   {
     name: "Winter Tyres", place: "Garage", labels: ["Seasonal"],
     quantity: 4, brand: "Michelin", model: "Alpin 6",
     price: "640.00", currency: "EUR", boughtDaysAgo: 380,
-    reminder: { inDays: -2, title: "Check winter tyre tread depth" },
+    reminder: { inDays: -2, title: "Check winter tyre tread depth", assignTo: "sam" },
   },
   {
     name: "Jumper Cables", place: "Garage", labels: ["Tools"],
@@ -448,7 +453,7 @@ const ITEMS: ItemSeed[] = [
     brand: "Bosch", model: "Rotak 43 LI", serial: "BSH-RTK-881231",
     price: "449.00", currency: "EUR", boughtDaysAgo: 600, warrantyInDays: 1230, pin: true,
     care: [{ daysAgo: 120, name: "Sharpened blade", cost: "15.00" }],
-    reminder: { inDays: 2, title: "Mow the lawn" },
+    reminder: { inDays: 2, title: "Mow the lawn", assignTo: "sam" },
   },
   {
     name: "Pressure Washer", place: "Shed", labels: ["Outdoor", "Tools"],
@@ -472,7 +477,7 @@ const ITEMS: ItemSeed[] = [
     brand: "Manutti", model: "Air Collection 5-Piece",
     price: "3499.00", currency: "EUR", boughtDaysAgo: 400, warrantyInDays: 3230, pin: true,
     notes: "Store cushions in the shed over winter.",
-    reminder: { inDays: 35, title: "Store patio cushions for winter" },
+    reminder: { inDays: 35, title: "Store patio cushions for winter", assignTo: "rosie" },
   },
   {
     name: "String Lights", place: "Terrace", labels: ["Outdoor", "Seasonal"],
@@ -500,7 +505,7 @@ const ITEMS: ItemSeed[] = [
     brand: "Oase", model: "AquaMax Eco Premium 6000",
     price: "329.00", currency: "EUR", boughtDaysAgo: 400, warrantyInDays: 1330, pin: true,
     care: [{ daysAgo: 90, name: "Cleaned filter basket" }],
-    reminder: { inDays: 14, title: "Clean pond pump filter" },
+    reminder: { inDays: 14, title: "Clean pond pump filter", assignTo: "sam" },
   },
   {
     name: "Koi Fish Food", place: "Pond", labels: ["Outdoor", "Seasonal"],
@@ -513,7 +518,7 @@ const ITEMS: ItemSeed[] = [
     brand: "Wickey", model: "TurboFlyer", price: "329.00", currency: "EUR",
     boughtDaysAgo: 600, warrantyInDays: 3000, pin: true,
     notes: "For when friends visit with kids. Check bolts each spring.",
-    reminder: { inDays: 25, title: "Inspect swing set bolts" },
+    reminder: { inDays: 25, title: "Inspect swing set bolts", assignTo: "sam" },
   },
   {
     name: "Hammock", place: "Garden", labels: ["Outdoor", "Furniture"],
@@ -540,34 +545,36 @@ const ITEMS: ItemSeed[] = [
 // ── Runner ──────────────────────────────────────────────────────────────
 
 async function main() {
-  const admin = getAdminClient();
-
   // 1. Ensure demo users exist
   console.log("Ensuring demo users…");
-  const hariId = await ensureUser(admin, DEMO_EMAIL, DEMO_NAME, DEMO_PASSWORD);
+  const samId = await ensureUser(DEMO_EMAIL, DEMO_NAME, DEMO_PASSWORD);
 
   const memberIds: string[] = [];
   for (const member of HOUSEHOLD) {
-    const memberId = await ensureUser(admin, member.email, member.name);
+    const memberId = await ensureUser(member.email, member.name);
     memberIds.push(memberId);
   }
+  const rosieId = memberIds[0]!;
+
+  // Map assignTo names → user IDs
+  const assigneeMap: Record<string, string> = { sam: samId, rosie: rosieId };
 
   // 2. Wipe existing demo data
-  await wipe(hariId);
+  await wipe(samId);
 
   // 3. Set up household
   const db = getDb();
   for (let i = 0; i < HOUSEHOLD.length; i++) {
     await db.execute(
       sql`INSERT INTO shared_access (member_user_id, owner_id, relationship)
-          VALUES (${memberIds[i]!}, ${hariId}, ${HOUSEHOLD[i]!.relationship})
-          ON CONFLICT (member_user_id) DO UPDATE SET owner_id = ${hariId}, relationship = ${HOUSEHOLD[i]!.relationship}`,
+          VALUES (${memberIds[i]!}, ${samId}, ${HOUSEHOLD[i]!.relationship})
+          ON CONFLICT (member_user_id) DO UPDATE SET owner_id = ${samId}, relationship = ${HOUSEHOLD[i]!.relationship}`,
     );
     console.log(`  Household: ${HOUSEHOLD[i]!.name} (${HOUSEHOLD[i]!.relationship})`);
   }
 
   // 4. Set home location (Antwerp, Belgium)
-  await homeQueries.setHomeLocation(hariId, {
+  await homeQueries.setHomeLocation(samId, {
     placeName: "Antwerp, Belgium",
     latitude: 51.2194,
     longitude: 4.4025,
@@ -582,7 +589,7 @@ async function main() {
   for (const p of PLACES) {
     rectByPlace.set(p.name, p.rect);
     const [x, y, w, h] = p.rect;
-    const [created] = await locationQueries.createLocation(hariId, {
+    const [created] = await locationQueries.createLocation(samId, {
       name: p.name,
       parentId: p.parent ? (placeIdByName.get(p.parent) ?? null) : null,
       planKind: p.kind,
@@ -596,7 +603,7 @@ async function main() {
   // 6. Create labels
   const labelIdByName = new Map<string, string>();
   for (const l of LABELS) {
-    const [created] = await labelQueries.createLabel(hariId, l);
+    const [created] = await labelQueries.createLabel(samId, l);
     if (!created) continue;
     labelIdByName.set(l.name, created.id);
   }
@@ -618,7 +625,7 @@ async function main() {
           }
         : {};
 
-    const [created] = await itemQueries.createItem(hariId, {
+    const [created] = await itemQueries.createItem(samId, {
       name: item.name,
       description: item.description,
       quantity: item.quantity,
@@ -642,18 +649,18 @@ async function main() {
     itemsCreated++;
 
     if (item.archived) {
-      await itemQueries.updateItem(hariId, created.id, { archived: true });
+      await itemQueries.updateItem(samId, created.id, { archived: true });
     }
 
-    await itemActivityQueries.recordItemActivity(hariId, {
+    await itemActivityQueries.recordItemActivity(samId, {
       itemName: created.name, action: "created", itemId: created.id,
     });
 
     const labelIds = (item.labels ?? []).flatMap((n) => labelIdByName.get(n) ?? []);
-    if (labelIds.length > 0) await itemLabelQueries.setItemLabels(hariId, created.id, labelIds);
+    if (labelIds.length > 0) await itemLabelQueries.setItemLabels(samId, created.id, labelIds);
 
     for (const entry of item.care ?? []) {
-      await maintenanceQueries.createMaintenanceEntry(hariId, {
+      await maintenanceQueries.createMaintenanceEntry(samId, {
         itemId: created.id, name: entry.name, date: dayKey(-entry.daysAgo),
         description: entry.description, cost: entry.cost,
       });
@@ -661,11 +668,12 @@ async function main() {
     }
 
     if (item.reminder) {
-      await reminderQueries.createReminder(hariId, {
+      const assignee = item.reminder.assignTo ? assigneeMap[item.reminder.assignTo] : samId;
+      await reminderQueries.createReminder(samId, {
         itemId: created.id, title: item.reminder.title,
         description: item.reminder.description,
         dueDate: dayKey(item.reminder.inDays),
-        assignedToUserId: hariId,
+        assignedToUserId: assignee ?? samId,
       });
       remindersCreated++;
     }
