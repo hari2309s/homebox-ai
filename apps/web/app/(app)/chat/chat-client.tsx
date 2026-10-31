@@ -324,16 +324,10 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile header */}
-        <div className="flex items-center gap-3 border-b border-border px-5 py-3 lg:hidden">
-          <Link href="/" className="flex items-center justify-center text-ink no-underline">
-            <span className="material-symbols-rounded">arrow_back</span>
-          </Link>
-          <div className="flex-1">
-            <div className="font-serif text-[19px] text-ink">Ask the house</div>
-            <div className="font-mono text-[10px] tracking-wide text-accent">
-              KNOWS {itemCount} {itemCount === 1 ? "THING" : "THINGS"} · {zoneCount} {zoneCount === 1 ? "ZONE" : "ZONES"}
-            </div>
+        {/* Mobile sub-header — stats + history (title handled by MobileHeader) */}
+        <div className="flex items-center gap-3 border-b border-border px-5 py-2 lg:hidden">
+          <div className="flex-1 font-mono text-[10px] tracking-wide text-accent">
+            KNOWS {itemCount} {itemCount === 1 ? "THING" : "THINGS"} · {zoneCount} {zoneCount === 1 ? "ZONE" : "ZONES"}
           </div>
           <TapButton
             type="button"

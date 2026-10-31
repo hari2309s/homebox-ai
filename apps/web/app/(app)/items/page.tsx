@@ -62,7 +62,7 @@ export default async function ItemsPage({ searchParams }: ItemsPageProps) {
             <>
               <div className="flex items-end justify-between px-1 lg:px-0">
                 <div>
-                  <h1 className="m-0 font-serif text-[32px] font-normal leading-none text-ink lg:text-[30px]">
+                  <h1 className="m-0 hidden font-serif text-[30px] font-normal leading-none text-ink lg:block">
                     Things
                   </h1>
                   <div className="mt-1 font-mono text-[11px] tracking-wide text-muted lg:text-[10px]">

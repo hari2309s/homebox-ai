@@ -77,11 +77,8 @@ export function MaintenancePanel({ items, householdUsers, currentUserId, accepte
   return (
     <div data-scroll-container className="flex h-full flex-col overflow-y-auto">
       <div className="flex flex-col gap-3 p-4">
-        <div className="px-1">
-          <div className="font-serif text-[30px] leading-none text-ink">Care &amp; upkeep</div>
-          <div className="mt-1 font-mono text-[11px] tracking-wide text-muted">
-            PICK A THING · I&apos;LL SUGGEST A ROUTINE
-          </div>
+        <div className="px-1 font-mono text-[11px] tracking-wide text-muted">
+          PICK A THING · I&apos;LL SUGGEST A ROUTINE
         </div>
 
         <WeatherCard weather={weather} />

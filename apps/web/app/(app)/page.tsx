@@ -1,5 +1,4 @@
 import { itemQueries, maintenanceQueries, reminderQueries } from "@homebox-ai/db";
-import { AnimatedHomeboxIcon } from "@homebox-ai/ui";
 import Link from "next/link";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
@@ -165,17 +164,10 @@ export default async function DashboardPage() {
         </form>
       </div>
 
-      {/* Mobile header */}
-      <div className="flex items-center gap-3 px-1 lg:hidden">
-        <AnimatedHomeboxIcon size={44} />
-        <div className="flex-1">
-          <div className="font-mono text-[10px] tracking-[0.06em] text-muted">
-            {totalItems} ITEMS · {locations.length} LOCATIONS
-          </div>
-          <div className="font-serif text-2xl leading-tight text-ink">
-            {getGreeting()}
-            {displayName ? `, ${displayName}` : ""}
-          </div>
+      {/* Mobile stats (title/greeting handled by the persistent MobileHeader) */}
+      <div className="px-1 lg:hidden">
+        <div className="font-mono text-[10px] tracking-[0.06em] text-muted">
+          {totalItems} ITEMS · {locations.length} LOCATIONS
         </div>
       </div>
 

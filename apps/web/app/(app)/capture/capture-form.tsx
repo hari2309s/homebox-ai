@@ -17,13 +17,8 @@ interface CaptureFormProps {
 function StepHeader({ step, total, label }: { step: number; total: number; label: string }) {
   return (
     <div className="flex flex-col gap-3 px-4 pb-3 pt-1">
-      <div className="flex items-center gap-3">
-        <div className="flex-1 text-center">
-          <div className="font-serif text-[19px] text-ink">Add a thing</div>
-          <div className="font-mono text-[10px] text-muted">
-            STEP {step} OF {total} · {label.toUpperCase()}
-          </div>
-        </div>
+      <div className="text-center font-mono text-[10px] text-muted">
+        STEP {step} OF {total} · {label.toUpperCase()}
       </div>
       <div className="grid grid-cols-3 gap-1">
         {Array.from({ length: total }, (_, i) => (

@@ -140,11 +140,8 @@ export default async function LabelsPage({ searchParams }: { searchParams: Promi
 
       <div data-scroll-container className="flex h-full flex-col overflow-y-auto lg:hidden">
         <div className="flex flex-col gap-3 p-4 pb-0">
-          <div className="px-1">
-            <div className="font-serif text-[30px] leading-none text-ink">Labels</div>
-            <div className="mt-1 font-mono text-[11px] tracking-wide text-muted">
-              {labels.length} LABEL{labels.length === 1 ? "" : "S"} · TAP TO EDIT
-            </div>
+          <div className="px-1 font-mono text-[11px] tracking-wide text-muted">
+            {labels.length} LABEL{labels.length === 1 ? "" : "S"} · TAP TO EDIT
           </div>
         </div>
 

@@ -107,9 +107,6 @@ function SettingsSection({
         <div className={`font-mono text-[10px] ${danger ? "text-danger" : "text-muted"}`}>
           {meta.eyebrow}
         </div>
-        <div className={`font-mono text-[10px] ${danger ? "text-danger" : "text-muted"}`}>
-          {meta.eyebrow}
-        </div>
         <h2 id={`${slug}-title`} className="m-0 font-serif text-[28px] font-normal text-ink">
           {meta.title}
         </h2>

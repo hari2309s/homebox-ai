@@ -165,13 +165,8 @@ export default async function LocationsPage({ searchParams }: { searchParams: Pr
 
       <div data-scroll-container className="flex h-full flex-col overflow-y-auto lg:hidden">
         <div className="flex flex-col gap-3 p-4 pb-0">
-          <div className="flex items-end justify-between px-1">
-            <div>
-              <div className="font-serif text-[30px] leading-none text-ink">Places</div>
-              <div className="mt-1 font-mono text-[11px] tracking-wide text-muted">
-                {topLocations.length} ZONES · {totalSpots} SPOTS
-              </div>
-            </div>
+          <div className="px-1 font-mono text-[11px] tracking-wide text-muted">
+            {topLocations.length} ZONES · {totalSpots} SPOTS
           </div>
         </div>
 

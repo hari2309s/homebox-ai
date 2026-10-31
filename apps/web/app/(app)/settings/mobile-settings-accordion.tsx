@@ -35,8 +35,6 @@ export function MobileSettingsAccordion({ displayName, email, avatarUrl, profile
 
   return (
     <div className="flex flex-col gap-2 p-4 lg:hidden">
-      <h1 className="m-0 px-[2px] pb-[6px] font-serif text-[28px] font-normal leading-none text-ink">Settings</h1>
-
       {/* User card — expands profile section (avatar + name) */}
       <div className="overflow-hidden rounded-[14px] border border-border bg-card">
         <button
