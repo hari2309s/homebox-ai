@@ -38,8 +38,8 @@ export function DesktopSettingsShell({ sections, initialSlug, content }: Props) 
               type="button"
               onClick={() => handleClick(s.slug)}
               aria-current={isCurrent ? "page" : undefined}
-              className={`flex h-10 cursor-pointer items-center gap-[10px] rounded-[10px] border-none bg-transparent px-[10px] text-left text-[14px] font-semibold ${
-                isCurrent ? "bg-selected" : "hover:bg-surface-soft"
+              className={`flex h-10 cursor-pointer items-center gap-[10px] rounded-[10px] border-none px-[10px] text-left text-[14px] font-semibold ${
+                isCurrent ? "bg-selected" : "bg-transparent hover:bg-surface-soft"
               } ${s.danger ? "text-clay" : "text-ink"}`}
             >
               <span

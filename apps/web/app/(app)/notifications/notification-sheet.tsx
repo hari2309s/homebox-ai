@@ -72,7 +72,7 @@ export function NotificationSheet({ open, onClose }: { open: boolean; onClose: (
         <>
           <motion.div
             key="backdrop"
-            className="fixed inset-0 z-[80] bg-black/30"
+            className="fixed inset-0 z-[100] bg-black/30"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -84,7 +84,7 @@ export function NotificationSheet({ open, onClose }: { open: boolean; onClose: (
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 340, damping: 34 }}
-            className="fixed inset-x-0 bottom-0 z-[81] flex max-h-[85dvh] flex-col rounded-t-[20px] border-t border-border bg-card"
+            className="fixed inset-x-0 bottom-0 z-[101] flex max-h-[85dvh] flex-col rounded-t-[20px] border-t border-border bg-card"
           >
             {/* Handle */}
             <div className="flex justify-center pt-2 pb-1">
