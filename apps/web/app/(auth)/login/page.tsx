@@ -568,6 +568,34 @@ function LoginForm() {
             ))}
           </StaggerList>
         )}
+
+        {/* Demo account */}
+        {mode === "sign-in" && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={async () => {
+              setError(null);
+              setInfo(null);
+              setPending(true);
+              const { error: authError } = await createSupabaseBrowserClient().auth.signInWithPassword({
+                email: "demo@homebox.app",
+                password: "TryHomebox2024!",
+              });
+              if (authError) {
+                setPending(false);
+                setError("Demo account isn't set up yet. Ask the admin to run the seed script.");
+                return;
+              }
+              router.replace(redirectTo);
+              router.refresh();
+            }}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border py-3 text-[14px] font-semibold text-muted transition-colors hover:border-accent hover:text-accent disabled:cursor-default disabled:opacity-60"
+          >
+            <span className="material-symbols-rounded text-[18px]">explore</span>
+            Try the demo
+          </button>
+        )}
       </div>
     </main>
   );
