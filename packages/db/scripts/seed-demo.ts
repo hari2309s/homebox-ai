@@ -16,6 +16,8 @@ import { sql } from "drizzle-orm";
 
 config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../.env.local") });
 
+import { createClient } from "@supabase/supabase-js";
+
 import {
   getDb,
   homeQueries,
@@ -45,9 +47,11 @@ const dayKey = (offsetDays: number) =>
 
 // ── Supabase admin (service role) ──────────────────────────────────────
 
-async function getAdminClient() {
-  const { createSupabaseAdminClient } = await import("@homebox-ai/supabase/admin");
-  return createSupabaseAdminClient();
+function getAdminClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) throw new Error("NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY must be set");
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
 }
 
 async function ensureUser(
@@ -536,7 +540,7 @@ const ITEMS: ItemSeed[] = [
 // ── Runner ──────────────────────────────────────────────────────────────
 
 async function main() {
-  const admin = await getAdminClient();
+  const admin = getAdminClient();
 
   // 1. Ensure demo users exist
   console.log("Ensuring demo users…");
