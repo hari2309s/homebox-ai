@@ -3,7 +3,7 @@
 import { EmptyState, SwipeableRow, WalkingDots, type SwipeAction } from "@homebox-ai/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { MouseEvent } from "react";
+import { memo, type MouseEvent } from "react";
 import { useCallback, useState, useTransition } from "react";
 
 import { formatCurrency } from "../../../lib/currency";
@@ -36,7 +36,7 @@ interface ItemListProps {
   onSelect: (itemId: string, event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
-function ItemRow({
+const ItemRow = memo(function ItemRow({
   item,
   group,
   locationNameById,
@@ -85,9 +85,9 @@ function ItemRow({
       )}
     </Link>
   );
-}
+});
 
-function SwipeableItemRow({
+const SwipeableItemRow = memo(function SwipeableItemRow({
   item,
   group,
   locationNameById,
@@ -107,6 +107,11 @@ function SwipeableItemRow({
   onNavigate: (itemId: string, event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   const router = useRouter();
+
+  const handleSelect = useCallback(
+    (id: string, e: MouseEvent<HTMLAnchorElement>) => { onSelect(id, e); onNavigate(id, e); },
+    [onSelect, onNavigate],
+  );
 
   const actions: SwipeAction[] = [
     {
@@ -148,13 +153,13 @@ function SwipeableItemRow({
           group={group}
           locationNameById={locationNameById}
           selected={selected}
-          onSelect={(id, e) => { onSelect(id, e); onNavigate(id, e); }}
+          onSelect={handleSelect}
           navigating={navigatingId === item.id}
         />
       </div>
     </SwipeableRow>
   );
-}
+});
 
 export function ItemList({ groups, locationNameById, selectedId, onSelect }: ItemListProps) {
   const router = useRouter();

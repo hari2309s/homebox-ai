@@ -32,12 +32,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const [unreadChatCount, itemCounts, reminders, householdUsers, locations] = await Promise.all([
+  const [unreadChatCount, itemCounts, reminders, householdUsers, locations, home, expiringWarranties] = await Promise.all([
     chatQueries.countUnreadProactiveMessages(user.id),
     itemQueries.countItemsByLocation(user.id),
     reminderQueries.listReminders(user.id),
     sharingQueries.listHouseholdUsers(user.id),
     listLocationsCached(user.id),
+    homeQueries.getHomeLocation(user.id),
+    itemQueries.listUpcomingWarrantyExpirations(user.id, 30),
   ]);
 
   // Brand-new owners set up their place first — but never instead of an invite they're opening.
@@ -88,10 +90,6 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     .filter((r) => r.status === "pending" && r.dueDate <= dueCutoff)
     .map((r) => ({ id: r.id, title: r.title, itemName: r.itemName, dueDate: r.dueDate, status: r.status }));
 
-  const [home, expiringWarranties] = await Promise.all([
-    homeQueries.getHomeLocation(user.id),
-    itemQueries.listUpcomingWarrantyExpirations(user.id, 30),
-  ]);
   const forecast = home ? await getForecast(home.latitude, home.longitude) : null;
   const alerts = forecast ? weatherAlerts(forecast.days) : [];
 

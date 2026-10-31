@@ -2,7 +2,7 @@
 
 import { EmptyState, WalkingDots } from "@homebox-ai/ui";
 import Link from "next/link";
-import type { MouseEvent } from "react";
+import { memo, type MouseEvent } from "react";
 
 interface Item {
   id: string;
@@ -20,7 +20,7 @@ interface ItemGridProps {
   onSelect: (itemId: string, event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
-function ItemCard({
+const ItemCard = memo(function ItemCard({
   item,
   locationNameById,
   selected,
@@ -70,7 +70,7 @@ function ItemCard({
       </div>
     </Link>
   );
-}
+});
 
 export function ItemGrid({ items, locationNameById, selectedId, onSelect }: ItemGridProps) {
   if (items.length === 0) {

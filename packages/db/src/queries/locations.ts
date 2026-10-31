@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { wouldFormCycle } from "../cycle";
@@ -33,14 +33,47 @@ export function createLocation(userId: string, data: { name: string; parentId?: 
 
 /** Saves site-plan kind/geometry for several places in one transaction (a dragged zone moves its sub-places too). */
 export function updateLocationPlans(userId: string, updates: ({ id: string } & LocationPlan)[]) {
-  return withRLS(userId, async (tx) => {
-    const ownerId = await getEffectiveOwnerId(tx, userId);
-    for (const { id, ...plan } of updates) {
+  if (updates.length === 0) return Promise.resolve();
+  // Single-item fast path avoids the overhead of unnest/CTE.
+  if (updates.length === 1) {
+    const { id, ...plan } = updates[0]!;
+    return withRLS(userId, async (tx) => {
+      const ownerId = await getEffectiveOwnerId(tx, userId);
       await tx
         .update(locations)
         .set(plan)
         .where(and(eq(locations.id, id), eq(locations.ownerId, ownerId)));
-    }
+    });
+  }
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    const ids = updates.map((u) => u.id);
+    const planKinds = updates.map((u) => u.planKind ?? null);
+    const planShapes = updates.map((u) => u.planShape ?? null);
+    const planXs = updates.map((u) => u.planX ?? null);
+    const planYs = updates.map((u) => u.planY ?? null);
+    const planWs = updates.map((u) => u.planW ?? null);
+    const planHs = updates.map((u) => u.planH ?? null);
+    await tx.execute(sql`
+      update locations as l set
+        plan_kind  = coalesce(v.plan_kind,  l.plan_kind),
+        plan_shape = coalesce(v.plan_shape, l.plan_shape),
+        plan_x     = coalesce(v.plan_x,     l.plan_x),
+        plan_y     = coalesce(v.plan_y,     l.plan_y),
+        plan_w     = coalesce(v.plan_w,     l.plan_w),
+        plan_h     = coalesce(v.plan_h,     l.plan_h)
+      from (
+        select
+          unnest(${ids}::uuid[])             as id,
+          unnest(${planKinds}::text[])       as plan_kind,
+          unnest(${planShapes}::text[])      as plan_shape,
+          unnest(${planXs}::double precision[])   as plan_x,
+          unnest(${planYs}::double precision[])   as plan_y,
+          unnest(${planWs}::double precision[])   as plan_w,
+          unnest(${planHs}::double precision[])   as plan_h
+      ) as v
+      where l.id = v.id and l.owner_id = ${ownerId}
+    `);
   });
 }
 

@@ -253,6 +253,20 @@ export function updateItem(userId: string, itemId: string, data: UpdateItemInput
   });
 }
 
+/** Batch-updates plan pin positions for several items in a single transaction. */
+export function batchUpdateItemPins(userId: string, pins: { id: string; planX: number; planY: number }[]) {
+  if (pins.length === 0) return Promise.resolve();
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    for (const pin of pins) {
+      await tx
+        .update(items)
+        .set({ planX: pin.planX, planY: pin.planY, updatedAt: new Date() })
+        .where(and(eq(items.id, pin.id), eq(items.ownerId, ownerId)));
+    }
+  });
+}
+
 export function deleteItem(userId: string, itemId: string) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);

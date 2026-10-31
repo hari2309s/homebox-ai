@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { getEffectiveOwnerId } from "../access";
 import { attachments } from "../schema";
@@ -39,18 +39,14 @@ export function listAllAttachments(userId: string) {
 }
 
 // Only one attachment can be "primary" (cover image) per item, so setting one
-// clears any other primary flag on that item's attachments first.
+// clears any other primary flag on that item's attachments in a single UPDATE.
 export function setPrimaryAttachment(userId: string, itemId: string, attachmentId: string) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
-    await tx
-      .update(attachments)
-      .set({ isPrimary: false })
-      .where(and(eq(attachments.itemId, itemId), eq(attachments.ownerId, ownerId)));
     return tx
       .update(attachments)
-      .set({ isPrimary: true })
-      .where(and(eq(attachments.id, attachmentId), eq(attachments.ownerId, ownerId)))
+      .set({ isPrimary: sql`(${attachments.id} = ${attachmentId})` })
+      .where(and(eq(attachments.itemId, itemId), eq(attachments.ownerId, ownerId)))
       .returning();
   });
 }

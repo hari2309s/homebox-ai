@@ -61,80 +61,95 @@ export const sharedAccessInvites = pgTable("shared_access_invites", {
   acceptedByUserId: uuid("accepted_by_user_id").references(() => authUsers.id, { onDelete: "set null" }),
 });
 
-export const locations = pgTable("locations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  parentId: uuid("parent_id").references((): AnyPgColumn => locations.id, { onDelete: "set null" }),
-  /** How the place is drawn on the site plan (house, garden, garage, room, bed, …); null lets the app infer it from the name. */
-  planKind: text("plan_kind"),
-  /** Outline on the site plan (rect, oval, pill, lshape, triangle, hexagon); null uses the kind's default. */
-  planShape: text("plan_shape"),
-  /** Plot-space rectangle on the site plan. All four are null until the place is drawn or moved there. */
-  planX: doublePrecision("plan_x"),
-  planY: doublePrecision("plan_y"),
-  planW: doublePrecision("plan_w"),
-  planH: doublePrecision("plan_h"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const locations = pgTable(
+  "locations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    parentId: uuid("parent_id").references((): AnyPgColumn => locations.id, { onDelete: "set null" }),
+    /** How the place is drawn on the site plan (house, garden, garage, room, bed, …); null lets the app infer it from the name. */
+    planKind: text("plan_kind"),
+    /** Outline on the site plan (rect, oval, pill, lshape, triangle, hexagon); null uses the kind's default. */
+    planShape: text("plan_shape"),
+    /** Plot-space rectangle on the site plan. All four are null until the place is drawn or moved there. */
+    planX: doublePrecision("plan_x"),
+    planY: doublePrecision("plan_y"),
+    planW: doublePrecision("plan_w"),
+    planH: doublePrecision("plan_h"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("locations_owner_id_idx").on(table.ownerId)],
+);
 
-export const labels = pgTable("labels", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  // Hex color (e.g. "#fb7369") shown behind the label chip; null falls back to the default chip style.
-  color: text("color"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const labels = pgTable(
+  "labels",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    // Hex color (e.g. "#fb7369") shown behind the label chip; null falls back to the default chip style.
+    color: text("color"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("labels_owner_id_idx").on(table.ownerId)],
+);
 
-export const items = pgTable("items", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  description: text("description"),
-  quantity: integer("quantity").notNull().default(1),
-  // Sequential per-owner number (not a global sequence — see itemQueries.createItem),
-  // shown zero-padded for printable asset labels. Null on items that predate this field.
-  assetId: integer("asset_id"),
-  serialNumber: text("serial_number"),
-  modelNumber: text("model_number"),
-  manufacturer: text("manufacturer"),
-  insured: boolean("insured").notNull().default(false),
-  archived: boolean("archived").notNull().default(false),
-  lifetimeWarranty: boolean("lifetime_warranty").notNull().default(false),
-  // ISO 4217 code (see apps/web/lib/currency.ts's SUPPORTED_CURRENCIES) —
-  // one currency per item, covering both purchasePrice and salePrice below.
-  // A single global "your currency" setting doesn't fit a household that
-  // buys things in several countries, so this is chosen per item instead.
-  currency: text("currency").notNull().default("USD"),
-  purchasePrice: numeric("purchase_price", { precision: 12, scale: 2 }),
-  purchaseDate: date("purchase_date"),
-  purchaseFrom: text("purchase_from"),
-  salePrice: numeric("sale_price", { precision: 12, scale: 2 }),
-  saleDate: date("sale_date"),
-  soldTo: text("sold_to"),
-  soldNotes: text("sold_notes"),
-  warrantyExpires: date("warranty_expires"),
-  // Set once an AI notifier message has been sent for this item's expiring
-  // warranty, so the check doesn't re-notify every time it runs.
-  warrantyNotifiedAt: timestamp("warranty_notified_at", { withTimezone: true }),
-  locationId: uuid("location_id").references(() => locations.id, { onDelete: "set null" }),
-  parentItemId: uuid("parent_item_id").references((): AnyPgColumn => items.id, { onDelete: "set null" }),
-  notes: text("notes"),
-  /** Pin position on the site plan, in the same plot space as locations.plan_*; null when the item isn't pinned. */
-  planX: doublePrecision("plan_x"),
-  planY: doublePrecision("plan_y"),
-  /** The user who actually created this item — may differ from ownerId when a shared household member adds it. Null on rows predating this column. */
-  createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const items = pgTable(
+  "items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    description: text("description"),
+    quantity: integer("quantity").notNull().default(1),
+    // Sequential per-owner number (not a global sequence — see itemQueries.createItem),
+    // shown zero-padded for printable asset labels. Null on items that predate this field.
+    assetId: integer("asset_id"),
+    serialNumber: text("serial_number"),
+    modelNumber: text("model_number"),
+    manufacturer: text("manufacturer"),
+    insured: boolean("insured").notNull().default(false),
+    archived: boolean("archived").notNull().default(false),
+    lifetimeWarranty: boolean("lifetime_warranty").notNull().default(false),
+    // ISO 4217 code (see apps/web/lib/currency.ts's SUPPORTED_CURRENCIES) —
+    // one currency per item, covering both purchasePrice and salePrice below.
+    // A single global "your currency" setting doesn't fit a household that
+    // buys things in several countries, so this is chosen per item instead.
+    currency: text("currency").notNull().default("USD"),
+    purchasePrice: numeric("purchase_price", { precision: 12, scale: 2 }),
+    purchaseDate: date("purchase_date"),
+    purchaseFrom: text("purchase_from"),
+    salePrice: numeric("sale_price", { precision: 12, scale: 2 }),
+    saleDate: date("sale_date"),
+    soldTo: text("sold_to"),
+    soldNotes: text("sold_notes"),
+    warrantyExpires: date("warranty_expires"),
+    // Set once an AI notifier message has been sent for this item's expiring
+    // warranty, so the check doesn't re-notify every time it runs.
+    warrantyNotifiedAt: timestamp("warranty_notified_at", { withTimezone: true }),
+    locationId: uuid("location_id").references(() => locations.id, { onDelete: "set null" }),
+    parentItemId: uuid("parent_item_id").references((): AnyPgColumn => items.id, { onDelete: "set null" }),
+    notes: text("notes"),
+    /** Pin position on the site plan, in the same plot space as locations.plan_*; null when the item isn't pinned. */
+    planX: doublePrecision("plan_x"),
+    planY: doublePrecision("plan_y"),
+    /** The user who actually created this item — may differ from ownerId when a shared household member adds it. Null on rows predating this column. */
+    createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("items_owner_archived_idx").on(table.ownerId, table.archived),
+    index("items_owner_location_idx").on(table.ownerId, table.locationId),
+  ],
+);
 
 export const itemLabels = pgTable(
   "item_labels",
@@ -149,22 +164,29 @@ export const itemLabels = pgTable(
   (table) => [primaryKey({ columns: [table.itemId, table.labelId] })],
 );
 
-export const attachments = pgTable("attachments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
-  itemId: uuid("item_id")
-    .notNull()
-    .references(() => items.id, { onDelete: "cascade" }),
-  type: attachmentType("type").notNull(),
-  // Path within the Supabase Storage "attachments" bucket: "{ownerId}/{itemId}/{filename}"
-  // (owner-scoped, not the uploading member's own id, so every shared member can see it)
-  // — not a local filesystem path.
-  storagePath: text("storage_path").notNull(),
-  isPrimary: boolean("is_primary").notNull().default(false),
-  uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const attachments = pgTable(
+  "attachments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => items.id, { onDelete: "cascade" }),
+    type: attachmentType("type").notNull(),
+    // Path within the Supabase Storage "attachments" bucket: "{ownerId}/{itemId}/{filename}"
+    // (owner-scoped, not the uploading member's own id, so every shared member can see it)
+    // — not a local filesystem path.
+    storagePath: text("storage_path").notNull(),
+    isPrimary: boolean("is_primary").notNull().default(false),
+    uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("attachments_item_primary_idx").on(table.itemId, table.isPrimary),
+    index("attachments_owner_id_idx").on(table.ownerId),
+  ],
+);
 
 // Chat stays personal — each member has their own conversation history —
 // even though the inventory data it searches over is shared.
@@ -192,6 +214,7 @@ export const chatMessages = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    index("chat_messages_owner_id_idx").on(table.ownerId),
     uniqueIndex("chat_messages_nudge_key_unique")
       .on(table.ownerId, table.nudgeKey)
       .where(sql`${table.nudgeKey} is not null`),
@@ -227,6 +250,7 @@ export const reminders = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
+    index("reminders_owner_id_idx").on(table.ownerId),
     // The reminder-check cron scans exactly this predicate every run — without
     // a matching partial index it's a full sequential scan of every reminder
     // in the system, cost growing with total rows instead of just pending ones.
@@ -236,22 +260,26 @@ export const reminders = pgTable(
   ],
 );
 
-export const maintenanceEntries = pgTable("maintenance_entries", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
-  itemId: uuid("item_id")
-    .notNull()
-    .references(() => items.id, { onDelete: "cascade" }),
-  date: date("date").notNull(),
-  name: text("name").notNull(),
-  description: text("description"),
-  cost: numeric("cost", { precision: 12, scale: 2 }),
-  /** The user who logged this entry — may differ from ownerId for shared household members. Null on rows predating this column. */
-  createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const maintenanceEntries = pgTable(
+  "maintenance_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => items.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    cost: numeric("cost", { precision: 12, scale: 2 }),
+    /** The user who logged this entry — may differ from ownerId for shared household members. Null on rows predating this column. */
+    createdBy: uuid("created_by").references(() => authUsers.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("maintenance_entries_owner_id_idx").on(table.ownerId)],
+);
 
 export const itemActivityAction = pgEnum("item_activity_action", ["created", "updated", "deleted"]);
 
@@ -259,20 +287,24 @@ export const itemActivityAction = pgEnum("item_activity_action", ["created", "up
 // deletion is still visible in the home page's activity feed after the row
 // it describes is gone — everything the feed needs (name, actor) is snapshot
 // here at write time rather than joined from `items` live.
-export const itemActivity = pgTable("item_activity", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => authUsers.id, { onDelete: "cascade" }),
-  actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
-  itemName: text("item_name").notNull(),
-  action: itemActivityAction("action").notNull(),
-  // Deliberately no FK/cascade to `items` — a "deleted" row must keep
-  // pointing at an id that no longer exists in that table, just so the feed
-  // can tell created/updated entries (still linkable) from deleted ones.
-  itemId: uuid("item_id"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const itemActivity = pgTable(
+  "item_activity",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => authUsers.id, { onDelete: "cascade" }),
+    actorId: uuid("actor_id").references(() => authUsers.id, { onDelete: "set null" }),
+    itemName: text("item_name").notNull(),
+    action: itemActivityAction("action").notNull(),
+    // Deliberately no FK/cascade to `items` — a "deleted" row must keep
+    // pointing at an id that no longer exists in that table, just so the feed
+    // can tell created/updated entries (still linkable) from deleted ones.
+    itemId: uuid("item_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("item_activity_owner_id_idx").on(table.ownerId)],
+);
 
 // Household-wide settings, one row per owner (members read and edit their owner's row, like every other
 // table here). Holds the home's location, which the weather forecast and weather-aware maintenance use.

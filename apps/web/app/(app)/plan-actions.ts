@@ -66,8 +66,11 @@ export async function savePlacesAction(
     pins.length > 500
   )
     return;
-  for (const pin of pins) {
-    await itemQueries.updateItem(user.id, String(pin.id), validPoint(pin.x, pin.y));
+  if (pins.length > 0) {
+    await itemQueries.batchUpdateItemPins(
+      user.id,
+      pins.map((pin) => ({ id: String(pin.id), ...validPoint(pin.x, pin.y) })),
+    );
   }
   await locationQueries.updateLocationPlans(
     user.id,
