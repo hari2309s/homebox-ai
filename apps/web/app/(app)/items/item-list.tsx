@@ -1,10 +1,10 @@
 "use client";
 
-import { EmptyState, SwipeableRow, type SwipeAction } from "@homebox-ai/ui";
+import { EmptyState, SwipeableRow, WalkingDots, type SwipeAction } from "@homebox-ai/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { MouseEvent } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useTransition } from "react";
 
 import { formatCurrency } from "../../../lib/currency";
 import { toastItemArchived } from "../notifications/use-notifications";
@@ -42,12 +42,14 @@ function ItemRow({
   locationNameById,
   selected,
   onSelect,
+  navigating,
 }: {
   item: Item;
   group: ZoneGroup;
   locationNameById: Map<string, string>;
   selected: boolean;
   onSelect: ItemListProps["onSelect"];
+  navigating?: boolean;
 }) {
   const locationName = item.locationId ? locationNameById.get(item.locationId) : null;
   const price = formatCurrency(item.purchasePrice, item.currency);
@@ -60,7 +62,7 @@ function ItemRow({
       data-item-id={item.id}
       className={`flex items-center gap-3 border-b border-border/40 py-[10px] no-underline last:border-b-0 lg:px-3 lg:py-[9px] lg:hover:bg-selected-soft ${
         selected ? "lg:bg-selected-soft lg:shadow-[inset_3px_0_0_var(--color-accent)]" : ""
-      }`}
+      } ${navigating ? "opacity-60" : ""}`}
     >
       <div
         className="h-[44px] w-[44px] shrink-0 rounded-[10px] lg:h-10 lg:w-10 lg:rounded-[9px]"
@@ -76,7 +78,11 @@ function ItemRow({
           {locationName ?? (group.zoneId ? "" : "No location")}
         </span>
       </div>
-      {price && <span className="shrink-0 font-mono text-xs text-body">{price}</span>}
+      {navigating ? (
+        <WalkingDots size={5} className="shrink-0" />
+      ) : (
+        price && <span className="shrink-0 font-mono text-xs text-body">{price}</span>
+      )}
     </Link>
   );
 }
@@ -88,6 +94,8 @@ function SwipeableItemRow({
   selected,
   onSelect,
   onArchive,
+  navigatingId,
+  onNavigate,
 }: {
   item: Item;
   group: ZoneGroup;
@@ -95,6 +103,8 @@ function SwipeableItemRow({
   selected: boolean;
   onSelect: ItemListProps["onSelect"];
   onArchive: (itemId: string, name: string) => void;
+  navigatingId: string | null;
+  onNavigate: (itemId: string, event: MouseEvent<HTMLAnchorElement>) => void;
 }) {
   const router = useRouter();
 
@@ -133,14 +143,24 @@ function SwipeableItemRow({
   return (
     <SwipeableRow actions={actions} fullSwipeAction={fullSwipeAction} fullSwipeLabel="Release to archive">
       <div className="px-3">
-        <ItemRow item={item} group={group} locationNameById={locationNameById} selected={selected} onSelect={onSelect} />
+        <ItemRow
+          item={item}
+          group={group}
+          locationNameById={locationNameById}
+          selected={selected}
+          onSelect={(id, e) => { onSelect(id, e); onNavigate(id, e); }}
+          navigating={navigatingId === item.id}
+        />
       </div>
     </SwipeableRow>
   );
 }
 
 export function ItemList({ groups, locationNameById, selectedId, onSelect }: ItemListProps) {
+  const router = useRouter();
   const [undoItem, setUndoItem] = useState<{ id: string; name: string } | null>(null);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   const handleArchive = useCallback(async (itemId: string, name: string) => {
     setUndoItem({ id: itemId, name });
@@ -148,6 +168,19 @@ export function ItemList({ groups, locationNameById, selectedId, onSelect }: Ite
     toastItemArchived(name);
     setTimeout(() => setUndoItem((prev) => (prev?.id === itemId ? null : prev)), 4000);
   }, []);
+
+  const handleNavigate = useCallback(
+    (itemId: string, event: MouseEvent<HTMLAnchorElement>) => {
+      // On desktop, onSelect prevents default — don't show loader
+      if (event.defaultPrevented) return;
+      event.preventDefault();
+      setNavigatingId(itemId);
+      startTransition(() => {
+        router.push(`/items/${itemId}`);
+      });
+    },
+    [router],
+  );
 
   if (groups.length === 0) {
     return <EmptyState>No items match — try a different search.</EmptyState>;
@@ -188,6 +221,8 @@ export function ItemList({ groups, locationNameById, selectedId, onSelect }: Ite
                 selected={item.id === selectedId}
                 onSelect={onSelect}
                 onArchive={handleArchive}
+                navigatingId={navigatingId}
+                onNavigate={handleNavigate}
               />
             ))}
           </div>
