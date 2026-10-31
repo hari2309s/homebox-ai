@@ -28,7 +28,9 @@ type ViewTransitionDocument = Document & {
 
 const REVEAL_MS = 560;
 
-export function ThemeSwitcher({ variant = "full" }: { variant?: "compact" | "full" }) {
+const CYCLE_ORDER: Theme[] = ["system", "light", "dark"];
+
+export function ThemeSwitcher({ variant = "full" }: { variant?: "compact" | "full" | "icon" }) {
   const [theme, setTheme] = useState<Theme>("system");
   const [mounted, setMounted] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -104,6 +106,34 @@ export function ThemeSwitcher({ variant = "full" }: { variant?: "compact" | "ful
         clearTimeout(fallback);
         done();
       });
+  }
+
+  if (variant === "icon") {
+    const current = OPTIONS.find((o) => o.value === theme) ?? OPTIONS[0]!;
+    const next = CYCLE_ORDER[(CYCLE_ORDER.indexOf(theme) + 1) % CYCLE_ORDER.length]!;
+    const nextLabel = OPTIONS.find((o) => o.value === next)!.label;
+    return (
+      <button
+        type="button"
+        onClick={(event) => choose(next, event)}
+        aria-label={`Theme: ${current.label}. Switch to ${nextLabel}`}
+        title={`${current.label} theme`}
+        className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent"
+      >
+        <motion.span
+          key={mounted ? current.value : "system"}
+          aria-hidden
+          className="material-symbols-rounded text-[20px]"
+          style={{ fontVariationSettings: "'FILL' 1" }}
+          variants={ICON_VARIANTS[current.value]}
+          initial={mounted && !reduceMotion ? "hidden" : false}
+          animate="shown"
+          transition={{ type: "spring", stiffness: 300, damping: 18 }}
+        >
+          {current.icon}
+        </motion.span>
+      </button>
+    );
   }
 
   const compact = variant === "compact";

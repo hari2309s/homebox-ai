@@ -124,9 +124,8 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
       <div className="flex items-center gap-2 px-[10px] pb-2">
         <NotificationBell />
         <div className="flex-1" />
+        <ThemeSwitcher variant="icon" />
         <LogoutButton />
-        <span className="font-mono text-[9px] text-faint">THEME</span>
-        <ThemeSwitcher variant="compact" />
       </div>
       <Link href="/settings/household" className="flex items-center gap-2 border-t border-border p-[10px] no-underline">
         <span className="flex">
