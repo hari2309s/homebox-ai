@@ -5,12 +5,11 @@ import { listLabelsCached, listLocationsCached } from "../../../lib/cached-queri
 import { LABEL_SWATCHES, labelChip } from "../../../lib/label-colors";
 import { locationPath, stripeFor, zoneIndexOf } from "../items/item-summary";
 import { LabelPane } from "./label-pane";
-import { Input, SubmitButton } from "@homebox-ai/ui";
 
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { createLabelAction } from "./actions";
-import { CrudShell } from "../crud-shell";
+import { AddLabelForm } from "./add-label-form";
 import { LabelList } from "./label-list";
 
 export default async function LabelsPage({ searchParams }: { searchParams: Promise<{ selected?: string }> }) {
@@ -139,40 +138,16 @@ export default async function LabelsPage({ searchParams }: { searchParams: Promi
       </div>
 
       <div data-scroll-container className="flex h-full flex-col overflow-y-auto lg:hidden">
-        <div className="flex flex-col gap-3 p-4 pb-0">
+        <div className="flex flex-col gap-3 p-4">
           <div className="px-1 font-mono text-[11px] tracking-wide text-muted">
             {labels.length} LABEL{labels.length === 1 ? "" : "S"} · TAP TO EDIT
           </div>
+          <LabelList labels={labels} />
         </div>
 
-        <CrudShell
-          toggleLabel="Add label"
-          formAction={createLabelAction}
-          formClassName="flex flex-col gap-2"
-          formFields={
-            <>
-              <div className="font-mono text-[10px] text-muted">NEW LABEL</div>
-              <div className="grid grid-cols-[1fr_44px] gap-[6px]">
-                <Input name="name" placeholder="e.g. Greenhouse" required />
-                <SubmitButton className="!rounded-[10px] !px-0">
-                  <span className="material-symbols-rounded text-[18px]">add</span>
-                </SubmitButton>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-body">Colour</span>
-                <input
-                  type="color"
-                  name="color"
-                  defaultValue="#3f6b45"
-                  aria-label="Label color"
-                  className="h-[26px] w-[26px] shrink-0 cursor-pointer rounded-full border-none bg-transparent p-0"
-                />
-              </div>
-            </>
-          }
-        >
-          <LabelList labels={labels} />
-        </CrudShell>
+        <div className="sticky bottom-0 mt-auto border-t border-border/70 bg-surface/80 p-4 backdrop-blur-lg">
+          <AddLabelForm nextColor={nextColor} />
+        </div>
       </div>
     </>
   );

@@ -5,7 +5,6 @@ import { itemQueries } from "@homebox-ai/db";
 import { getSessionUser } from "@homebox-ai/supabase/server";
 
 import { createLocationAction } from "./actions";
-import { CrudShell } from "../crud-shell";
 import { LocationList } from "./location-list";
 import { PlaceHeader } from "./place-header";
 import { PlaceTree } from "./place-tree";
@@ -164,38 +163,32 @@ export default async function LocationsPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div data-scroll-container className="flex h-full flex-col overflow-y-auto lg:hidden">
-        <div className="flex flex-col gap-3 p-4 pb-0">
+        <div className="flex flex-col gap-3 p-4">
           <div className="px-1 font-mono text-[11px] tracking-wide text-muted">
             {topLocations.length} ZONES · {totalSpots} SPOTS
           </div>
+          <LocationList locations={locations} pathById={pathById} countsById={countsById} />
         </div>
 
-        <CrudShell
-          toggleLabel="Add place"
-          formAction={createLocationAction}
-          formClassName="flex flex-col gap-2"
-          formFields={
-            <>
-              <div className="font-mono text-[10px] text-muted">NEW PLACE</div>
-              <div className="grid grid-cols-[1fr_1fr_44px] gap-[6px]">
-                <Input name="name" placeholder="e.g. Greenhouse" required />
-                <Select name="parentId" defaultValue="">
-                  <option value="">No parent (top-level)</option>
-                  {locations.map((location) => (
-                    <option key={location.id} value={location.id}>
-                      {pathFor(location.id)}
-                    </option>
-                  ))}
-                </Select>
-                <SubmitButton className="!rounded-[10px] !px-0">
-                  <span className="material-symbols-rounded text-[18px]">add</span>
-                </SubmitButton>
-              </div>
-            </>
-          }
-        >
-          <LocationList locations={locations} pathById={pathById} countsById={countsById} />
-        </CrudShell>
+        <div className="sticky bottom-0 mt-auto border-t border-border/70 bg-surface/80 p-4 backdrop-blur-lg">
+          <form action={createLocationAction} className="flex flex-col gap-2">
+            <div className="font-mono text-[10px] text-muted">NEW PLACE</div>
+            <div className="grid grid-cols-[1fr_1fr_44px] gap-[6px]">
+              <Input name="name" placeholder="e.g. Greenhouse" required />
+              <Select name="parentId" defaultValue="">
+                <option value="">No parent (top-level)</option>
+                {locations.map((location) => (
+                  <option key={location.id} value={location.id}>
+                    {pathFor(location.id)}
+                  </option>
+                ))}
+              </Select>
+              <SubmitButton className="!rounded-[10px] !px-0">
+                <span className="material-symbols-rounded text-[18px]">add</span>
+              </SubmitButton>
+            </div>
+          </form>
+        </div>
       </div>
     </>
   );
