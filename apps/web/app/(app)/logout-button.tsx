@@ -24,7 +24,7 @@ function LogoutIcon(props: ComponentProps<"svg">) {
   );
 }
 
-export function LogoutButton() {
+export function LogoutButton({ variant = "icon" }: { variant?: "icon" | "row" }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -49,20 +49,36 @@ export function LogoutButton() {
     }
   }
 
+  function openConfirm() {
+    setError(null);
+    setConfirmOpen(true);
+  }
+
   return (
     <div className="relative">
-      <TapButton
-        type="button"
-        onClick={() => {
-          setError(null);
-          setConfirmOpen(true);
-        }}
-        disabled={pending}
-        aria-label="Log out"
-        className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent disabled:opacity-50"
-      >
-        <LogoutIcon className="h-5 w-5 md:h-6 md:w-6" />
-      </TapButton>
+      {variant === "row" ? (
+        <button
+          type="button"
+          onClick={openConfirm}
+          disabled={pending}
+          className="flex w-full cursor-pointer items-center gap-3 rounded-[14px] border border-border bg-card px-3 py-3 disabled:opacity-50"
+        >
+          <span className="flex h-8 w-8 flex-none items-center justify-center rounded-[9px] bg-[#f3e0d0]">
+            <span className="material-symbols-rounded text-[18px] text-clay">logout</span>
+          </span>
+          <span className="text-[14px] font-semibold text-clay">Sign out</span>
+        </button>
+      ) : (
+        <TapButton
+          type="button"
+          onClick={openConfirm}
+          disabled={pending}
+          aria-label="Log out"
+          className="cursor-pointer rounded-md border-none bg-transparent p-1 text-ink transition-colors duration-150 hover:text-accent disabled:opacity-50"
+        >
+          <LogoutIcon className="h-5 w-5 md:h-6 md:w-6" />
+        </TapButton>
+      )}
       <ConfirmDialog
         open={confirmOpen}
         title="Log out?"

@@ -3,6 +3,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 
+import { LogoutButton } from "../logout-button";
+
 export interface AccordionRow {
   slug: string;
   icon: string;
@@ -124,7 +126,9 @@ export function MobileSettingsAccordion({ displayName, email, avatarUrl, profile
         );
       })}
 
-      <div className="pb-4 pt-2 text-center font-mono text-[10px] text-muted">HOMEBOX &middot; SETTINGS</div>
+      <LogoutButton variant="row" />
+
+      <div className="pb-4 text-center font-mono text-[10px] text-muted">HOMEBOX &middot; SETTINGS</div>
     </div>
   );
 }

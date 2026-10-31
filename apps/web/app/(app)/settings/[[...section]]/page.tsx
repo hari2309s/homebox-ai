@@ -1,12 +1,12 @@
 import { homeQueries, sharingQueries } from "@homebox-ai/db";
 import { getSessionUser } from "@homebox-ai/supabase/server";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { AvatarUploadForm } from "../avatar-upload-form";
 import { CsvImportForm } from "../csv-import-form";
 import { DeleteAccountForm } from "../delete-account-form";
+import { DesktopSettingsShell, type DesktopSection } from "../desktop-settings-shell";
 import { DisplayNameForm } from "../display-name-form";
 import { HomeLocationForm } from "../home-location-form";
 import { HouseholdSection } from "../household-section";
@@ -83,12 +83,10 @@ type Slug = (typeof SECTIONS)[number]["slug"];
 
 function SettingsSection({
   slug,
-  active,
   children,
   aside,
 }: {
   slug: Slug;
-  active: Slug;
   children: ReactNode;
   aside?: ReactNode;
 }) {
@@ -101,7 +99,7 @@ function SettingsSection({
     <section
       id={slug}
       aria-labelledby={`${slug}-title`}
-      className={`flex scroll-mt-4 flex-col gap-2 lg:gap-[18px] ${slug === active ? "" : "hidden"}`}
+      className="flex scroll-mt-4 flex-col gap-2 lg:gap-[18px]"
     >
       <div>
         <div className={`font-mono text-[10px] ${danger ? "text-danger" : "text-muted"}`}>
@@ -209,37 +207,77 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
     { slug: "danger", icon: "warning", title: "Danger zone", sub: "Delete account", bg: "#fbf1ec", bd: "#d9a58a", ibg: "#ecdccd", ic: "#7a3f22", tc: "#5a2e18", content: dangerContent },
   ];
 
+  const desktopSections: DesktopSection[] = SECTIONS.map((s) => ({
+    slug: s.slug,
+    label: s.label,
+    icon: s.icon,
+    danger: s.slug === "danger",
+  }));
+
+  const desktopContent: Record<string, ReactNode> = {
+    profile: (
+      <SettingsSection slug="profile">
+        <AvatarUploadForm userId={user.id} currentAvatarUrl={avatarUrl} />
+        <DisplayNameForm initialName={displayName} />
+      </SettingsSection>
+    ),
+    account: (
+      <SettingsSection slug="account">
+        <span className="text-xs font-semibold text-body">Email</span>
+        <div className="flex items-center gap-2 rounded-xl bg-surface px-3 py-[11px]">
+          <span className="min-w-0 flex-1 truncate text-[15px] text-ink">{email}</span>
+          <span className="flex items-center gap-1 text-xs font-semibold text-accent">
+            <span aria-hidden className="material-symbols-rounded text-[16px]">
+              verified
+            </span>
+            Verified
+          </span>
+        </div>
+        <span className="text-xs text-muted">Used for invites and receipts.</span>
+      </SettingsSection>
+    ),
+    appearance: (
+      <SettingsSection slug="appearance">
+        {appearanceContent}
+      </SettingsSection>
+    ),
+    password: (
+      <SettingsSection slug="password">
+        {passwordContent}
+      </SettingsSection>
+    ),
+    household: (
+      <SettingsSection
+        slug="household"
+        aside={
+          <div className="hidden flex-col gap-2 rounded-[14px] border border-border bg-card p-4 lg:flex">
+            <span className="text-[14px] font-semibold text-ink">Roles</span>
+            <span className="text-[13px] leading-normal text-muted">
+              The owner can invite and remove members. Members can add, edit and move anything in the household, and
+              can leave it at any time.
+            </span>
+          </div>
+        }
+      >
+        {householdContent}
+      </SettingsSection>
+    ),
+    data: (
+      <SettingsSection slug="data">
+        {dataContent}
+      </SettingsSection>
+    ),
+    danger: (
+      <SettingsSection slug="danger">
+        {dangerContent}
+      </SettingsSection>
+    ),
+  };
+
   return (
     <div data-full-bleed className="flex h-full flex-col lg:flex-row">
-      {/* Desktop sidebar nav — always visible on large screens */}
-      <nav
-        aria-label="Settings sections"
-        className="hidden w-[240px] flex-none flex-col gap-1 border-r border-border px-4 py-7 lg:flex"
-      >
-        <h1 className="m-0 px-[10px] pb-[14px] font-serif text-[28px] font-normal text-ink">Settings</h1>
-        {SECTIONS.map((s) => {
-          const isActive = s.slug === active;
-          return (
-            <Link
-              key={s.slug}
-              href={`/settings/${s.slug}`}
-              aria-current={isActive ? "page" : undefined}
-              className={`flex h-10 items-center gap-[10px] rounded-[10px] px-[10px] text-[14px] font-semibold no-underline ${
-                isActive ? "bg-selected" : "hover:bg-surface-soft"
-              } ${s.slug === "danger" ? "text-clay" : "text-ink"}`}
-            >
-              <span
-                aria-hidden
-                className="material-symbols-rounded text-[19px]"
-                style={{ fontVariationSettings: isActive ? "'FILL' 1" : undefined }}
-              >
-                {s.icon}
-              </span>
-              {s.label}
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Desktop: client-side section switching (no page navigation) */}
+      <DesktopSettingsShell sections={desktopSections} initialSlug={active} content={desktopContent} />
 
       {/* Mobile accordion — all sections expand inline */}
       <MobileSettingsAccordion
@@ -249,63 +287,6 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
         profileContent={profileContent}
         rows={accordionRows}
       />
-
-      {/* Desktop section content */}
-      <div
-        data-scroll-container
-        className="hidden min-w-0 flex-1 flex-col gap-[22px] overflow-y-auto p-4 lg:flex lg:px-9 lg:py-7"
-      >
-        <SettingsSection slug="profile" active={active}>
-          <AvatarUploadForm userId={user.id} currentAvatarUrl={avatarUrl} />
-          <DisplayNameForm initialName={displayName} />
-        </SettingsSection>
-
-        <SettingsSection slug="account" active={active}>
-          <span className="text-xs font-semibold text-body">Email</span>
-          <div className="flex items-center gap-2 rounded-xl bg-surface px-3 py-[11px]">
-            <span className="min-w-0 flex-1 truncate text-[15px] text-ink">{email}</span>
-            <span className="flex items-center gap-1 text-xs font-semibold text-accent">
-              <span aria-hidden className="material-symbols-rounded text-[16px]">
-                verified
-              </span>
-              Verified
-            </span>
-          </div>
-          <span className="text-xs text-muted">Used for invites and receipts.</span>
-        </SettingsSection>
-
-        <SettingsSection slug="appearance" active={active}>
-          {appearanceContent}
-        </SettingsSection>
-
-        <SettingsSection slug="password" active={active}>
-          {passwordContent}
-        </SettingsSection>
-
-        <SettingsSection
-          slug="household"
-          active={active}
-          aside={
-            <div className="hidden flex-col gap-2 rounded-[14px] border border-border bg-card p-4 lg:flex">
-              <span className="text-[14px] font-semibold text-ink">Roles</span>
-              <span className="text-[13px] leading-normal text-muted">
-                The owner can invite and remove members. Members can add, edit and move anything in the household, and
-                can leave it at any time.
-              </span>
-            </div>
-          }
-        >
-          {householdContent}
-        </SettingsSection>
-
-        <SettingsSection slug="data" active={active}>
-          {dataContent}
-        </SettingsSection>
-
-        <SettingsSection slug="danger" active={active}>
-          {dangerContent}
-        </SettingsSection>
-      </div>
     </div>
   );
 }

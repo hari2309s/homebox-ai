@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { isActive, PRIMARY_LINKS, TOOL_LINKS, type NavLink } from "./nav-links";
+import { LogoutButton } from "./logout-button";
 import { NotificationBell } from "./notifications/notification-center";
 import { ThemeSwitcher } from "./theme-switcher";
 
@@ -123,6 +124,7 @@ export function Sidebar({ itemCount, dueCount, unreadChatCount, userName, househ
       <div className="flex items-center gap-2 px-[10px] pb-2">
         <NotificationBell />
         <div className="flex-1" />
+        <LogoutButton />
         <span className="font-mono text-[9px] text-faint">THEME</span>
         <ThemeSwitcher variant="compact" />
       </div>
