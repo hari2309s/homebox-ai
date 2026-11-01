@@ -82,7 +82,7 @@ export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { allowed, remaining, retryAfterMs } = checkRateLimit(`chat:${user.id}`, CHAT_RATE_LIMIT);
+  const { allowed, remaining: _remaining, retryAfterMs } = checkRateLimit(`chat:${user.id}`, CHAT_RATE_LIMIT);
   if (!allowed) {
     const retryAfter = Math.max(1, Math.ceil((retryAfterMs - Date.now()) / 1000));
     return NextResponse.json(
