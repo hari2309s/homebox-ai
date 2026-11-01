@@ -39,21 +39,28 @@ export function deleteLabel(userId: string, labelId: string) {
   });
 }
 
-/** Resolves each name to an existing label's id, creating any that don't exist yet — dedupes case-insensitively by name. */
-export async function resolveOrCreateLabelIds(userId: string, labelNames: string[]): Promise<string[]> {
-  const existing = await listLabels(userId);
-  const byName = new Map(existing.map((label) => [label.name.toLowerCase(), label.id]));
-  const ids: string[] = [];
-  for (const name of labelNames) {
-    const key = name.toLowerCase();
-    let id = byName.get(key);
-    if (!id) {
-      const [created] = await createLabel(userId, { name });
-      if (!created) continue;
-      id = created.id;
-      byName.set(key, id);
+/** Resolves each name to an existing label's id, creating any that don't exist yet — dedupes case-insensitively by name. Single transaction for all creates. */
+export function resolveOrCreateLabelIds(userId: string, labelNames: string[]): Promise<string[]> {
+  if (labelNames.length === 0) return Promise.resolve([]);
+  return withRLS(userId, async (tx) => {
+    const ownerId = await getEffectiveOwnerId(tx, userId);
+    const existing = await tx.select().from(labels).where(eq(labels.ownerId, ownerId));
+    const byName = new Map(existing.map((label) => [label.name.toLowerCase(), label.id]));
+    const ids: string[] = [];
+    for (const name of labelNames) {
+      const key = name.toLowerCase();
+      let id = byName.get(key);
+      if (!id) {
+        const [created] = await tx
+          .insert(labels)
+          .values({ ownerId, name })
+          .returning();
+        if (!created) continue;
+        id = created.id;
+        byName.set(key, id);
+      }
+      ids.push(id);
     }
-    ids.push(id);
-  }
-  return ids;
+    return ids;
+  });
 }

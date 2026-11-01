@@ -44,7 +44,10 @@ export async function updateSession(request: NextRequest) {
     loginUrl.search = "";
     // Preserved so e.g. an invite link (/join/[token]) survives a
     // sign-in/sign-up detour instead of dropping the visitor on /items.
-    loginUrl.searchParams.set("redirectTo", request.nextUrl.pathname);
+    const originalPath = request.nextUrl.search
+      ? `${request.nextUrl.pathname}${request.nextUrl.search}`
+      : request.nextUrl.pathname;
+    loginUrl.searchParams.set("redirectTo", originalPath);
     return NextResponse.redirect(loginUrl);
   }
 

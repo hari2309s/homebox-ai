@@ -99,6 +99,17 @@ export async function archiveItemAction(itemId: string) {
   revalidatePath("/items");
 }
 
+export async function unarchiveItemAction(itemId: string) {
+  const user = await requireSessionUser();
+  if (!itemId) throw new Error("Missing item id");
+
+  const [item] = await itemQueries.updateItem(user.id, itemId, { archived: false });
+  if (item) {
+    await itemActivityQueries.recordItemActivity(user.id, { itemName: item.name, action: "updated", itemId });
+  }
+  revalidatePath("/items");
+}
+
 export async function deleteItemAction(formData: FormData) {
   const user = await requireSessionUser();
 

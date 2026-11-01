@@ -8,7 +8,7 @@ import { useCallback, useState, useTransition } from "react";
 
 import { formatCurrency } from "../../../lib/currency";
 import { toastItemArchived } from "../notifications/use-notifications";
-import { archiveItemAction } from "./actions";
+import { archiveItemAction, unarchiveItemAction } from "./actions";
 import { stripeFor } from "./item-summary";
 
 interface Item {
@@ -243,7 +243,11 @@ export function ItemList({ groups, locationNameById, selectedId, onSelect }: Ite
           <button
             type="button"
             className="cursor-pointer border-none bg-transparent text-[14px] font-semibold text-accent"
-            onClick={() => setUndoItem(null)}
+            onClick={async () => {
+              const id = undoItem.id;
+              setUndoItem(null);
+              await unarchiveItemAction(id);
+            }}
           >
             Undo
           </button>

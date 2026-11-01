@@ -24,11 +24,16 @@ export function countItems(userId: string): Promise<number> {
   });
 }
 
+/** Escapes LIKE/ILIKE wildcards so user input is treated as literal text. */
+function escapeLike(value: string): string {
+  return value.replace(/[%_\\]/g, "\\$&");
+}
+
 export function searchItems(userId: string, filters: SearchItemsFilters = {}) {
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
     const conditions = [eq(items.ownerId, ownerId)];
-    if (filters.query) conditions.push(ilike(items.name, `%${filters.query}%`));
+    if (filters.query) conditions.push(ilike(items.name, `%${escapeLike(filters.query)}%`));
     if (filters.locationId) conditions.push(eq(items.locationId, filters.locationId));
     if (!filters.includeArchived) conditions.push(eq(items.archived, false));
     return tx
@@ -43,7 +48,7 @@ export function searchItemsWithPrimaryPhoto(userId: string, filters: SearchItems
   return withRLS(userId, async (tx) => {
     const ownerId = await getEffectiveOwnerId(tx, userId);
     const conditions = [eq(items.ownerId, ownerId)];
-    if (filters.query) conditions.push(ilike(items.name, `%${filters.query}%`));
+    if (filters.query) conditions.push(ilike(items.name, `%${escapeLike(filters.query)}%`));
     if (filters.locationId) conditions.push(eq(items.locationId, filters.locationId));
     if (!filters.includeArchived) conditions.push(eq(items.archived, false));
     return tx

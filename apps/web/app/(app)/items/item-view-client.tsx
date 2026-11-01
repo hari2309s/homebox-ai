@@ -271,10 +271,17 @@ function groupItemsByZone(items: Item[], locations: Location[], topLocations: Lo
   const parentMap = new Map(locations.map((l) => [l.id, l.parentId]));
 
   function findTopZone(locationId: string | null): string | null {
-    if (!locationId) return null;
-    if (topLocationIds.has(locationId)) return locationId;
-    const parent = parentMap.get(locationId);
-    return parent ? findTopZone(parent) : locationId;
+    const visited = new Set<string>();
+    let current = locationId;
+    while (current) {
+      if (topLocationIds.has(current)) return current;
+      if (visited.has(current)) return current; // cycle guard
+      visited.add(current);
+      const parent = parentMap.get(current);
+      if (!parent) return current;
+      current = parent;
+    }
+    return null;
   }
 
   const groups = new Map<string | null, Item[]>();
