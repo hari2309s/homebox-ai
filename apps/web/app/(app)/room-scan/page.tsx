@@ -13,7 +13,7 @@ export default async function RoomScanPage() {
     : [[], []];
 
   return (
-    <>
+    <div data-full-bleed className="h-full">
       <div className="h-full lg:hidden">
         <RoomScanForm locations={locations} labels={labels} />
       </div>
@@ -33,6 +33,6 @@ export default async function RoomScanPage() {
           labels={labels}
         />
       </div>
-    </>
+    </div>
   );
 }

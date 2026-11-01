@@ -78,7 +78,7 @@ function PhotoPanel({
         </div>
       </div>
 
-      <div className="relative h-[270px] flex-none overflow-hidden rounded-[20px] bg-surface-soft">
+      <div className="relative min-h-[200px] flex-1 overflow-hidden rounded-[20px] bg-surface-soft">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={previewUrl} alt="Room being scanned" className="absolute inset-0 h-full w-full object-cover" />
         {rows.map((row) => {
@@ -546,7 +546,7 @@ export function RoomScanDesktop({
         </div>
 
         {/* Table */}
-        <div role="table" aria-label="Scanned items" className="overflow-hidden rounded-[14px] border border-border bg-card">
+        <div role="table" aria-label="Scanned items" className="min-h-0 flex-1 overflow-y-auto rounded-[14px] border border-border bg-card">
           <div
             role="row"
             className="grid gap-[10px] border-b border-border/60 px-[14px] py-[9px] font-mono text-[10px] font-semibold text-muted"
