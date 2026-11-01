@@ -152,7 +152,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply, sessionId, pendingAction, referencedItems });
   } catch (error) {
-    console.error("chat-search graph failed:", error);
+    console.error("chat-search graph failed:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json(
       { error: "The assistant is temporarily unavailable. Try again shortly." },
       { status: 502 },

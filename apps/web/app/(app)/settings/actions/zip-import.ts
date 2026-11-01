@@ -20,6 +20,8 @@ import { normalizeCurrency } from "../../../../lib/currency";
 import { createNameResolver } from "./name-resolver";
 
 const IMPORT_CONCURRENCY = 5;
+/** Cap total decompressed size to prevent zip-bomb DoS. */
+const MAX_DECOMPRESSED_BYTES = 200 * 1024 * 1024; // 200 MiB
 
 interface ZipManifest {
   locations?: { id: string; name: string; parentId: string | null }[];
@@ -60,6 +62,22 @@ export async function importZipAction(formData: FormData): Promise<ZipImportSumm
   if (!(file instanceof File) || file.size === 0) throw new Error("Choose a ZIP file to import");
 
   const zip = await JSZip.loadAsync(await file.arrayBuffer());
+
+  // Guard against zip bombs: sum the uncompressed sizes declared in the
+  // central directory. JSZip doesn't expose uncompressed size on its public
+  // type, but the internal _data property carries it from the parsed central
+  // directory header. Fall back to 0 (skip the check) if the structure
+  // changes in a future JSZip version rather than rejecting valid archives.
+  let declaredTotal = 0;
+  zip.forEach((_path, entry) => {
+    if (!entry.dir) {
+      const internalData = (entry as unknown as Record<string, Record<string, number>>)._data;
+      declaredTotal += internalData?.uncompressedSize ?? 0;
+    }
+  });
+  if (declaredTotal > MAX_DECOMPRESSED_BYTES)
+    throw new Error(`ZIP contents too large (${Math.round(declaredTotal / 1024 / 1024)} MiB exceeds 200 MiB limit)`);
+
   const dataEntry = zip.file("data.json");
   if (!dataEntry) throw new Error("This doesn't look like a Homebox AI export (missing data.json)");
 

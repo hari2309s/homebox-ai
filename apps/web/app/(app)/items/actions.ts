@@ -136,6 +136,9 @@ export async function uploadItemAttachmentAction(formData: FormData) {
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) throw new Error("Choose a file to upload");
+  if (file.size > 10 * 1024 * 1024) throw new Error("File too large (max 10 MB)");
+  if (!file.type.startsWith("image/") && file.type !== "application/pdf")
+    throw new Error("Only images and PDFs are accepted");
 
   const typeRaw = String(formData.get("type") ?? "manual");
   const type = ATTACHMENT_TYPES.has(typeRaw) ? (typeRaw as "photo" | "receipt" | "manual" | "warranty") : "manual";

@@ -8,11 +8,14 @@ const components: Components = {
   ul: ({ children }) => <ul className="m-0 list-disc pl-4">{children}</ul>,
   ol: ({ children }) => <ol className="m-0 list-decimal pl-4">{children}</ol>,
   li: ({ children }) => <li className="my-0.5">{children}</li>,
-  a: ({ children, href }) => (
-    <a href={href} target="_blank" rel="noreferrer" className="underline underline-offset-2">
-      {children}
-    </a>
-  ),
+  a: ({ children, href }) => {
+    const safe = href && /^https?:\/\//i.test(href) ? href : undefined;
+    return (
+      <a href={safe} target="_blank" rel="noreferrer" className="underline underline-offset-2">
+        {children}
+      </a>
+    );
+  },
   code: ({ children }) => <code className="rounded bg-black/5 px-1 py-0.5 text-xs">{children}</code>,
   table: ({ children }) => (
     <div className="-mx-1 my-1 overflow-x-auto">

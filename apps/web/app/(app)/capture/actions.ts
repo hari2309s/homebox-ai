@@ -20,6 +20,8 @@ export async function analyzePhotoAction(formData: FormData): Promise<ItemDraft>
 
   const file = formData.get("photo");
   if (!(file instanceof File) || file.size === 0) throw new Error("A photo is required");
+  if (file.size > 10 * 1024 * 1024) throw new Error("Photo too large (max 10 MB)");
+  if (!file.type.startsWith("image/")) throw new Error("Only image files are accepted");
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const dataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
