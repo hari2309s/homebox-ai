@@ -312,7 +312,7 @@ export function CalendarDesktop({
           <button
             type="button"
             onClick={() => setFormOpen(true)}
-            className="flex cursor-pointer items-center justify-center gap-[6px] rounded-[10px] border-none bg-accent py-3 text-[14px] font-semibold text-on-accent"
+            className="flex cursor-pointer items-center justify-center gap-[6px] rounded-[9px] border border-accent bg-accent py-3 text-[13px] font-semibold text-on-accent"
           >
             <span aria-hidden className="material-symbols-rounded text-[18px]">
               add_alarm

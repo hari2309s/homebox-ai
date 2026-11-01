@@ -20,12 +20,12 @@ export function StepPills({ steps, current }: { steps: string[]; current: number
           <li
             key={label}
             aria-current={active ? "step" : undefined}
-            className={`flex h-[34px] items-center gap-[6px] rounded-full px-3 text-[13px] font-semibold ${
+            className={`flex h-[34px] items-center gap-[6px] rounded-full border px-3 text-[13px] font-semibold ${
               active
-                ? "bg-ink text-surface"
+                ? "border-ink bg-ink text-surface"
                 : done
-                  ? "bg-selected text-(--plan-ink)"
-                  : "border border-border text-muted"
+                  ? "border-accent/30 bg-selected text-(--plan-ink)"
+                  : "border-border text-muted"
             }`}
           >
             <span aria-hidden className="material-symbols-rounded text-[16px]">
