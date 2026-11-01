@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomScanDraft, RoomScanItem } from "@homebox-ai/ai";
+import type { RoomScanItem } from "@homebox-ai/ai";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
@@ -469,26 +469,27 @@ export function RoomScanForm({ locations, labels: _labels }: RoomScanFormProps) 
 
     const timer = setTimeout(() => setSlowScan(true), 10000);
 
-    try {
-      const formData = new FormData();
-      formData.set("photo", selected);
-      const draft: RoomScanDraft = await analyzeRoomAction(formData);
-      clearTimeout(timer);
+    const formData = new FormData();
+    formData.set("photo", selected);
+    const result = await analyzeRoomAction(formData);
+    clearTimeout(timer);
 
-      if (draft.items.length === 0) {
-        setStep("photo");
-        setError("No items found in this photo. Try a wider shot with better lighting.");
-        return;
-      }
-
-      setSpaceName(draft.spaceName ?? "");
-      setRows(draft.items.map((item, i) => draftFromScan(item, i)));
-      setStep("select");
-    } catch (err) {
-      clearTimeout(timer);
-      setError(err instanceof Error ? err.message : "Couldn't scan that photo");
+    if ("error" in result) {
+      setError(result.error);
       setStep("photo");
+      return;
     }
+
+    const draft = result.data;
+    if (draft.items.length === 0) {
+      setStep("photo");
+      setError("No items found in this photo. Try a wider shot with better lighting.");
+      return;
+    }
+
+    setSpaceName(draft.spaceName ?? "");
+    setRows(draft.items.map((item, i) => draftFromScan(item, i)));
+    setStep("select");
   }, []);
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -542,15 +543,14 @@ export function RoomScanForm({ locations, labels: _labels }: RoomScanFormProps) 
       ),
     );
 
-    try {
-      await importRoomScanItemsAction(formData);
-      setImportedCount(included.length);
-      setStep("done");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't add these items");
-    } finally {
-      setImporting(false);
+    const result = await importRoomScanItemsAction(formData);
+    setImporting(false);
+    if ("error" in result) {
+      setError(result.error);
+      return;
     }
+    setImportedCount(included.length);
+    setStep("done");
   }
 
   /* ------ Step: Done ------ */

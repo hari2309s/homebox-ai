@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomScanDraft, RoomScanItem } from "@homebox-ai/ai";
+import type { RoomScanItem } from "@homebox-ai/ai";
 import { motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -200,24 +200,26 @@ export function RoomScanDesktop({
     setRows([]);
     setError(null);
 
-    try {
-      const formData = new FormData();
-      formData.set("photo", selected);
-      const draft: RoomScanDraft = await analyzeRoomAction(formData);
+    const formData = new FormData();
+    formData.set("photo", selected);
+    const result = await analyzeRoomAction(formData);
 
-      if (draft.items.length === 0) {
-        setStep("photo");
-        setError("No items found in this photo. Try a wider shot with better lighting.");
-        return;
-      }
-
-      setSpaceName(draft.spaceName ?? "");
-      setRows(draft.items.map((item, i) => rowFromScan(item, i)));
-      setStep("select");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't scan that photo");
+    if ("error" in result) {
+      setError(result.error);
       setStep("photo");
+      return;
     }
+
+    const draft = result.data;
+    if (draft.items.length === 0) {
+      setStep("photo");
+      setError("No items found in this photo. Try a wider shot with better lighting.");
+      return;
+    }
+
+    setSpaceName(draft.spaceName ?? "");
+    setRows(draft.items.map((item, i) => rowFromScan(item, i)));
+    setStep("select");
   }, []);
 
   function update(key: string, patch: Partial<Row>) {
@@ -266,15 +268,14 @@ export function RoomScanDesktop({
       ),
     );
 
-    try {
-      await importRoomScanItemsAction(formData);
-      setImportedCount(included.length);
-      setImporting(false);
-      setStep("done");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't add these items");
-      setImporting(false);
+    const result = await importRoomScanItemsAction(formData);
+    setImporting(false);
+    if ("error" in result) {
+      setError(result.error);
+      return;
     }
+    setImportedCount(included.length);
+    setStep("done");
   }
 
   const placeColor = (id: string) => locations.find((l) => l.id === id)?.color ?? "#9aa49c";
