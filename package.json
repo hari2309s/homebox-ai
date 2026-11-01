@@ -18,6 +18,21 @@
     "test": "vitest run --exclude 'apps/web/e2e/**'",
     "test:e2e": "pnpm --filter web test:e2e"
   },
+  "pnpm": {
+    "overrides": {
+      "js-yaml": ">=4.3.2",
+      "brace-expansion@^1": ">=1.1.20",
+      "brace-expansion@>4": ">=5.0.11",
+      "minimatch": ">=11.0.1",
+      "sharp": ">=0.35.5",
+      "postcss": ">=8.5.26",
+      "browserslist": ">=4.28.7",
+      "@grpc/grpc-js": ">=1.14.5",
+      "source-map-js": ">=1.2.2",
+      "zod": ">=4.6.6",
+      "glob@>=9": ">=14.0.2"
+    }
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^10.0.1",
@@ -28,6 +43,6 @@
     "prettier": "^3.9.6",
     "turbo": "^2.3.0",
     "typescript": "^5.7.0",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.12"
   }
 }
