@@ -7,7 +7,7 @@ import type { ChangeEvent } from "react";
 import { useCallback, useRef, useState } from "react";
 
 import { normalizeCurrency, SUPPORTED_CURRENCIES } from "../../../lib/currency";
-import { HoppingSquares, StepPills } from "../capture/workspace-parts";
+import { HoppingSquares } from "../capture/workspace-parts";
 import { analyzeRoomAction, importRoomScanItemsAction } from "./actions";
 
 /* ------------------------------------------------------------------ */
@@ -169,7 +169,6 @@ function PhotoOverlay({
 
 function ItemCard({
   row,
-  hoveredIndex,
   onHover,
   onToggle,
   onExpand,
@@ -178,7 +177,6 @@ function ItemCard({
   reduced,
 }: {
   row: DraftRow;
-  hoveredIndex: number | null;
   onHover: (index: number | null) => void;
   onToggle: () => void;
   onExpand: () => void;
@@ -186,7 +184,6 @@ function ItemCard({
   locations: { id: string; name: string }[];
   reduced: boolean;
 }) {
-  const isHovered = hoveredIndex === row.index;
   const unsure = row.confidence === "unsure";
   return (
     <motion.div
@@ -422,7 +419,7 @@ function DoneScreen({
 /*  Main form                                                          */
 /* ------------------------------------------------------------------ */
 
-export function RoomScanForm({ locations, labels }: RoomScanFormProps) {
+export function RoomScanForm({ locations, labels: _labels }: RoomScanFormProps) {
   const router = useRouter();
   const reduced = useReducedMotion() ?? false;
   const [file, setFile] = useState<File | null>(null);
@@ -639,7 +636,6 @@ export function RoomScanForm({ locations, labels }: RoomScanFormProps) {
             <ItemCard
               key={row.key}
               row={row}
-              hoveredIndex={hoveredIndex}
               onHover={setHoveredIndex}
               onToggle={() => updateRow(row.key, { included: !row.included })}
               onExpand={() => updateRow(row.key, { expanded: !row.expanded })}
