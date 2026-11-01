@@ -8,7 +8,11 @@ import { NextResponse } from "next/server";
 import { createSupabaseServerClient, getSessionUser } from "@homebox-ai/supabase/server";
 import { getAttachmentSignedUrls } from "@homebox-ai/supabase/storage";
 
+import { checkRateLimit } from "../../../lib/rate-limit";
 import { runTracedGraph } from "../../../lib/traced-graph";
+
+/** Per-user chat rate limit: 20 requests per 60-second sliding window. */
+const CHAT_RATE_LIMIT = { maxRequests: 20, windowMs: 60_000 } as const;
 
 /**
  * The mutating chat tools (create_location, create_item, etc.) never write
@@ -77,6 +81,15 @@ function extractItemsWithPhotos(
 export async function POST(request: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  const { allowed, remaining, retryAfterMs } = checkRateLimit(`chat:${user.id}`, CHAT_RATE_LIMIT);
+  if (!allowed) {
+    const retryAfter = Math.max(1, Math.ceil((retryAfterMs - Date.now()) / 1000));
+    return NextResponse.json(
+      { error: "Too many requests. Try again shortly." },
+      { status: 429, headers: { "Retry-After": String(retryAfter), "X-RateLimit-Remaining": "0" } },
+    );
+  }
 
   const { message, sessionId: rawSessionId, isContinuation } = (await request.json()) as {
     message?: string;

@@ -3,9 +3,13 @@ import { getModelForTask } from "@homebox-ai/ai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { NextResponse } from "next/server";
 
+import { mapWithConcurrency } from "../../../../lib/concurrency";
 import { isCronRequestAuthorized } from "../../../../lib/cron-auth";
 import { groupRemindersForNotification } from "../../../../lib/reminder-notification-groups";
 import { runTracedGraph } from "../../../../lib/traced-graph";
+
+/** At most 3 concurrent LLM calls per cron run — avoids spiking provider rate limits when many reminder groups fire at once. */
+const LLM_CONCURRENCY = 3;
 
 // How many days out a reminder needs to be due before it gets nudged.
 const LEAD_DAYS = 3;
@@ -61,11 +65,12 @@ export async function POST(request: Request) {
 
   const today = new Date().toISOString().slice(0, 10);
 
-  // Each group's message generation and delivery is independent of every
-  // other group's, so they run concurrently instead of one LLM round-trip
-  // at a time.
-  const results = await Promise.allSettled(
-    Array.from(groupsByKey.values()).map(async (group) => {
+  // Bounded concurrency so a large number of groups doesn't spike provider
+  // rate limits. Each group is independent; failures are caught per-group so
+  // one error doesn't stop the rest.
+  const groups = Array.from(groupsByKey.values());
+  const results = await mapWithConcurrency(groups, LLM_CONCURRENCY, async (group) => {
+    try {
       const message = await generateReminderNudgeMessage(group.reminders);
       const sessionId = crypto.randomUUID();
 
@@ -90,20 +95,15 @@ export async function POST(request: Request) {
       }
 
       return group.reminders.map((reminder) => reminder.id);
-    }),
-  );
-
-  const notifiedReminderIds: string[] = [];
-  results.forEach((result, index) => {
-    if (result.status === "fulfilled") {
-      notifiedReminderIds.push(...result.value);
-    } else {
+    } catch (error) {
       // One group's AI call or send failing (rate limit, etc.) shouldn't stop
       // the rest — its reminders are left un-notified so the next run retries them.
-      const group = Array.from(groupsByKey.values())[index];
-      console.error(`reminder-check notifier failed for recipients [${group?.recipients.join(", ")}]:`, result.reason);
+      console.error(`reminder-check notifier failed for recipients [${group.recipients.join(", ")}]:`, error);
+      return [];
     }
   });
+
+  const notifiedReminderIds = results.flat();
 
   await reminderQueries.markRemindersNotified(notifiedReminderIds);
   return NextResponse.json({ groups: groupsByKey.size, remindersNotified: notifiedReminderIds.length });

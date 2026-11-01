@@ -151,6 +151,10 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
       } catch {
         /* non-JSON body */
       }
+      if (response.status === 429) {
+        const retryAfter = response.headers.get("Retry-After");
+        throw new Error(retryAfter ? `Too many requests — try again in ${retryAfter}s.` : "Too many requests — try again shortly.");
+      }
       if (!response.ok) throw new Error(data.error ?? "Something went wrong");
       if (!data.reply) throw new Error("Something went wrong");
       if (sessionIdRef.current === requestSessionId) {
@@ -233,9 +237,13 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
               createdAt: new Date().toISOString(),
             },
           ]);
+        } else if (response.status === 429 && sessionIdRef.current === requestSessionId) {
+          // Rate-limited continuation — the confirmed action already succeeded,
+          // but the follow-up response can't be generated yet. Let the user know.
+          setError("Your action succeeded, but a follow-up couldn't be generated right now — try sending a message shortly.");
         }
       } catch {
-        /* continuation errors are swallowed — primary action already succeeded */
+        /* Other continuation errors are swallowed — primary action already succeeded. */
       } finally {
         if (sessionIdRef.current === requestSessionId) setPending(false);
       }

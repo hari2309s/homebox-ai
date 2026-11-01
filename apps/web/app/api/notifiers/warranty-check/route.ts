@@ -3,8 +3,12 @@ import { getModelForTask } from "@homebox-ai/ai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { NextResponse } from "next/server";
 
+import { mapWithConcurrency } from "../../../../lib/concurrency";
 import { isCronRequestAuthorized } from "../../../../lib/cron-auth";
 import { runTracedGraph } from "../../../../lib/traced-graph";
+
+/** At most 3 concurrent LLM calls per cron run — avoids spiking provider rate limits when many households have expiring warranties. */
+const LLM_CONCURRENCY = 3;
 
 type ExpiringWarrantyItem = Awaited<ReturnType<typeof notifierQueries.listItemsWithExpiringWarranty>>[number];
 
@@ -48,11 +52,11 @@ export async function POST(request: Request) {
   const today = new Date().toISOString().slice(0, 10);
   const owners = Array.from(itemsByOwner.entries());
 
-  // Each owner's message generation and delivery is independent of every
-  // other owner's, so they run concurrently instead of one LLM round-trip
-  // at a time.
-  const results = await Promise.allSettled(
-    owners.map(async ([ownerId, ownerItems]) => {
+  // Bounded concurrency so a large number of households doesn't spike
+  // provider rate limits. Each owner's call is independent; failures are
+  // caught per-owner so one household's error doesn't stop the rest.
+  const results = await mapWithConcurrency(owners, LLM_CONCURRENCY, async ([ownerId, ownerItems]) => {
+    try {
       const message = await generateWarrantyReminderMessage(ownerItems);
       const recipients = await notifierQueries.listRecipientsForOwner(ownerId);
       const sessionId = crypto.randomUUID();
@@ -72,21 +76,16 @@ export async function POST(request: Request) {
       }
 
       return ownerItems.map((item) => item.id);
-    }),
-  );
-
-  const notifiedItemIds: string[] = [];
-  results.forEach((result, index) => {
-    if (result.status === "fulfilled") {
-      notifiedItemIds.push(...result.value);
-    } else {
+    } catch (error) {
       // One household's AI call failing (rate limit, etc.) shouldn't stop the
       // rest — those items are left un-notified (warrantyNotifiedAt still
       // null) so the next run retries them.
-      const [ownerId] = owners[index] ?? [];
-      console.error(`warranty-check notifier failed for owner ${ownerId}:`, result.reason);
+      console.error(`warranty-check notifier failed for owner ${ownerId}:`, error);
+      return [];
     }
   });
+
+  const notifiedItemIds = results.flat();
 
   await notifierQueries.markWarrantyNotified(notifiedItemIds);
   return NextResponse.json({ households: itemsByOwner.size, itemsNotified: notifiedItemIds.length });
