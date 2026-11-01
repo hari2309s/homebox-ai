@@ -15,6 +15,7 @@ export const TOOL_LINKS: NavLink[] = [
   { href: "/locations", label: "Places", icon: "location_on" },
   { href: "/labels", label: "Labels", icon: "sell" },
   { href: "/capture", label: "Capture", icon: "photo_camera" },
+  { href: "/room-scan", label: "Room Scan", icon: "view_in_ar" },
   { href: "/receipts", label: "Receipts", icon: "receipt_long" },
   { href: "/scan", label: "Scan", icon: "barcode_scanner" },
   { href: "/maintenance", label: "Maintain", icon: "build" },

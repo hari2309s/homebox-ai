@@ -412,6 +412,22 @@ body {
   }
 }
 
+/* Room-scan bounding-box pulse — green ring breathes while a row/box is hovered */
+@keyframes rsPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(244, 243, 238, 0.9), 0 0 0 5px #3f6b45;
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(244, 243, 238, 0.9), 0 0 0 10px rgba(63, 107, 69, 0.25);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="rsPulse"] {
+    animation: none !important;
+  }
+}
+
 /* Google's icon stylesheet is unlayered, so its `display: inline-block` beats Tailwind's layered utilities —
    icons that are their own centred badge (`material-symbols-rounded flex …`) need flex restored. */
 .material-symbols-rounded.flex {

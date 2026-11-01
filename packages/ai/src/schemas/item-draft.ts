@@ -43,3 +43,32 @@ export const receiptDraftSchema = z.object({
 });
 
 export type ReceiptDraft = z.infer<typeof receiptDraftSchema>;
+
+// Room-scan: multi-item extraction from a photo of a space/room.
+// Each item includes a bounding box (percentage coords) and confidence level.
+// Factory pattern avoids $ref issues with Gemini (see currencyField comment).
+const roomScanItemSchema = () =>
+  z.object({
+    name: z.string().min(1).describe("Short, recognisable item name"),
+    description: z.string().optional().describe("Brief visual description (colour, size, material)"),
+    quantity: z.number().int().min(1).default(1),
+    suggestedLabel: z.string().optional().describe("Best-guess category, e.g. 'Power tools'"),
+    suggestedLocation: z.string().optional().describe("Where in the space, e.g. 'Pegboard', 'Shelf'"),
+    confidence: z
+      .enum(["high", "medium", "unsure"])
+      .describe("How confident the detection is"),
+    boundingBox: z.object({
+      x: z.number().min(0).describe("Left edge as percentage of image width, 0-100"),
+      y: z.number().min(0).describe("Top edge as percentage of image height, 0-100"),
+      w: z.number().min(0).describe("Width as percentage of image width"),
+      h: z.number().min(0).describe("Height as percentage of image height"),
+    }).describe("Bounding rectangle in percentage coordinates"),
+  });
+
+export const roomScanDraftSchema = z.object({
+  items: z.array(roomScanItemSchema()),
+  spaceName: z.string().optional().describe("Best-guess name for the space, e.g. 'Garage', 'Kitchen pantry'"),
+});
+
+export type RoomScanDraft = z.infer<typeof roomScanDraftSchema>;
+export type RoomScanItem = z.infer<ReturnType<typeof roomScanItemSchema>>;

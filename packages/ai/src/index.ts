@@ -4,6 +4,7 @@ export { createLangfuseHandler, type TracingContext } from "./tracing";
 export { createChatSearchGraph } from "./graphs/chat-search";
 export { runPhotoToItemGraph } from "./graphs/photo-to-item";
 export { runReceiptImportGraph } from "./graphs/receipt-import";
+export { runRoomScanGraph } from "./graphs/room-scan";
 export { runMaintenanceAssistantGraph, type MaintenanceContext } from "./graphs/maintenance-assistant";
 
 export * from "./schemas/item-draft";

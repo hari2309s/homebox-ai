@@ -12,6 +12,7 @@ const TILE_STYLE: Record<string, { bg: string; color: string }> = {
   "/locations": { bg: "#dfe8d6", color: "#3f6b45" },
   "/labels": { bg: "#f6dde5", color: "#7a2f47" },
   "/capture": { bg: "#dfe8d6", color: "#3f6b45" },
+  "/room-scan": { bg: "#dfe8d6", color: "#3f6b45" },
   "/receipts": { bg: "#ecdccd", color: "#b0643f" },
   "/scan": { bg: "#e7e1d0", color: "#5a4f33" },
   "/maintenance": { bg: "#f6e7c4", color: "#6b4e10" },
