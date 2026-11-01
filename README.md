@@ -6,7 +6,7 @@
 
 ### Know what you own, and where it is.
 
-An AI-native home inventory PWA — search your stuff in plain English, snap a photo to log an item, import a receipt as a batch of items, and let a warranty assistant nudge you before things expire.
+An AI-native home inventory PWA — search your stuff in plain English, snap a photo to log an item, scan a whole room to bulk-add everything in it, import a receipt as a batch of items, and let a warranty assistant nudge you before things expire.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/hari2309s/homebox-ai)
 
@@ -41,6 +41,7 @@ An AI-native home inventory PWA — search your stuff in plain English, snap a p
 
 - 🔍 **Natural-language inventory search** — ask "where's my passport?" or "what's in the garage?" in plain English; a LangGraph tool-calling agent looks it up for real, grounded in your actual data
 - 📸 **Photo → item** — snap or upload a photo, a vision model drafts a name, description, label, and location guess for you to confirm
+- 🏠 **Room scan** — photograph a room, shelf, drawer or any space; a vision model finds every item with bounding boxes and confidence levels, and you pick which ones to add in one batch
 - 🧾 **Receipt import** — upload a receipt/invoice photo, extract every line item as a batch of draft items in one pass
 - 🔔 **Proactive AI nudges** — a daily cron checks for warranties expiring soon and reminders coming up, and messages you in chat unprompted, with an unread badge on the Chat tab; idempotent by design, so re-running either check never double-sends
 - 📅 **Household calendar & reminders** — turn a maintenance suggestion into a scheduled reminder (instead of a silent log entry), assign it to yourself or any family member sharing your household, and see it on a hand-rolled month calendar color-coded by assignee; a daily cron nudges the assignee in chat a few days before it's due
@@ -71,7 +72,7 @@ Tools query YOUR data only — every query is scoped to your effective owner id
 Conversational reply, grounded in what's actually in your inventory
 ```
 
-Photo capture and receipt import follow the same shape but with a vision-capable chain (Gemini → OpenRouter) and structured-output extraction instead of tool calls. The maintenance assistant reasons over an item's purchase date and service history (Cerebras → Groq → OpenRouter) to suggest upcoming tasks and flag warranties expiring within 60 days.
+Photo capture, room scan, and receipt import follow the same shape but with a vision-capable chain (Gemini → OpenRouter) and structured-output extraction instead of tool calls. Room scan additionally returns bounding-box coordinates and confidence levels per item, letting the user review detections overlaid on the original photo before bulk-importing. The maintenance assistant reasons over an item's purchase date and service history (Cerebras → Groq → OpenRouter) to suggest upcoming tasks and flag warranties expiring within 60 days.
 
 Every provider chain is a plain ordered list in `packages/ai/src/router.ts` — one provider failing (bad key, rate limit, quota) transparently falls through to the next, per task type.
 
@@ -115,6 +116,7 @@ homebox-ai/
 │           │   ├── labels/              # colored labels CRUD
 │           │   ├── chat/                # NL search UI, session history, unread nudges
 │           │   ├── capture/             # photo → item draft review
+│           │   ├── room-scan/            # room photo → AI item detection → bulk import
 │           │   ├── receipts/            # receipt → batch item review
 │           │   ├── maintenance/         # AI maintenance suggestions → assignable calendar reminders
 │           │   ├── calendar/            # household calendar: month grid, reminders, assignee color-coding
@@ -134,7 +136,7 @@ homebox-ai/
 │   ├── ai/                              # LangGraph orchestration
 │   │   ├── src/providers/               # gemini · groq · cerebras · openrouter model factories
 │   │   ├── src/router.ts                # task → ordered provider chain, with fallback
-│   │   ├── src/graphs/                  # chat-search · photo-to-item · receipt-import · maintenance-assistant
+│   │   ├── src/graphs/                  # chat-search · photo-to-item · room-scan · receipt-import · maintenance-assistant
 │   │   └── src/tracing.ts               # Langfuse callback handler factory
 │   ├── ui/                              # shared components, Framer Motion primitives
 │   └── config/                          # shared tsconfig
