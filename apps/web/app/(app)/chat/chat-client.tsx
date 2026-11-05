@@ -1,10 +1,10 @@
 "use client";
 
-import { TapButton } from "@homebox-ai/ui";
+import { TapButton, WalkingDots } from "@homebox-ai/ui";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import type { FormEvent, KeyboardEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PendingAction } from "@homebox-ai/ai";
 
@@ -37,6 +37,18 @@ interface ChatSession {
   hasUnread: boolean;
 }
 
+interface ChatError {
+  message: string;
+  /** The user message that triggered this error, so we can retry or edit it. */
+  originalMessage: string;
+  /** Which retry attempt we're on (1-indexed). After MAX_RETRIES, we stop and show the error card. */
+  attempt: number;
+  /** Whether we're currently retrying automatically. */
+  retrying: boolean;
+}
+
+const MAX_RETRIES = 3;
+
 const SUGGESTIONS = [
   { q: "What needs doing before the frost?", c: "#3f6b45" },
   { q: "Where's the long-handled fish net?", c: "#3f8a8a" },
@@ -62,13 +74,81 @@ function TypingDots() {
   );
 }
 
+/** Maps raw error strings to a user-friendly title + description per Design J Screen 30. */
+function errorCopy(message: string): { title: string; description: string; icon: string } {
+  if (/too many requests/i.test(message)) {
+    return { title: "Slow down a moment.", description: message, icon: "schedule" };
+  }
+  if (/offline|network|fetch|connection/i.test(message)) {
+    return { title: "I lost the thread there.", description: "The connection dropped before I could answer.", icon: "cloud_off" };
+  }
+  if (/unavailable|502|503/i.test(message)) {
+    return { title: "I can't think right now.", description: "The assistant is temporarily unavailable. Give it a moment.", icon: "cloud_off" };
+  }
+  return { title: "I lost the thread there.", description: message, icon: "cloud_off" };
+}
+
+function ChatErrorCard({
+  error,
+  onRetry,
+  onEditQuestion,
+}: {
+  error: ChatError;
+  onRetry: () => void;
+  onEditQuestion: () => void;
+}) {
+  const { title, description, icon } = errorCopy(error.message);
+
+  if (error.retrying) {
+    return (
+      <div role="status" className="mt-1 flex items-center gap-2.5 self-start text-sm text-muted">
+        <WalkingDots size={5} />
+        <span className="font-mono text-[10px] tracking-wide">
+          RETRYING · ATTEMPT {error.attempt} OF {MAX_RETRIES}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      role="alert"
+      className="mt-1 flex flex-col gap-[10px] self-start rounded-[14px] border-[1.5px] border-danger-line bg-danger-faint p-3"
+    >
+      <div className="flex items-start gap-[10px]">
+        <span className="material-symbols-rounded text-clay">{icon}</span>
+        <div className="flex-1 text-[14px] leading-relaxed text-danger-ink">
+          <strong>{title}</strong> {description}
+        </div>
+      </div>
+      <div className="flex gap-[6px]">
+        <TapButton
+          type="button"
+          onClick={onRetry}
+          className="flex cursor-pointer items-center gap-1 rounded-lg bg-clay px-3 py-[7px] text-[13px] font-semibold text-on-accent"
+        >
+          <span className="material-symbols-rounded text-[16px]">refresh</span>
+          Try again
+        </TapButton>
+        <TapButton
+          type="button"
+          onClick={onEditQuestion}
+          className="cursor-pointer rounded-lg border border-border bg-card px-3 py-[6px] text-[13px] font-semibold text-ink"
+        >
+          Edit question
+        </TapButton>
+      </div>
+    </div>
+  );
+}
+
 export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCount: number; zoneCount: number; userName?: string }) {
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ChatError | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [resolvedActions, setResolvedActions] = useState<Record<string, "confirmed" | "cancelled">>({});
   const [loadingSessionId, setLoadingSessionId] = useState<string | null>(null);
@@ -91,7 +171,7 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
   }, [sessionId]);
   useEffect(() => {
     scrollToBottom();
-  }, [messages, pending]);
+  }, [messages, pending, error]);
 
   function startNewChat() {
     setSessionId(crypto.randomUUID());
@@ -115,23 +195,32 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
       const history = await loadChatSessionAction(id);
       setMessages(history);
     } catch {
-      setError("Couldn't load that conversation");
+      setError({ message: "Couldn't load that conversation", originalMessage: "", attempt: MAX_RETRIES, retrying: false });
     } finally {
       setLoadingSessionId(null);
       setHistoryOpen(false);
     }
   }
 
-  async function sendMessage(text: string) {
+  /**
+   * Sends a message to the chat API. When `attempt` > 1, this is a retry of
+   * the same message (the user bubble is already in the list, so we skip
+   * adding it again). After MAX_RETRIES failures, we stop and show the error
+   * card with manual Retry / Edit buttons.
+   */
+  const sendMessage = useCallback(async (text: string, attempt = 1) => {
     const trimmed = text.trim();
     if (!trimmed || pending) return;
-    const requestSessionId = sessionId;
+    const requestSessionId = sessionIdRef.current;
+    const isRetry = attempt > 1;
 
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), role: "user", content: trimmed, createdAt: new Date().toISOString() },
-    ]);
-    setInput("");
+    if (!isRetry) {
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), role: "user", content: trimmed, createdAt: new Date().toISOString() },
+      ]);
+      setInput("");
+    }
     setPending(true);
     setError(null);
     const controller = new AbortController();
@@ -175,17 +264,53 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
         .catch(() => {});
     } catch (err) {
       if (controller.signal.aborted) return;
-      if (sessionIdRef.current === requestSessionId) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
+      if (sessionIdRef.current !== requestSessionId) return;
+
+      const errorMsg = err instanceof Error ? err.message : "Something went wrong";
+      const isRateLimited = /too many requests/i.test(errorMsg);
+
+      // Auto-retry unless we've exhausted attempts or it's a rate-limit error
+      if (attempt < MAX_RETRIES && !isRateLimited) {
+        setError({ message: errorMsg, originalMessage: trimmed, attempt: attempt + 1, retrying: true });
+        if (abortRef.current === controller) abortRef.current = null;
+        setPending(false);
+        // Small delay before auto-retry
+        await new Promise((r) => setTimeout(r, 1200));
+        sendMessage(trimmed, attempt + 1);
+        return;
       }
+
+      setError({ message: errorMsg, originalMessage: trimmed, attempt, retrying: false });
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
       setPending(false);
     }
-  }
+  }, [pending]);
 
   function stopReply() {
     abortRef.current?.abort();
+  }
+
+  function handleRetry() {
+    if (!error?.originalMessage) return;
+    const text = error.originalMessage;
+    setError(null);
+    sendMessage(text, 1);
+  }
+
+  function handleEditQuestion() {
+    if (!error?.originalMessage) return;
+    setInput(error.originalMessage);
+    // Remove the user's message that failed so they can resend an edited version
+    setMessages((prev) => {
+      let lastUserIdx = -1;
+      for (let i = prev.length - 1; i >= 0; i--) {
+        if (prev[i]!.role === "user") { lastUserIdx = i; break; }
+      }
+      if (lastUserIdx === -1) return prev;
+      return prev.slice(0, lastUserIdx);
+    });
+    setError(null);
   }
 
   async function handleConfirmAction(messageId: string, action: PendingAction) {
@@ -240,7 +365,7 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
         } else if (response.status === 429 && sessionIdRef.current === requestSessionId) {
           // Rate-limited continuation — the confirmed action already succeeded,
           // but the follow-up response can't be generated yet. Let the user know.
-          setError("Your action succeeded, but a follow-up couldn't be generated right now — try sending a message shortly.");
+          setError({ message: "Your action succeeded, but a follow-up couldn't be generated right now — try sending a message shortly.", originalMessage: "", attempt: MAX_RETRIES, retrying: false });
         }
       } catch {
         /* Other continuation errors are swallowed — primary action already succeeded. */
@@ -249,7 +374,7 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
       }
     } catch (err) {
       if (sessionIdRef.current === requestSessionId) {
-        setError(err instanceof Error ? err.message : "Couldn't complete that action");
+        setError({ message: err instanceof Error ? err.message : "Couldn't complete that action", originalMessage: "", attempt: MAX_RETRIES, retrying: false });
       }
     }
   }
@@ -466,9 +591,11 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
             )}
 
             {error && (
-              <p role="alert" className="mt-1 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
-                {error}
-              </p>
+              <ChatErrorCard
+                error={error}
+                onRetry={handleRetry}
+                onEditQuestion={handleEditQuestion}
+              />
             )}
           </div>
         </div>
