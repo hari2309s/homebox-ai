@@ -98,6 +98,7 @@ export async function POST(request: Request) {
     isContinuation?: boolean;
   };
   if (!message) return NextResponse.json({ error: "message is required" }, { status: 400 });
+  if (message.length > 4000) return NextResponse.json({ error: "Message is too long (max 4 000 characters)" }, { status: 400 });
 
   const sessionId = rawSessionId ?? crypto.randomUUID();
 

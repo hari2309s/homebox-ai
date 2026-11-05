@@ -65,7 +65,9 @@ export async function createItemFromCaptureAction(formData: FormData) {
   if (photo instanceof File && photo.size > 0) {
     const ownerId = await resolveEffectiveOwnerId(user.id);
     const supabase = await createSupabaseServerClient();
-    const path = await uploadAttachment(supabase, ownerId, item.id, photo, photo.name || "photo.jpg");
+    const ext = (photo.name || "").split(".").pop();
+    const uniqueName = ext ? `${crypto.randomUUID()}.${ext}` : `${crypto.randomUUID()}.jpg`;
+    const path = await uploadAttachment(supabase, ownerId, item.id, photo, uniqueName);
     await attachmentQueries.createAttachment(user.id, { itemId: item.id, type: "photo", storagePath: path });
   }
 

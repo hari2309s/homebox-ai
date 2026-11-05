@@ -1,11 +1,11 @@
 "use client";
 
-import { createSupabaseBrowserClient } from "@homebox-ai/supabase/client";
-import { uploadAvatar } from "@homebox-ai/supabase/storage";
 import { WalkingDots } from "@homebox-ai/ui";
 import { AnimatePresence, motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useCallback, useRef, useState } from "react";
+
+import { uploadAvatarAction } from "./actions/avatar";
 import type { default as CropperComponent, Area } from "react-easy-crop";
 
 // Only needed once a photo is picked, so it's split out of the settings
@@ -65,11 +65,10 @@ async function cropImageToBlob(imageSrc: string, pixelCrop: Area): Promise<Blob>
 }
 
 interface AvatarUploadFormProps {
-  userId: string;
   currentAvatarUrl: string | null;
 }
 
-export function AvatarUploadForm({ userId, currentAvatarUrl }: AvatarUploadFormProps) {
+export function AvatarUploadForm({ currentAvatarUrl }: AvatarUploadFormProps) {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(currentAvatarUrl);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,9 +108,9 @@ export function AvatarUploadForm({ userId, currentAvatarUrl }: AvatarUploadFormP
     setUploading(true);
     try {
       const blob = await cropImageToBlob(cropSrc, croppedAreaPixels);
-      const supabase = createSupabaseBrowserClient();
-      const signedUrl = await uploadAvatar(supabase, userId, blob);
-      await supabase.auth.updateUser({ data: { avatar_url: signedUrl } });
+      const formData = new FormData();
+      formData.set("file", blob, "avatar.jpg");
+      const signedUrl = await uploadAvatarAction(formData);
       setAvatarUrl(signedUrl);
       URL.revokeObjectURL(cropSrc);
       setCropSrc(null);

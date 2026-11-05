@@ -78,7 +78,9 @@ export async function importRoomScanItemsAction(
     if (photo instanceof File && photo.size > 0) {
       const ownerId = await resolveEffectiveOwnerId(user.id);
       const supabase = await createSupabaseServerClient();
-      photoPath = await uploadAttachment(supabase, ownerId, crypto.randomUUID(), photo, photo.name || "room.jpg");
+      const ext = (photo.name || "").split(".").pop();
+      const uniqueName = ext ? `${crypto.randomUUID()}.${ext}` : `${crypto.randomUUID()}.jpg`;
+      photoPath = await uploadAttachment(supabase, ownerId, crypto.randomUUID(), photo, uniqueName);
     }
 
     await mapWithConcurrency(items, IMPORT_CONCURRENCY, async (draft) => {

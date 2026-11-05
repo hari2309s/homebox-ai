@@ -155,6 +155,7 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sessionIdRef = useRef(sessionId);
   const abortRef = useRef<AbortController | null>(null);
+  const pendingRef = useRef(false);
 
   function scrollToBottom() {
     scrollContainerRef.current?.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: "smooth" });
@@ -210,7 +211,7 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
    */
   const sendMessage = useCallback(async (text: string, attempt = 1) => {
     const trimmed = text.trim();
-    if (!trimmed || pending) return;
+    if (!trimmed || pendingRef.current) return;
     const requestSessionId = sessionIdRef.current;
     const isRetry = attempt > 1;
 
@@ -221,6 +222,7 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
       ]);
       setInput("");
     }
+    pendingRef.current = true;
     setPending(true);
     setError(null);
     const controller = new AbortController();
@@ -273,6 +275,7 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
       if (attempt < MAX_RETRIES && !isRateLimited) {
         setError({ message: errorMsg, originalMessage: trimmed, attempt: attempt + 1, retrying: true });
         if (abortRef.current === controller) abortRef.current = null;
+        pendingRef.current = false;
         setPending(false);
         // Small delay before auto-retry
         await new Promise((r) => setTimeout(r, 1200));
@@ -283,9 +286,10 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
       setError({ message: errorMsg, originalMessage: trimmed, attempt, retrying: false });
     } finally {
       if (abortRef.current === controller) abortRef.current = null;
+      pendingRef.current = false;
       setPending(false);
     }
-  }, [pending]);
+  }, []);
 
   function stopReply() {
     abortRef.current?.abort();

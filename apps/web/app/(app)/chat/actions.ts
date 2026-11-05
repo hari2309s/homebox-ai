@@ -132,6 +132,10 @@ export async function confirmChatActionAction(sessionId: string, rawAction: unkn
       hrefLabel = "View item";
       break;
     }
+    default: {
+      const _exhaustive: never = action;
+      throw new Error(`Unsupported action type: ${(_exhaustive as { type: string }).type}`);
+    }
   }
 
   await chatQueries.createChatMessage(user.id, { sessionId, role: "assistant", content: message });

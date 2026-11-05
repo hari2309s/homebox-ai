@@ -20,6 +20,7 @@ export async function importItemsCsvAction(formData: FormData): Promise<{ import
   const rows = parseCsv(await file.text());
   const [header, ...dataRows] = rows;
   if (!header || dataRows.length === 0) throw new Error("CSV has no data rows");
+  if (dataRows.length > 5000) throw new Error("Too many rows (max 5 000). Split the file and import in batches.");
 
   const columnIndex = new Map(header.map((name, index) => [name.trim(), index]));
   const cell = (row: string[], name: string) => {

@@ -194,7 +194,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
 
   const profileContent = (
     <>
-      <AvatarUploadForm userId={user.id} currentAvatarUrl={avatarUrl} />
+      <AvatarUploadForm currentAvatarUrl={avatarUrl} />
       <DisplayNameForm initialName={displayName} />
     </>
   );
@@ -217,7 +217,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ secti
   const desktopContent: Record<string, ReactNode> = {
     profile: (
       <SettingsSection slug="profile">
-        <AvatarUploadForm userId={user.id} currentAvatarUrl={avatarUrl} />
+        <AvatarUploadForm currentAvatarUrl={avatarUrl} />
         <DisplayNameForm initialName={displayName} />
       </SettingsSection>
     ),

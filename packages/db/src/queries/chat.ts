@@ -34,7 +34,11 @@ export function createChatMessage(userId: string, data: CreateChatMessageInput) 
 
 export function listChatMessages(userId: string, sessionId: string) {
   return withRLS(userId, (tx) =>
-    tx.select().from(chatMessages).where(eq(chatMessages.sessionId, sessionId)).orderBy(asc(chatMessages.createdAt)),
+    tx
+      .select()
+      .from(chatMessages)
+      .where(and(eq(chatMessages.sessionId, sessionId), eq(chatMessages.ownerId, userId)))
+      .orderBy(asc(chatMessages.createdAt)),
   );
 }
 

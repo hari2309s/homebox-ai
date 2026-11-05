@@ -69,7 +69,9 @@ export async function importReceiptItemsAction(formData: FormData) {
     // checks the leading owner-id segment via has_shared_access(); each
     // created item below gets its own `attachments` row pointing at this
     // same object).
-    photoPath = await uploadAttachment(supabase, ownerId, crypto.randomUUID(), photo, photo.name || "receipt.jpg");
+    const ext = (photo.name || "").split(".").pop();
+    const uniqueName = ext ? `${crypto.randomUUID()}.${ext}` : `${crypto.randomUUID()}.jpg`;
+    photoPath = await uploadAttachment(supabase, ownerId, crypto.randomUUID(), photo, uniqueName);
   }
 
   // Each draft's item/labels/attachment are independent of every other
