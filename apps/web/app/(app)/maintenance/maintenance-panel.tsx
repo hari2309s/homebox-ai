@@ -1,7 +1,7 @@
 "use client";
 
 import type { MaintenanceSuggestion } from "@homebox-ai/ai";
-import { EmptyState, Select } from "@homebox-ai/ui";
+import { EmptyState, InlineErrorCard, Select } from "@homebox-ai/ui";
 import { useState } from "react";
 
 import { formatDate } from "../../../lib/date";
@@ -119,7 +119,12 @@ export function MaintenancePanel({ items, householdUsers, currentUserId, accepte
         </div>
 
         {error && (
-          <p role="alert" className="rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">{error}</p>
+          <InlineErrorCard
+            icon="build"
+            title={/reminder/i.test(error) ? "Couldn't add the reminder" : "Couldn't get suggestions"}
+            description={error}
+            onRetry={itemId && !/reminder/i.test(error) ? handleGetSuggestions : undefined}
+          />
         )}
 
         {/* Warranty warning */}

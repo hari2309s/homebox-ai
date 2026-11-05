@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useCallback, useRef, useState } from "react";
 
+import { InlineErrorCard } from "@homebox-ai/ui";
+
 import { normalizeCurrency, SUPPORTED_CURRENCIES } from "../../../lib/currency";
 import { HoppingSquares } from "../capture/workspace-parts";
 import { analyzeRoomAction, importRoomScanItemsAction } from "./actions";
@@ -738,9 +740,11 @@ export function RoomScanForm({ locations, labels: _labels }: RoomScanFormProps) 
           </span>
         </div>
         {error && (
-          <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
-            {error}
-          </p>
+          <InlineErrorCard
+            icon="view_in_ar"
+            title="Couldn't scan the room"
+            description={error}
+          />
         )}
       </div>
       <div className="flex flex-col gap-[10px] px-5 pb-[34px] pt-[14px]">

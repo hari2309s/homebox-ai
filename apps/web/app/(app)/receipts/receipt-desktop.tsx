@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 
+import { InlineErrorCard } from "@homebox-ai/ui";
+
 import { currencyLabel, formatCurrency, normalizeCurrency, SUPPORTED_CURRENCIES } from "../../../lib/currency";
 import { labelChip } from "../../../lib/label-colors";
 import { BAR_BUTTON, BAR_PRIMARY, DropZone, FIELD, HoppingSquares, StepPills } from "../capture/workspace-parts";
@@ -160,9 +162,12 @@ export function ReceiptDesktop({
           <StepPills steps={["Receipt", "Read", "Choose"]} current={0} />
         </div>
         {error && (
-          <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
-            {error}
-          </p>
+          <InlineErrorCard
+            icon="receipt_long"
+            title="Couldn't read the receipt"
+            description={error}
+            onRetry={file ? () => analyze(file) : undefined}
+          />
         )}
         <DropZone
           title="Drop a receipt here, or paste with ⌘V"
@@ -277,9 +282,12 @@ export function ReceiptDesktop({
         </div>
 
         {error && (
-          <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
-            {error}
-          </p>
+          <InlineErrorCard
+            icon={/line item/i.test(error) ? "receipt_long" : /import|tick/i.test(error) ? "error" : "image_not_supported"}
+            title={/import|tick/i.test(error) ? "Couldn't import" : "Couldn't read the receipt"}
+            description={error}
+            onRetry={file && !rows ? () => analyze(file) : undefined}
+          />
         )}
 
         {rows ? (

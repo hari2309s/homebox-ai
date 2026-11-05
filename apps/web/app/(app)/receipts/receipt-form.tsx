@@ -1,7 +1,7 @@
 "use client";
 
 import type { ItemDraft } from "@homebox-ai/ai";
-import { CapturePhotoPicker, FormField, Input, Select, SubmitButton } from "@homebox-ai/ui";
+import { CapturePhotoPicker, FormField, InlineErrorCard, Input, Select, SubmitButton } from "@homebox-ai/ui";
 import { useRouter } from "next/navigation";
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
@@ -233,9 +233,11 @@ export function ReceiptForm({ locations, labels }: ReceiptFormProps) {
         )}
 
         {error && (
-          <p role="alert" className="rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
-            {error}
-          </p>
+          <InlineErrorCard
+            icon={/import|select/i.test(error) ? "error" : "receipt_long"}
+            title={/import|select/i.test(error) ? "Couldn't import" : "Couldn't read the receipt"}
+            description={error}
+          />
         )}
       </div>
 

@@ -5,13 +5,59 @@ import { useState } from "react";
 
 import type { PendingAction } from "@homebox-ai/ai";
 
-const ACTION_LABELS: Record<PendingAction["type"], string> = {
-  create_location: "New location",
-  create_label: "New label",
-  create_item: "New item",
-  update_item: "Update item",
-  add_maintenance_entry: "Maintenance entry",
+/* ------------------------------------------------------------------ */
+/*  Per-action-type config (icon, colors, confirm label)               */
+/* ------------------------------------------------------------------ */
+
+interface ActionMeta {
+  icon: string;
+  iconBg: string;
+  iconColor: string;
+  label: string;
+  confirmLabel: string;
+}
+
+const ACTION_META: Record<PendingAction["type"], ActionMeta> = {
+  create_location: {
+    icon: "location_on",
+    iconBg: "var(--color-selected)",
+    iconColor: "var(--color-accent)",
+    label: "NEW LOCATION",
+    confirmLabel: "Create it",
+  },
+  create_label: {
+    icon: "sell",
+    iconBg: "var(--color-selected)",
+    iconColor: "var(--color-accent)",
+    label: "NEW LABEL",
+    confirmLabel: "Create it",
+  },
+  create_item: {
+    icon: "add_circle",
+    iconBg: "var(--color-selected)",
+    iconColor: "var(--color-accent)",
+    label: "NEW ITEM",
+    confirmLabel: "Add it",
+  },
+  update_item: {
+    icon: "move_item",
+    iconBg: "var(--color-warn-soft)",
+    iconColor: "var(--color-warn)",
+    label: "UPDATE ITEM",
+    confirmLabel: "Do it",
+  },
+  add_maintenance_entry: {
+    icon: "build",
+    iconBg: "var(--color-warn-soft)",
+    iconColor: "var(--color-warn)",
+    label: "MAINTENANCE LOG",
+    confirmLabel: "Log it",
+  },
 };
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
 
 interface ActionCardProps {
   action: PendingAction;
@@ -19,9 +65,10 @@ interface ActionCardProps {
   onCancel: () => void;
 }
 
-/** Shown in place of a plain reply bubble when the assistant proposes a create/update/log action — nothing happens until the user picks one of these. */
+/** Proposed-action card matching Design J6 Screen 31. */
 export function ActionCard({ action, onConfirm, onCancel }: ActionCardProps) {
   const [pending, setPending] = useState(false);
+  const meta = ACTION_META[action.type];
 
   async function handleConfirm() {
     setPending(true);
@@ -33,29 +80,39 @@ export function ActionCard({ action, onConfirm, onCancel }: ActionCardProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-accent/30 bg-card p-4 text-sm shadow-sm">
-      <span className="w-fit rounded-full bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent-hover">
-        {ACTION_LABELS[action.type]}
-      </span>
-      <p className="m-0 text-body">{action.summary}</p>
-      <div className="flex gap-2">
-        <TapButton
-          type="button"
-          onClick={handleConfirm}
-          disabled={pending}
-          whileHover={pending ? undefined : { scale: 1.02 }}
-          className="flex flex-1 cursor-pointer items-center justify-center rounded-md bg-accent px-3 py-2 font-bold text-on-accent transition-colors duration-150 hover:bg-accent-hover disabled:cursor-default disabled:opacity-60"
+    <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-[8px_12px_24px_-16px_rgba(0,0,0,.25)]">
+      {/* Body */}
+      <div className="flex items-center gap-[10px] px-3 py-[10px]">
+        <span
+          className="flex h-9 w-9 flex-none items-center justify-center rounded-[10px]"
+          style={{ background: meta.iconBg, color: meta.iconColor }}
         >
-          {pending ? <WalkingDots size={6} /> : "Confirm"}
-        </TapButton>
+          <span className="material-symbols-rounded text-[20px]">{meta.icon}</span>
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[14px] font-semibold text-ink">{action.summary}</div>
+          <div className="font-mono text-[10px] text-muted">{meta.label}</div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center gap-[6px] border-t border-border/60 bg-surface-soft px-3 py-2">
+        <span className="flex-1 text-[13px] text-muted">Confirm?</span>
         <TapButton
           type="button"
           onClick={onCancel}
           disabled={pending}
-          whileHover={pending ? undefined : { scale: 1.02 }}
-          className="cursor-pointer rounded-md border border-border bg-card px-3 py-2 font-semibold text-body transition-colors duration-150 hover:border-accent disabled:cursor-default disabled:opacity-60"
+          className="cursor-pointer rounded-lg border border-border bg-card px-[10px] py-[6px] text-[13px] font-semibold text-ink disabled:opacity-60"
         >
           Cancel
+        </TapButton>
+        <TapButton
+          type="button"
+          onClick={handleConfirm}
+          disabled={pending}
+          className="flex cursor-pointer items-center gap-1 rounded-lg border-none bg-accent px-[10px] py-[7px] text-[13px] font-semibold text-on-accent disabled:opacity-60"
+        >
+          {pending ? <WalkingDots size={5} /> : meta.confirmLabel}
         </TapButton>
       </div>
     </div>

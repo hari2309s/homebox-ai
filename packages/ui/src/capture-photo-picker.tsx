@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, RefObject } from "react";
 
+import { InlineErrorCard } from "./inline-error-card";
 import { WalkingDots } from "./walking-dots";
 
 interface CapturePhotoPickerProps {
@@ -52,9 +53,11 @@ export function CapturePhotoPicker({
           </div>
         )}
         {error && (
-          <p role="alert" className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent-hover">
-            {error}
-          </p>
+          <InlineErrorCard
+            icon="image_not_supported"
+            title="That didn't work"
+            description={error}
+          />
         )}
       </div>
       <div className="shrink-0 border-t border-border bg-card p-4 md:p-6">

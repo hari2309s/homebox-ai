@@ -193,9 +193,14 @@ function buildTools(userId: string) {
           warrantyExpires !== undefined && `set warranty expiry to ${warrantyExpires}`,
           description !== undefined && "update the description",
         ].filter(Boolean);
+        // When the only change is a location move, use a cleaner "Move X → Y" summary.
+        const isMove = locationName && !name && quantity === undefined && purchasePrice === undefined && purchaseDate === undefined && warrantyExpires === undefined && description === undefined;
+        const summary = isMove
+          ? `Move "${existingItem.name}" → ${locationName}`
+          : `Update "${existingItem.name}"${changes.length > 0 ? `: ${changes.join(", ")}` : ""}`;
         return proposal({
           type: "update_item",
-          summary: `Update "${existingItem.name}"${changes.length > 0 ? `: ${changes.join(", ")}` : ""}`,
+          summary,
           itemId,
           name,
           description,
@@ -209,8 +214,9 @@ function buildTools(userId: string) {
       {
         name: "update_item",
         description:
-          "Propose updating fields on an existing item — shown to the user to confirm or cancel, not applied " +
-          "immediately. Look the item up with search_items or get_item first to find its id.",
+          "Propose updating fields on an existing item (including moving it to a different location) — shown " +
+          "to the user to confirm or cancel, not applied immediately. Look the item up with search_items or " +
+          "get_item first to find its id.",
         schema: z.object({
           itemId: z.string(),
           name: z.string().optional(),

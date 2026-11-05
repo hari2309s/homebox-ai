@@ -3,6 +3,7 @@ export type { PickerOption } from "./bottom-sheet-picker";
 export { CapturePhotoPicker } from "./capture-photo-picker";
 export { ConfirmDialog } from "./confirm-dialog";
 export { EmptyState } from "./empty-state";
+export { InlineErrorCard } from "./inline-error-card";
 export { FormField } from "./form-field";
 export { InstallPrompt } from "./install-prompt";
 export { FadeIn } from "./motion/fade-in";

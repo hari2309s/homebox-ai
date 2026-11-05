@@ -4,6 +4,8 @@ import type { MaintenanceSuggestion } from "@homebox-ai/ai";
 import Link from "next/link";
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
+import { InlineErrorCard } from "@homebox-ai/ui";
+
 import { householdUserLabel, type HouseholdUser } from "../../../lib/household";
 import { assigneeInitial, colorForAssignee } from "../calendar/calendar-utils";
 import { toastSuggestionAccepted } from "../notifications/use-notifications";
@@ -315,9 +317,12 @@ export function MaintenanceDesktop({
       <WeatherCard weather={weather} />
 
       {error && (
-        <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
-          {error}
-        </p>
+        <InlineErrorCard
+          icon="build"
+          title={/reminder/i.test(error) ? "Couldn't add the reminder" : "Couldn't get suggestions"}
+          description={error}
+          onRetry={item && !/reminder/i.test(error) ? suggest : undefined}
+        />
       )}
 
       {showWarranty && item && (

@@ -524,7 +524,7 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
                   >
                     {message.pendingAction ? (
                       <div className="flex flex-col gap-2">
-                        <div className="text-[15px] leading-relaxed text-body">
+                        <div className="rounded-2xl rounded-tl-sm border border-border bg-card px-[15px] py-[11px] text-[15px] leading-relaxed text-body lg:rounded-[16px_16px_16px_4px] lg:px-4 lg:py-3">
                           <MessageContent content={message.content} />
                         </div>
                         {resolution === "cancelled" ? (
@@ -543,7 +543,7 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
                       </div>
                     ) : (
                       <div className="flex flex-col gap-3">
-                        <div className="text-[15px] leading-relaxed text-body lg:text-[16px] lg:leading-[1.6]">
+                        <div className="rounded-2xl rounded-tl-sm border border-border bg-card px-[15px] py-[11px] text-[15px] leading-relaxed text-body lg:rounded-[16px_16px_16px_4px] lg:px-4 lg:py-3 lg:text-[16px] lg:leading-[1.6]">
                           <MessageContent content={message.content} />
                         </div>
                         {message.referencedItems && message.referencedItems.length > 0 && (

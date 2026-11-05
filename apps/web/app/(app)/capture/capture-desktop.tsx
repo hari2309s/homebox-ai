@@ -4,6 +4,8 @@ import type { ItemDraft } from "@homebox-ai/ai";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
+import { InlineErrorCard } from "@homebox-ai/ui";
+
 import { currencyLabel, normalizeCurrency, SUPPORTED_CURRENCIES } from "../../../lib/currency";
 import { labelChip } from "../../../lib/label-colors";
 import { analyzePhotoAction, createItemFromCaptureAction } from "./actions";
@@ -110,9 +112,12 @@ export function CaptureDesktop({ locations, labels }: CaptureDesktopProps) {
       </div>
 
       {error && (
-        <p role="alert" className="m-0 rounded-xl bg-danger-soft px-3 py-2.5 text-sm text-danger-ink">
-          {error}
-        </p>
+        <InlineErrorCard
+          icon={/too large|file/i.test(error) ? "photo_size_select_large" : "image_not_supported"}
+          title={/save|create/i.test(error) ? "Couldn't save that" : "Couldn't read the photo"}
+          description={error}
+          onRetry={file ? () => analyze(file) : undefined}
+        />
       )}
 
       {!previewUrl ? (
