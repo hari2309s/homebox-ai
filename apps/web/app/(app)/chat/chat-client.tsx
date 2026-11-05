@@ -77,15 +77,15 @@ function TypingDots() {
 /** Maps raw error strings to a user-friendly title + description per Design J Screen 30. */
 function errorCopy(message: string): { title: string; description: string; icon: string } {
   if (/too many requests/i.test(message)) {
-    return { title: "Slow down a moment.", description: message, icon: "schedule" };
+    return { title: "Whoa, that's a lot of questions!", description: "Give me a sec to catch up — I'm not going anywhere.", icon: "schedule" };
   }
   if (/offline|network|fetch|connection/i.test(message)) {
-    return { title: "I lost the thread there.", description: "The connection dropped before I could answer.", icon: "cloud_off" };
+    return { title: "I lost the thread there.", description: "The connection dropped before I could answer. Let's try that again!", icon: "cloud_off" };
   }
   if (/unavailable|502|503/i.test(message)) {
-    return { title: "I can't think right now.", description: "The assistant is temporarily unavailable. Give it a moment.", icon: "cloud_off" };
+    return { title: "Hmm, my brain's foggy.", description: "I'm having a moment — give me a sec and try again.", icon: "cloud_off" };
   }
-  return { title: "I lost the thread there.", description: message, icon: "cloud_off" };
+  return { title: "I lost the thread there.", description: "Something tripped me up, sorry about that!", icon: "cloud_off" };
 }
 
 function ChatErrorCard({
