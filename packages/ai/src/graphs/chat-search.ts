@@ -267,6 +267,12 @@ function buildTools(userId: string) {
 // below — ReturnType<typeof createReactAgent> alone falls back to the
 // function's default generic params, which produce a differently-shaped
 // state type than what buildTools()'s concrete tool schemas actually infer.
+// Cap agent loops to initial call + 5 tool rounds = 6 LLM invocations max.
+// Without this, the default (25) lets a confused model burn through free-tier
+// provider quotas in a single turn. 6 is enough for search → get → propose
+// with room to spare.
+const AGENT_RECURSION_LIMIT = 6;
+
 function buildAgent(llm: BaseChatModel, tools: ReturnType<typeof buildTools>, prompt: string) {
   return createReactAgent({ llm, tools, prompt });
 }
@@ -391,7 +397,10 @@ export function createChatSearchGraph(userId: string, options: { displayName?: s
       let lastError: unknown;
       for (const [index, llm] of models.entries()) {
         try {
-          const result = await buildAgent(llm, tools, prompt).invoke(input, config);
+          const result = await buildAgent(llm, tools, prompt).invoke(input, {
+            ...config,
+            recursionLimit: AGENT_RECURSION_LIMIT,
+          });
           const lastMessage = result.messages.at(-1);
           if (typeof lastMessage?.content === "string" && looksLikeLeakedToolCall(lastMessage.content, toolNames)) {
             throw new Error("Model emitted an unparsed tool-call-like response instead of a real tool call");

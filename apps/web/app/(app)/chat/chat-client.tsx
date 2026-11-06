@@ -269,10 +269,13 @@ export function ChatClient({ itemCount, zoneCount, userName = "You" }: { itemCou
       if (sessionIdRef.current !== requestSessionId) return;
 
       const errorMsg = err instanceof Error ? err.message : "Something went wrong";
-      const isRateLimited = /too many requests/i.test(errorMsg);
+      // Don't auto-retry rate-limit or provider-unavailable errors — retrying
+      // just burns more free-tier quota for the same result. Show the error
+      // card with a manual Retry button instead so the user can try later.
+      const skipAutoRetry = /too many requests|unavailable/i.test(errorMsg);
 
-      // Auto-retry unless we've exhausted attempts or it's a rate-limit error
-      if (attempt < MAX_RETRIES && !isRateLimited) {
+      // Auto-retry only transient errors (network blips, timeouts)
+      if (attempt < MAX_RETRIES && !skipAutoRetry) {
         setError({ message: errorMsg, originalMessage: trimmed, attempt: attempt + 1, retrying: true });
         if (abortRef.current === controller) abortRef.current = null;
         pendingRef.current = false;
