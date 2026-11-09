@@ -1,0 +1,47 @@
+name: Langfuse eval gate
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: langfuse/experiment-action@b945f9bf921b24a4074306078f621cba729d173e # v1.0.10
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+          # Deliberately no Supabase/DB secrets: the eval bypasses DB access
+          # entirely — fixtures provide synthetic data directly. Keeping DB
+          # credentials out avoids accidental writes to production.
+        with:
+          langfuse_public_key: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          langfuse_secret_key: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          experiment_path: packages/ai/evals/gate.ts
+          dataset_name: homebox-golden
+          should_comment_on_pr: false
+          github_token: ${{ github.token }}
+          # gate.ts's transitive imports (router.ts -> @langchain/*, etc.)
+          # need the real pnpm install above — the action's own install only
+          # fetches the Langfuse/OTel/tsx packages into an isolated temp dir
+          # without those. Our package.json already carries @langfuse/client,
+          # so skip the action's redundant (and insufficient) install.
+          should_skip_sdk_installation: true

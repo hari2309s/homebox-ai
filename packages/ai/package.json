@@ -7,7 +7,9 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "eval": "tsx evals/run-golden.ts",
+    "eval:sync-dataset": "tsx evals/sync-dataset.ts"
   },
   "dependencies": {
     "@homebox-ai/db": "workspace:*",
@@ -16,12 +18,15 @@
     "@langchain/groq": "^1.3.1",
     "@langchain/langgraph": "^1.4.12",
     "@langchain/openai": "^1.5.10",
+    "@langfuse/client": "^5.10.1",
     "@langfuse/langchain": "^5.10.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@homebox-ai/config": "workspace:*",
     "@types/node": "^22.0.0",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.0.0",
     "typescript": "^5.7.0"
   }
 }
