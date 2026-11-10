@@ -41,42 +41,42 @@ interface Slot {
 }
 
 const SLOTS: Slot[] = [
-  // Top strip (6–8% keeps icons fully visible even during upward float drift)
-  { left: 10, top: 6, r: -15, dy: 10, dr: 4 },
-  { left: 48, top: 5, r: 10, dy: 12, dr: 3 },
-  { left: 88, top: 7, r: -20, dy: 9, dr: 5 },
-  // Left margin (md+)
-  { left: 8, top: 25, r: 18, dy: 11, dr: 4 },
-  { left: 14, top: 50, r: -12, dy: 13, dr: 3 },
-  { left: 10, top: 75, r: 22, dy: 10, dr: 5 },
-  // Right margin (md+)
-  { left: 92, top: 28, r: -18, dy: 12, dr: 4 },
-  { left: 86, top: 52, r: 14, dy: 10, dr: 3 },
-  { left: 90, top: 78, r: -22, dy: 11, dr: 5 },
-  // Bottom strip (94–96% keeps icons below form content and within viewport)
-  { left: 12, top: 95, r: 12, dy: 9, dr: 4 },
-  { left: 50, top: 96, r: -10, dy: 12, dr: 3 },
-  { left: 88, top: 94, r: 18, dy: 10, dr: 5 },
+  // Top strip — staggered heights, asymmetric spacing
+  { left: 7, top: 5, r: -22, dy: 11, dr: 5 },
+  { left: 42, top: 8, r: 14, dy: 9, dr: 3 },
+  { left: 82, top: 4, r: -8, dy: 13, dr: 4 },
+  // Left margin (md+) — varied horizontal offsets and vertical rhythm
+  { left: 5, top: 22, r: 25, dy: 12, dr: 6 },
+  { left: 16, top: 46, r: -18, dy: 10, dr: 3 },
+  { left: 7, top: 72, r: 12, dy: 14, dr: 5 },
+  // Right margin (md+) — different rhythm from left side
+  { left: 94, top: 32, r: -14, dy: 11, dr: 4 },
+  { left: 84, top: 58, r: 20, dy: 9, dr: 6 },
+  { left: 93, top: 82, r: -26, dy: 12, dr: 3 },
+  // Bottom strip — staggered heights, asymmetric spacing
+  { left: 18, top: 94, r: 16, dy: 10, dr: 4 },
+  { left: 56, top: 96, r: -12, dy: 8, dr: 5 },
+  { left: 85, top: 93, r: 22, dy: 11, dr: 3 },
 ];
 
-/** Organized: neat, aligned peripheral positions (icons straighten up). */
+/** Organized: peripheral but slightly irregular grid (not perfectly aligned). */
 const ORGANIZED: { left: number; top: number }[] = [
-  // Top row — evenly spaced, aligned height
-  { left: 20, top: 6 },
-  { left: 50, top: 6 },
-  { left: 80, top: 6 },
-  // Left column — aligned
-  { left: 6, top: 30 },
-  { left: 6, top: 50 },
-  { left: 6, top: 70 },
-  // Right column — aligned
-  { left: 94, top: 30 },
-  { left: 94, top: 50 },
-  { left: 94, top: 70 },
-  // Bottom row — evenly spaced, aligned height
-  { left: 20, top: 95 },
-  { left: 50, top: 95 },
-  { left: 80, top: 95 },
+  // Top — offset heights and uneven horizontal gaps
+  { left: 15, top: 5 },
+  { left: 48, top: 7 },
+  { left: 78, top: 4 },
+  // Left column — staggered inward
+  { left: 5, top: 26 },
+  { left: 10, top: 48 },
+  { left: 4, top: 72 },
+  // Right column — different offsets from left
+  { left: 96, top: 34 },
+  { left: 90, top: 56 },
+  { left: 95, top: 80 },
+  // Bottom — offset heights and uneven gaps
+  { left: 22, top: 95 },
+  { left: 53, top: 93 },
+  { left: 82, top: 96 },
 ];
 
 /** Indices 3–8 are side-margin icons, hidden on mobile. */
