@@ -45,8 +45,8 @@ function seededRandom(seed: number) {
 function scatteredPos(index: number) {
   const r = (i: number) => seededRandom(index * 7 + i);
   return {
-    x: `${10 + r(0) * 80}%`,
-    y: `${5 + r(1) * 90}%`,
+    left: `${10 + r(0) * 80}%`,
+    top: `${5 + r(1) * 90}%`,
     rotate: -30 + r(2) * 60,
   };
 }
@@ -64,8 +64,8 @@ function organizedPos(index: number, total: number) {
   const row = Math.floor(index / cols);
   const rows = Math.ceil(total / cols);
   return {
-    x: `${GRID_PAD_X + (cols > 1 ? (col / (cols - 1)) * GRID_SPAN_X : GRID_SPAN_X / 2)}%`,
-    y: `${GRID_PAD_Y + (rows > 1 ? (row / (rows - 1)) * GRID_SPAN_Y : GRID_SPAN_Y / 2)}%`,
+    left: `${GRID_PAD_X + (cols > 1 ? (col / (cols - 1)) * GRID_SPAN_X : GRID_SPAN_X / 2)}%`,
+    top: `${GRID_PAD_Y + (rows > 1 ? (row / (rows - 1)) * GRID_SPAN_Y : GRID_SPAN_Y / 2)}%`,
     rotate: 0,
   };
 }
@@ -80,8 +80,8 @@ const itemVariants: Variants = {
   scattered: (i: number) => {
     const pos = scatteredPos(i);
     return {
-      left: pos.x,
-      top: pos.y,
+      left: pos.left,
+      top: pos.top,
       rotate: pos.rotate,
       opacity: 0,
       scale: 0.7,
@@ -91,21 +91,21 @@ const itemVariants: Variants = {
   appear: (i: number) => {
     const pos = scatteredPos(i);
     return {
-      left: pos.x,
-      top: pos.y,
+      left: pos.left,
+      top: pos.top,
       rotate: pos.rotate,
       opacity: 0.5,
       scale: 1,
       transition: {
         delay: i * 0.03,
         duration: 0.3,
-        ease: [0.16, 1, 0.3, 1],
+        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
       },
     };
   },
   organized: (i: number) => ({
     ...organizedPos(i, 12),
-    opacity: 0.22,
+    opacity: 0.35,
     scale: 1,
     transition: {
       type: "spring",
@@ -117,7 +117,7 @@ const itemVariants: Variants = {
   /** Reduced-motion: skip straight to the organized state with no animation. */
   instant: (i: number) => ({
     ...organizedPos(i, 12),
-    opacity: 0.18,
+    opacity: 0.3,
     scale: 1,
     rotate: 0,
     transition: { duration: 0 },
@@ -152,8 +152,8 @@ const IDLE_CSS = `
 type Intensity = "subtle" | "medium";
 
 const OPACITY: Record<Intensity, number> = {
-  subtle: 0.15,
-  medium: 0.3,
+  subtle: 0.25,
+  medium: 0.4,
 };
 
 interface ScatteredItemsProps {
@@ -180,7 +180,7 @@ export function ScatteredItems({
   const items = ALL_ITEMS;
   const mobileCount = MOBILE_ITEMS.length;
 
-  // Memoize organized positions so they don't recalculate on every render.
+  // Memoize organized positions so they don't recalculate on every render (SSR fallback).
   const positions = useMemo(
     () => items.map((_, i) => organizedPos(i, items.length)),
     [items],
@@ -223,7 +223,7 @@ export function ScatteredItems({
             variants={itemVariants}
             initial="scattered"
             animate={itemAnimate}
-            className={`material-symbols-rounded absolute -translate-x-1/2 -translate-y-1/2 text-border will-change-transform ${i >= mobileCount ? "hidden md:block" : ""}`}
+            className={`material-symbols-rounded absolute -translate-x-1/2 -translate-y-1/2 text-muted will-change-transform ${i >= mobileCount ? "hidden md:block" : ""}`}
             style={{
               fontSize: 28,
               // After the spring animation ends, hand off to CSS idle breathing.
@@ -235,8 +235,8 @@ export function ScatteredItems({
               animationDelay: `${2.2 + i * 0.15}s`,
               "--si-base-opacity": baseOpacity,
               // Fallback positions for SSR (organized state).
-              left: org.x,
-              top: org.y,
+              left: org.left,
+              top: org.top,
             } as React.CSSProperties}
           >
             {icon}
