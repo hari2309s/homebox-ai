@@ -6,6 +6,7 @@ import {
   FormField,
   Input,
   PasswordInput,
+  ScatteredItems,
   StaggerItem,
   StaggerList,
   WalkingDots,
@@ -310,8 +311,11 @@ function LoginForm() {
   }
 
   return (
-    <main className="no-scrollbar mx-auto flex h-dvh w-full max-w-md flex-col items-center overflow-y-auto px-5 py-10">
-      <div className="m-auto flex w-full flex-col items-center gap-4">
+    <main className="no-scrollbar relative mx-auto flex h-dvh w-full max-w-md flex-col items-center overflow-y-auto px-5 py-10">
+      {/* Scattered → organized items background animation */}
+      <ScatteredItems className="absolute inset-0 z-0" intensity="subtle" />
+
+      <div className="relative z-10 m-auto flex w-full flex-col items-center gap-4">
         {/* Icon + Title */}
         <motion.div
           initial={{ scale: 0.6, opacity: 0 }}

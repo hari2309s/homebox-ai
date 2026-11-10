@@ -1,5 +1,7 @@
 "use client";
 
+import { ScatteredItems, StepTransition } from "@homebox-ai/ui";
+import { AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 
@@ -163,6 +165,12 @@ export function OnboardingFlow({
   const [copied, setCopied] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
+
+  function goTo(next: number) {
+    setDirection(next > step ? 1 : -1);
+    setStep(next);
+  }
 
   const options = useMemo(() => [...ZONE_OPTIONS, ...custom], [custom]);
   const pickedZones = options.filter((z) => picked.includes(z.name));
@@ -216,336 +224,356 @@ export function OnboardingFlow({
     });
   }
 
-  if (step === 0) {
-    return (
-      <Shell
-        step={0}
-        onSkip={() => finish("/")}
-        footer={
-          <>
-            <button
-              type="button"
-              disabled={busy || !placeName.trim()}
-              onClick={() =>
-                run(async () => {
-                  await saveHouseholdAction({ name: placeName, plotSize: plot });
-                  setStep(1);
-                })
-              }
-              className={PRIMARY}
-            >
-              {busy ? "Saving…" : "Continue"}
-            </button>
-            {pendingJoin ? (
-              <span className="text-[14px] text-muted">
-                Joining someone else&apos;s home?{" "}
-                <a href={pendingJoin} className="font-semibold text-accent no-underline">
-                  Open your invite
-                </a>
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowInviteField((v) => !v)}
-                className="cursor-pointer border-none bg-transparent p-0 text-[14px] text-muted"
-              >
-                Joining someone else&apos;s home? <span className="font-semibold text-accent">Use an invite</span>
-              </button>
-            )}
-          </>
-        }
-      >
-        <div>
-          <Eyebrow>Welcome{firstName ? `, ${firstName}` : ""} · step 1 of 3</Eyebrow>
-          <Title>What do you call home?</Title>
-        </div>
-        <label className="flex flex-col gap-[5px]">
-          <span className="text-[12px] font-semibold text-body">Name of the place</span>
-          <input
-            autoFocus
-            value={placeName}
-            maxLength={60}
-            onChange={(e) => setPlaceName(e.target.value)}
-            placeholder="e.g. Willow Cottage"
-            aria-describedby="place-hint"
-            className="rounded-xl border border-border bg-card px-3 py-[11px] text-[15px] text-ink outline-none focus:border-2 focus:border-accent focus:px-[11px] focus:py-[10px] focus:shadow-[0_0_0_4px_var(--color-selected)]"
-          />
-          <span id="place-hint" className="text-[12px] text-muted">
-            A house name or street works best, e.g. &ldquo;Willow Cottage&rdquo;
-          </span>
-        </label>
-        <fieldset className="m-0 flex flex-col gap-2 border-none p-0">
-          <legend className="mb-2 p-0 text-[12px] font-semibold text-body">Roughly how big is the plot?</legend>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Plot size">
-            {PLOT_SIZES.map((p) => {
-              const active = plot === p.id;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => setPlot(p.id)}
-                  className={`flex cursor-pointer flex-col items-center gap-2 rounded-[14px] px-2 py-3 text-center ${
-                    active ? "border-2 border-accent bg-selected-soft" : "border border-border bg-card"
-                  }`}
-                >
-                  <span
-                    className="relative flex-none rounded-[4px] border border-(--plan-bed-line) bg-(--plan-bed)"
-                    style={{ width: p.size, height: p.size }}
-                  >
-                    <span className="absolute left-[20%] top-[30%] h-[40%] w-[34%] rounded-[2px] border-[1.5px] border-(--plan-house-line) bg-(--plan-house)" />
-                  </span>
-                  <span className="text-[13px] font-semibold text-ink">{p.label}</span>
-                  <span className="font-mono text-[9px] text-muted">{p.detail}</span>
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-        {showInviteField && !pendingJoin && (
-          <div className="flex flex-col gap-2 rounded-[14px] border border-border bg-card p-3">
-            <label className="text-[12px] font-semibold text-body" htmlFor="invite-link">
-              Paste the invite link you were sent
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="invite-link"
-                value={inviteLink ?? ""}
-                onChange={(e) => setInviteLink(e.target.value)}
-                placeholder="https://…/join/…"
-                className="min-w-0 flex-1 rounded-[10px] border border-border bg-card px-3 py-[9px] font-mono text-[13px] text-ink outline-none focus:border-accent"
-              />
-              <button
-                type="button"
-                onClick={openInviteLink}
-                className="cursor-pointer rounded-[10px] border-none bg-accent px-4 text-[13px] font-semibold text-on-accent"
-              >
-                Open
-              </button>
-            </div>
-          </div>
-        )}
-        <ErrorNote error={error} />
-      </Shell>
-    );
-  }
-
-  if (step === 1) {
-    return (
-      <Shell
-        step={1}
-        onSkip={() => finish("/")}
-        footer={
-          <div className="flex w-full gap-2">
-            <button type="button" onClick={() => setStep(0)} className={`${SECONDARY} flex-1`}>
-              Back
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() =>
-                run(async () => {
-                  await createZonesAction(pickedZones.map((z) => ({ name: z.name, kind: z.kind })));
-                  setStep(2);
-                })
-              }
-              className={`${PRIMARY} flex-[2]`}
-            >
-              {busy
-                ? "Drawing your plot…"
-                : `Continue · ${pickedZones.length} ${pickedZones.length === 1 ? "zone" : "zones"}`}
-            </button>
-          </div>
-        }
-      >
-        <div>
-          <Eyebrow>{shortName} · step 2 of 3</Eyebrow>
-          <Title>What&apos;s on the plot?</Title>
-        </div>
-        <MiniPlan zones={pickedZones} preview={hoveredZone} />
-        <div className="grid grid-cols-2 gap-2" role="group" aria-label="Zones on your plot">
-          {options.map((zone) => {
-            const on = picked.includes(zone.name);
-            return (
-              <button
-                key={zone.name}
-                type="button"
-                role="checkbox"
-                aria-checked={on}
-                aria-disabled={zone.locked}
-                onClick={() =>
-                  !zone.locked && setPicked((prev) => (on ? prev.filter((p) => p !== zone.name) : [...prev, zone.name]))
-                }
-                onMouseEnter={() => setHovered(zone.name)}
-                onMouseLeave={() => setHovered(null)}
-                onFocus={() => setHovered(zone.name)}
-                onBlur={() => setHovered(null)}
-                className={`flex h-12 items-center gap-[10px] rounded-xl px-3 text-left ${zone.locked ? "cursor-default" : "cursor-pointer"} ${
-                  on ? "border-2 border-accent bg-selected-soft" : "border border-border bg-card"
-                }`}
-              >
-                <span className="h-3 w-3 flex-none rounded-[3px]" style={{ background: zone.color }} />
-                <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">{zone.name}</span>
-                <span
-                  aria-hidden
-                  className={`material-symbols-rounded text-[20px] ${on ? "text-accent" : "text-faint"}`}
-                  style={{ fontVariationSettings: on ? "'FILL' 1" : undefined }}
-                >
-                  {zone.locked ? "lock" : on ? "check_circle" : "add_circle"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        {customDraft === null ? (
-          <button
-            type="button"
-            onClick={() => setCustomDraft("")}
-            className="flex cursor-pointer items-center gap-1 self-start border-none bg-transparent p-0 text-[13px] font-semibold text-accent"
-          >
-            <span aria-hidden className="material-symbols-rounded text-[18px]">
-              add
-            </span>
-            Add your own (greenhouse, chicken run…)
-          </button>
-        ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              addCustom();
-            }}
-            className="flex gap-2"
-          >
-            <input
-              autoFocus
-              value={customDraft}
-              maxLength={40}
-              onChange={(e) => setCustomDraft(e.target.value)}
-              onKeyDown={(e) => e.key === "Escape" && setCustomDraft(null)}
-              placeholder="e.g. Chicken run"
-              aria-label="Name of your own zone"
-              className="min-w-0 flex-1 rounded-[10px] border border-border bg-card px-3 py-[9px] text-[14px] text-ink outline-none focus:border-accent"
-            />
-            <button
-              type="submit"
-              className="cursor-pointer rounded-[10px] border-none bg-accent px-4 text-[13px] font-semibold text-on-accent"
-            >
-              Add
-            </button>
-          </form>
-        )}
-        <p className="m-0 text-[12px] text-muted">You can move and resize everything later on the Plan.</p>
-        <ErrorNote error={error} />
-      </Shell>
-    );
-  }
+  /** Scattered items progress: scattered on step 0, organized once the user has picked zones. */
+  const scatteredStage = step < 2 ? "scattered" : "organized";
 
   return (
-    <Shell
-      step={2}
-      footer={
-        <>
-          <button type="button" disabled={busy} onClick={() => finish("/")} className={PRIMARY}>
-            Show me the plan
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => finish("/")}
-            className="cursor-pointer border-none bg-transparent p-0 text-[14px] font-semibold text-muted"
-          >
-            Skip for now
-          </button>
-        </>
-      }
-    >
-      <div>
-        <Eyebrow>Step 3 of 3 · almost home</Eyebrow>
-        <h1 className="m-0 mt-[6px] font-serif text-[28px] font-normal leading-[1.1] text-ink">
-          Who else looks after {shortName}?
-        </h1>
+    <div className="relative min-h-dvh w-full">
+      {/* Background: scattered → organized items animation */}
+      <ScatteredItems
+        className="absolute inset-0 z-0"
+        intensity="subtle"
+        stage={scatteredStage}
+      />
+
+      <div className="relative z-10">
+        <AnimatePresence mode="wait" custom={direction}>
+          {step === 0 && (
+            <StepTransition key="step-0" stepKey={0} direction={direction}>
+              <Shell
+                step={0}
+                onSkip={() => finish("/")}
+                footer={
+                  <>
+                    <button
+                      type="button"
+                      disabled={busy || !placeName.trim()}
+                      onClick={() =>
+                        run(async () => {
+                          await saveHouseholdAction({ name: placeName, plotSize: plot });
+                          goTo(1);
+                        })
+                      }
+                      className={PRIMARY}
+                    >
+                      {busy ? "Saving…" : "Continue"}
+                    </button>
+                    {pendingJoin ? (
+                      <span className="text-[14px] text-muted">
+                        Joining someone else&apos;s home?{" "}
+                        <a href={pendingJoin} className="font-semibold text-accent no-underline">
+                          Open your invite
+                        </a>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowInviteField((v) => !v)}
+                        className="cursor-pointer border-none bg-transparent p-0 text-[14px] text-muted"
+                      >
+                        Joining someone else&apos;s home? <span className="font-semibold text-accent">Use an invite</span>
+                      </button>
+                    )}
+                  </>
+                }
+              >
+                <div>
+                  <Eyebrow>Welcome{firstName ? `, ${firstName}` : ""} · step 1 of 3</Eyebrow>
+                  <Title>What do you call home?</Title>
+                </div>
+                <label className="flex flex-col gap-[5px]">
+                  <span className="text-[12px] font-semibold text-body">Name of the place</span>
+                  <input
+                    autoFocus
+                    value={placeName}
+                    maxLength={60}
+                    onChange={(e) => setPlaceName(e.target.value)}
+                    placeholder="e.g. Willow Cottage"
+                    aria-describedby="place-hint"
+                    className="rounded-xl border border-border bg-card px-3 py-[11px] text-[15px] text-ink outline-none focus:border-2 focus:border-accent focus:px-[11px] focus:py-[10px] focus:shadow-[0_0_0_4px_var(--color-selected)]"
+                  />
+                  <span id="place-hint" className="text-[12px] text-muted">
+                    A house name or street works best, e.g. &ldquo;Willow Cottage&rdquo;
+                  </span>
+                </label>
+                <fieldset className="m-0 flex flex-col gap-2 border-none p-0">
+                  <legend className="mb-2 p-0 text-[12px] font-semibold text-body">Roughly how big is the plot?</legend>
+                  <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Plot size">
+                    {PLOT_SIZES.map((p) => {
+                      const active = plot === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={active}
+                          onClick={() => setPlot(p.id)}
+                          className={`flex cursor-pointer flex-col items-center gap-2 rounded-[14px] px-2 py-3 text-center ${
+                            active ? "border-2 border-accent bg-selected-soft" : "border border-border bg-card"
+                          }`}
+                        >
+                          <span
+                            className="relative flex-none rounded-[4px] border border-(--plan-bed-line) bg-(--plan-bed)"
+                            style={{ width: p.size, height: p.size }}
+                          >
+                            <span className="absolute left-[20%] top-[30%] h-[40%] w-[34%] rounded-[2px] border-[1.5px] border-(--plan-house-line) bg-(--plan-house)" />
+                          </span>
+                          <span className="text-[13px] font-semibold text-ink">{p.label}</span>
+                          <span className="font-mono text-[9px] text-muted">{p.detail}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+                {showInviteField && !pendingJoin && (
+                  <div className="flex flex-col gap-2 rounded-[14px] border border-border bg-card p-3">
+                    <label className="text-[12px] font-semibold text-body" htmlFor="invite-link">
+                      Paste the invite link you were sent
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        id="invite-link"
+                        value={inviteLink ?? ""}
+                        onChange={(e) => setInviteLink(e.target.value)}
+                        placeholder="https://…/join/…"
+                        className="min-w-0 flex-1 rounded-[10px] border border-border bg-card px-3 py-[9px] font-mono text-[13px] text-ink outline-none focus:border-accent"
+                      />
+                      <button
+                        type="button"
+                        onClick={openInviteLink}
+                        className="cursor-pointer rounded-[10px] border-none bg-accent px-4 text-[13px] font-semibold text-on-accent"
+                      >
+                        Open
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <ErrorNote error={error} />
+              </Shell>
+            </StepTransition>
+          )}
+
+          {step === 1 && (
+            <StepTransition key="step-1" stepKey={1} direction={direction}>
+              <Shell
+                step={1}
+                onSkip={() => finish("/")}
+                footer={
+                  <div className="flex w-full gap-2">
+                    <button type="button" onClick={() => goTo(0)} className={`${SECONDARY} flex-1`}>
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() =>
+                        run(async () => {
+                          await createZonesAction(pickedZones.map((z) => ({ name: z.name, kind: z.kind })));
+                          goTo(2);
+                        })
+                      }
+                      className={`${PRIMARY} flex-[2]`}
+                    >
+                      {busy
+                        ? "Drawing your plot…"
+                        : `Continue · ${pickedZones.length} ${pickedZones.length === 1 ? "zone" : "zones"}`}
+                    </button>
+                  </div>
+                }
+              >
+                <div>
+                  <Eyebrow>{shortName} · step 2 of 3</Eyebrow>
+                  <Title>What&apos;s on the plot?</Title>
+                </div>
+                <MiniPlan zones={pickedZones} preview={hoveredZone} />
+                <div className="grid grid-cols-2 gap-2" role="group" aria-label="Zones on your plot">
+                  {options.map((zone) => {
+                    const on = picked.includes(zone.name);
+                    return (
+                      <button
+                        key={zone.name}
+                        type="button"
+                        role="checkbox"
+                        aria-checked={on}
+                        aria-disabled={zone.locked}
+                        onClick={() =>
+                          !zone.locked && setPicked((prev) => (on ? prev.filter((p) => p !== zone.name) : [...prev, zone.name]))
+                        }
+                        onMouseEnter={() => setHovered(zone.name)}
+                        onMouseLeave={() => setHovered(null)}
+                        onFocus={() => setHovered(zone.name)}
+                        onBlur={() => setHovered(null)}
+                        className={`flex h-12 items-center gap-[10px] rounded-xl px-3 text-left ${zone.locked ? "cursor-default" : "cursor-pointer"} ${
+                          on ? "border-2 border-accent bg-selected-soft" : "border border-border bg-card"
+                        }`}
+                      >
+                        <span className="h-3 w-3 flex-none rounded-[3px]" style={{ background: zone.color }} />
+                        <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-ink">{zone.name}</span>
+                        <span
+                          aria-hidden
+                          className={`material-symbols-rounded text-[20px] ${on ? "text-accent" : "text-faint"}`}
+                          style={{ fontVariationSettings: on ? "'FILL' 1" : undefined }}
+                        >
+                          {zone.locked ? "lock" : on ? "check_circle" : "add_circle"}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {customDraft === null ? (
+                  <button
+                    type="button"
+                    onClick={() => setCustomDraft("")}
+                    className="flex cursor-pointer items-center gap-1 self-start border-none bg-transparent p-0 text-[13px] font-semibold text-accent"
+                  >
+                    <span aria-hidden className="material-symbols-rounded text-[18px]">
+                      add
+                    </span>
+                    Add your own (greenhouse, chicken run…)
+                  </button>
+                ) : (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      addCustom();
+                    }}
+                    className="flex gap-2"
+                  >
+                    <input
+                      autoFocus
+                      value={customDraft}
+                      maxLength={40}
+                      onChange={(e) => setCustomDraft(e.target.value)}
+                      onKeyDown={(e) => e.key === "Escape" && setCustomDraft(null)}
+                      placeholder="e.g. Chicken run"
+                      aria-label="Name of your own zone"
+                      className="min-w-0 flex-1 rounded-[10px] border border-border bg-card px-3 py-[9px] text-[14px] text-ink outline-none focus:border-accent"
+                    />
+                    <button
+                      type="submit"
+                      className="cursor-pointer rounded-[10px] border-none bg-accent px-4 text-[13px] font-semibold text-on-accent"
+                    >
+                      Add
+                    </button>
+                  </form>
+                )}
+                <p className="m-0 text-[12px] text-muted">You can move and resize everything later on the Plan.</p>
+                <ErrorNote error={error} />
+              </Shell>
+            </StepTransition>
+          )}
+
+          {step === 2 && (
+            <StepTransition key="step-2" stepKey={2} direction={direction}>
+              <Shell
+                step={2}
+                footer={
+                  <>
+                    <button type="button" disabled={busy} onClick={() => finish("/")} className={PRIMARY}>
+                      Show me the plan
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => finish("/")}
+                      className="cursor-pointer border-none bg-transparent p-0 text-[14px] font-semibold text-muted"
+                    >
+                      Skip for now
+                    </button>
+                  </>
+                }
+              >
+                <div>
+                  <Eyebrow>Step 3 of 3 · almost home</Eyebrow>
+                  <h1 className="m-0 mt-[6px] font-serif text-[28px] font-normal leading-[1.1] text-ink">
+                    Who else looks after {shortName}?
+                  </h1>
+                </div>
+                <div className="flex flex-col gap-[10px] rounded-[14px] border border-border bg-card p-3">
+                  <div className="flex gap-[6px]">
+                    <input
+                      list="onboarding-relationships"
+                      value={relationship}
+                      maxLength={40}
+                      onChange={(e) => setRelationship(e.target.value)}
+                      placeholder="Who are they? e.g. Partner"
+                      aria-label="Their relationship to you"
+                      className="min-w-0 flex-1 rounded-[10px] border border-border bg-card px-[10px] py-[10px] text-[14px] text-ink outline-none focus:border-accent"
+                    />
+                    <datalist id="onboarding-relationships">
+                      {RELATIONSHIPS.map((r) => (
+                        <option key={r} value={r} />
+                      ))}
+                    </datalist>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={createInvite}
+                      className="cursor-pointer rounded-[10px] border-none bg-accent px-[14px] text-[13px] font-semibold text-on-accent disabled:opacity-45"
+                    >
+                      Invite
+                    </button>
+                  </div>
+                  {invited.map((invite) => (
+                    <div key={invite.token} className="flex items-center gap-[10px]">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#5b7fa6] text-[12px] font-bold text-white">
+                        {(invite.relationship || "?").charAt(0).toUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-[14px] text-ink">
+                        {invite.relationship || "Family member"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(`${window.location.origin}/join/${invite.token}`).catch(() => {});
+                          setCopied(invite.token);
+                        }}
+                        className="cursor-pointer border-none bg-transparent p-0 text-[12px] font-semibold text-accent"
+                      >
+                        {copied === invite.token ? "Link copied ✓" : "Copy link"}
+                      </button>
+                      <span className="rounded-[5px] bg-warn-soft px-[6px] py-[3px] font-mono text-[10px] text-warn-ink">
+                        INVITED
+                      </span>
+                    </div>
+                  ))}
+                  <span className="text-[12px] text-muted">
+                    {invited.length
+                      ? "Send them the link; it works once and lasts 7 days."
+                      : "Or share a link later from Settings › Household."}
+                  </span>
+                </div>
+                <h2 className="m-0 mt-1 font-serif text-[20px] font-normal text-ink">Add your first thing</h2>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { href: "/capture", icon: "photo_camera", label: "Photo", bg: "#dfe8d6", fg: "#3f6b45" },
+                    { href: "/receipts", icon: "receipt_long", label: "Receipt", bg: "#ecdccd", fg: "#b0643f" },
+                    { href: "/scan", icon: "barcode_scanner", label: "Barcode", bg: "#e7e1d0", fg: "#5a4f33" },
+                  ].map((first) => (
+                    <button
+                      key={first.href}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => finish(first.href)}
+                      className="flex cursor-pointer flex-col items-center gap-2 rounded-[14px] border border-border bg-card px-[6px] py-[14px]"
+                    >
+                      <span
+                        aria-hidden
+                        className="material-symbols-rounded flex h-11 w-11 items-center justify-center rounded-xl"
+                        style={{ background: first.bg, color: first.fg }}
+                      >
+                        {first.icon}
+                      </span>
+                      <span className="text-[13px] font-semibold text-ink">{first.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <ErrorNote error={error} />
+              </Shell>
+            </StepTransition>
+          )}
+        </AnimatePresence>
       </div>
-      <div className="flex flex-col gap-[10px] rounded-[14px] border border-border bg-card p-3">
-        <div className="flex gap-[6px]">
-          <input
-            list="onboarding-relationships"
-            value={relationship}
-            maxLength={40}
-            onChange={(e) => setRelationship(e.target.value)}
-            placeholder="Who are they? e.g. Partner"
-            aria-label="Their relationship to you"
-            className="min-w-0 flex-1 rounded-[10px] border border-border bg-card px-[10px] py-[10px] text-[14px] text-ink outline-none focus:border-accent"
-          />
-          <datalist id="onboarding-relationships">
-            {RELATIONSHIPS.map((r) => (
-              <option key={r} value={r} />
-            ))}
-          </datalist>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={createInvite}
-            className="cursor-pointer rounded-[10px] border-none bg-accent px-[14px] text-[13px] font-semibold text-on-accent disabled:opacity-45"
-          >
-            Invite
-          </button>
-        </div>
-        {invited.map((invite) => (
-          <div key={invite.token} className="flex items-center gap-[10px]">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#5b7fa6] text-[12px] font-bold text-white">
-              {(invite.relationship || "?").charAt(0).toUpperCase()}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-[14px] text-ink">
-              {invite.relationship || "Family member"}
-            </span>
-            <button
-              type="button"
-              onClick={async () => {
-                await navigator.clipboard.writeText(`${window.location.origin}/join/${invite.token}`).catch(() => {});
-                setCopied(invite.token);
-              }}
-              className="cursor-pointer border-none bg-transparent p-0 text-[12px] font-semibold text-accent"
-            >
-              {copied === invite.token ? "Link copied ✓" : "Copy link"}
-            </button>
-            <span className="rounded-[5px] bg-warn-soft px-[6px] py-[3px] font-mono text-[10px] text-warn-ink">
-              INVITED
-            </span>
-          </div>
-        ))}
-        <span className="text-[12px] text-muted">
-          {invited.length
-            ? "Send them the link; it works once and lasts 7 days."
-            : "Or share a link later from Settings › Household."}
-        </span>
-      </div>
-      <h2 className="m-0 mt-1 font-serif text-[20px] font-normal text-ink">Add your first thing</h2>
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { href: "/capture", icon: "photo_camera", label: "Photo", bg: "#dfe8d6", fg: "#3f6b45" },
-          { href: "/receipts", icon: "receipt_long", label: "Receipt", bg: "#ecdccd", fg: "#b0643f" },
-          { href: "/scan", icon: "barcode_scanner", label: "Barcode", bg: "#e7e1d0", fg: "#5a4f33" },
-        ].map((first) => (
-          <button
-            key={first.href}
-            type="button"
-            disabled={busy}
-            onClick={() => finish(first.href)}
-            className="flex cursor-pointer flex-col items-center gap-2 rounded-[14px] border border-border bg-card px-[6px] py-[14px]"
-          >
-            <span
-              aria-hidden
-              className="material-symbols-rounded flex h-11 w-11 items-center justify-center rounded-xl"
-              style={{ background: first.bg, color: first.fg }}
-            >
-              {first.icon}
-            </span>
-            <span className="text-[13px] font-semibold text-ink">{first.label}</span>
-          </button>
-        ))}
-      </div>
-      <ErrorNote error={error} />
-    </Shell>
+    </div>
   );
 }

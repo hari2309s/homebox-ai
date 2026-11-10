@@ -9,6 +9,8 @@ export { InstallPrompt } from "./install-prompt";
 export { FadeIn } from "./motion/fade-in";
 export { StaggerList, StaggerItem } from "./motion/stagger-list";
 export { AnimatedHomeboxIcon } from "./motion/animated-homebox-icon";
+export { ScatteredItems } from "./motion/scattered-items";
+export { StepTransition } from "./motion/step-transition";
 export { Input, Select, Button, SubmitButton } from "./form";
 export { PasswordInput } from "./password-input";
 export { PullToRefresh } from "./pull-to-refresh";
