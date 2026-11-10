@@ -310,12 +310,14 @@ function LoginForm() {
     );
   }
 
-  return (
-    <main className="no-scrollbar relative mx-auto flex h-dvh w-full max-w-md flex-col items-center overflow-y-auto px-5 py-10">
-      {/* Scattered → organized items background animation */}
-      <ScatteredItems className="absolute inset-0 z-0" intensity="subtle" />
+  const hasInput = email.length > 0 || password.length > 0 || name.length > 0;
 
-      <div className="relative z-10 m-auto flex w-full flex-col items-center gap-4">
+  return (
+    <>
+      <ScatteredItems className="fixed inset-0 z-0" stage={hasInput ? "organized" : "scattered"} />
+      <main className="no-scrollbar relative z-10 mx-auto flex h-dvh w-full max-w-md flex-col items-center overflow-y-auto px-5 py-10">
+
+      <div className="m-auto flex w-full flex-col items-center gap-4">
         {/* Icon + Title */}
         <motion.div
           initial={{ scale: 0.6, opacity: 0 }}
@@ -601,7 +603,8 @@ function LoginForm() {
           </button>
         )}
       </div>
-    </main>
+      </main>
+    </>
   );
 }
 

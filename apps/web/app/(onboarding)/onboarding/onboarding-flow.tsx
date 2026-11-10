@@ -228,15 +228,9 @@ export function OnboardingFlow({
   const scatteredStage = step < 2 ? "scattered" : "organized";
 
   return (
-    <div className="relative min-h-dvh w-full">
-      {/* Background: scattered → organized items animation */}
-      <ScatteredItems
-        className="absolute inset-0 z-0"
-        intensity="subtle"
-        stage={scatteredStage}
-      />
-
-      <div className="relative z-10">
+    <>
+      <ScatteredItems className="fixed inset-0 z-0 hidden md:block" stage={scatteredStage} />
+      <div className="relative z-10 min-h-dvh w-full">
         <AnimatePresence mode="wait" custom={direction}>
           {step === 0 && (
             <StepTransition key="step-0" stepKey={0} direction={direction}>
@@ -574,6 +568,6 @@ export function OnboardingFlow({
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </>
   );
 }

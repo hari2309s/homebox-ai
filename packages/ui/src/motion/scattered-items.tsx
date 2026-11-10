@@ -1,7 +1,6 @@
 "use client";
 
 import { motion, useReducedMotion, type Variants } from "framer-motion";
-import { useMemo } from "react";
 
 /* ------------------------------------------------------------------ */
 /*  Household items — Material Symbols icon names                      */
@@ -22,126 +21,116 @@ const ALL_ITEMS = [
   "kitchen",
 ] as const;
 
-/** Reduced set for small screens. */
-const MOBILE_ITEMS = [
-  "handyman",
-  "potted_plant",
-  "weekend",
-  "light",
-  "yard",
-  "kitchen",
-] as const;
-
 /* ------------------------------------------------------------------ */
-/*  Deterministic "random" positions seeded by index                   */
+/*  Peripheral positions — avoid center column where the form sits     */
+/*  0–2  top strip    (always visible)                                 */
+/*  3–5  left margin  (desktop only, hidden < md)                      */
+/*  6–8  right margin (desktop only, hidden < md)                      */
+/*  9–11 bottom strip (always visible)                                 */
 /* ------------------------------------------------------------------ */
 
-function seededRandom(seed: number) {
-  const x = Math.sin(seed * 9301 + 49297) * 233280;
-  return x - Math.floor(x);
+interface Slot {
+  left: number;
+  top: number;
+  /** Base rotation (deg). */
+  r: number;
+  /** Vertical drift amplitude (px). */
+  dy: number;
+  /** Rotation drift amplitude (deg). */
+  dr: number;
 }
 
-/** Scattered start positions (percentage-based) and rotations. */
-function scatteredPos(index: number) {
-  const r = (i: number) => seededRandom(index * 7 + i);
-  return {
-    left: `${10 + r(0) * 80}%`,
-    top: `${5 + r(1) * 90}%`,
-    rotate: -30 + r(2) * 60,
-  };
-}
+const SLOTS: Slot[] = [
+  // Top strip (6–8% keeps icons fully visible even during upward float drift)
+  { left: 10, top: 6, r: -15, dy: 10, dr: 4 },
+  { left: 48, top: 5, r: 10, dy: 12, dr: 3 },
+  { left: 88, top: 7, r: -20, dy: 9, dr: 5 },
+  // Left margin (md+)
+  { left: 8, top: 25, r: 18, dy: 11, dr: 4 },
+  { left: 14, top: 50, r: -12, dy: 13, dr: 3 },
+  { left: 10, top: 75, r: 22, dy: 10, dr: 5 },
+  // Right margin (md+)
+  { left: 92, top: 28, r: -18, dy: 12, dr: 4 },
+  { left: 86, top: 52, r: 14, dy: 10, dr: 3 },
+  { left: 90, top: 78, r: -22, dy: 11, dr: 5 },
+  // Bottom strip (94–96% keeps icons below form content and within viewport)
+  { left: 12, top: 95, r: 12, dy: 9, dr: 4 },
+  { left: 50, top: 96, r: -10, dy: 12, dr: 3 },
+  { left: 88, top: 94, r: 18, dy: 10, dr: 5 },
+];
 
-/* Organized positions: 3×4 grid inside the "house" area (centered). */
-const GRID_COLS = 4;
-const GRID_PAD_X = 18; // % from each side
-const GRID_PAD_Y = 15;
-const GRID_SPAN_X = 100 - GRID_PAD_X * 2;
-const GRID_SPAN_Y = 100 - GRID_PAD_Y * 2;
+/** Organized: neat, aligned peripheral positions (icons straighten up). */
+const ORGANIZED: { left: number; top: number }[] = [
+  // Top row — evenly spaced, aligned height
+  { left: 20, top: 6 },
+  { left: 50, top: 6 },
+  { left: 80, top: 6 },
+  // Left column — aligned
+  { left: 6, top: 30 },
+  { left: 6, top: 50 },
+  { left: 6, top: 70 },
+  // Right column — aligned
+  { left: 94, top: 30 },
+  { left: 94, top: 50 },
+  { left: 94, top: 70 },
+  // Bottom row — evenly spaced, aligned height
+  { left: 20, top: 95 },
+  { left: 50, top: 95 },
+  { left: 80, top: 95 },
+];
 
-function organizedPos(index: number, total: number) {
-  const cols = Math.min(GRID_COLS, total);
-  const col = index % cols;
-  const row = Math.floor(index / cols);
-  const rows = Math.ceil(total / cols);
-  return {
-    left: `${GRID_PAD_X + (cols > 1 ? (col / (cols - 1)) * GRID_SPAN_X : GRID_SPAN_X / 2)}%`,
-    top: `${GRID_PAD_Y + (rows > 1 ? (row / (rows - 1)) * GRID_SPAN_Y : GRID_SPAN_Y / 2)}%`,
-    rotate: 0,
-  };
-}
+/** Indices 3–8 are side-margin icons, hidden on mobile. */
+const MD_START = 3;
+const MD_END = 8;
 
 /* ------------------------------------------------------------------ */
-/*  Variants                                                           */
+/*  Framer Motion variants (controls left, top, opacity only)          */
 /* ------------------------------------------------------------------ */
 
-const STAGGER_DELAY = 0.06;
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const itemVariants: Variants = {
-  scattered: (i: number) => {
-    const pos = scatteredPos(i);
-    return {
-      left: pos.left,
-      top: pos.top,
-      rotate: pos.rotate,
-      opacity: 0,
-      scale: 0.7,
-      transition: { duration: 0 },
-    };
-  },
-  appear: (i: number) => {
-    const pos = scatteredPos(i);
-    return {
-      left: pos.left,
-      top: pos.top,
-      rotate: pos.rotate,
-      opacity: 0.5,
-      scale: 1,
-      transition: {
-        delay: i * 0.03,
-        duration: 0.3,
-        ease: [0.16, 1, 0.3, 1] as [number, number, number, number],
-      },
-    };
-  },
+  hidden: (i: number) => ({
+    left: `${SLOTS[i]!.left}%`,
+    top: `${SLOTS[i]!.top}%`,
+    opacity: 0,
+  }),
+  scattered: (i: number) => ({
+    left: `${SLOTS[i]!.left}%`,
+    top: `${SLOTS[i]!.top}%`,
+    opacity: 0.55,
+    transition: { delay: i * 0.06, duration: 0.6, ease: EASE },
+  }),
   organized: (i: number) => ({
-    ...organizedPos(i, 12),
-    opacity: 0.35,
-    scale: 1,
+    left: `${ORGANIZED[i]!.left}%`,
+    top: `${ORGANIZED[i]!.top}%`,
+    opacity: 0.22,
     transition: {
       type: "spring",
-      stiffness: 200,
-      damping: 25,
-      delay: 0.8 + i * STAGGER_DELAY,
+      stiffness: 120,
+      damping: 20,
+      delay: i * 0.04,
     },
   }),
-  /** Reduced-motion: skip straight to the organized state with no animation. */
   instant: (i: number) => ({
-    ...organizedPos(i, 12),
-    opacity: 0.3,
-    scale: 1,
-    rotate: 0,
-    transition: { duration: 0 },
+    left: `${ORGANIZED[i]!.left}%`,
+    top: `${ORGANIZED[i]!.top}%`,
+    opacity: 0.15,
   }),
 };
 
-const houseVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.92 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { delay: 0.3, duration: 0.5, ease: [0.16, 1, 0.3, 1] },
-  },
-  instant: { opacity: 1, scale: 1, transition: { duration: 0 } },
-};
-
 /* ------------------------------------------------------------------ */
-/*  Idle breathing (CSS keyframe — lighter than JS animation loop)     */
+/*  CSS floating keyframe (rotation + vertical drift)                  */
 /* ------------------------------------------------------------------ */
 
-const IDLE_CSS = `
-@keyframes scattered-breathe {
-  0%, 100% { opacity: var(--si-base-opacity); transform: translate(-50%,-50%) scale(1); }
-  50% { opacity: calc(var(--si-base-opacity) + 0.04); transform: translate(-50%,-50%) scale(1.03); }
+const FLOAT_CSS = `
+@keyframes si-float {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--si-r, 0deg));
+  }
+  50% {
+    transform: translateY(var(--si-dy, -10px)) rotate(calc(var(--si-r, 0deg) + var(--si-dr, 3deg)));
+  }
 }
 `;
 
@@ -149,49 +138,24 @@ const IDLE_CSS = `
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-type Intensity = "subtle" | "medium";
-
-const OPACITY: Record<Intensity, number> = {
-  subtle: 0.25,
-  medium: 0.4,
-};
-
 interface ScatteredItemsProps {
   className?: string;
-  /** Controls the base opacity of organized items. */
-  intensity?: Intensity;
   /** When false, renders the final organized state with no animation. */
   animate?: boolean;
-  /** Override which stage to show ("scattered" stays scattered). */
+  /** "scattered" = floating, "organized" = settled. */
   stage?: "scattered" | "organized";
 }
 
 export function ScatteredItems({
   className = "",
-  intensity = "subtle",
-  animate = true,
-  stage = "organized",
+  animate: shouldAnimate = true,
+  stage = "scattered",
 }: ScatteredItemsProps) {
   const reducedMotion = useReducedMotion();
-  const skip = reducedMotion || !animate;
-  const baseOpacity = OPACITY[intensity];
+  const skip = reducedMotion || !shouldAnimate;
+  const floating = !skip && stage === "scattered";
 
-  // Pick item set based on screen width (SSR-safe: default to full set, CSS hides extras).
-  const items = ALL_ITEMS;
-  const mobileCount = MOBILE_ITEMS.length;
-
-  // Memoize organized positions so they don't recalculate on every render (SSR fallback).
-  const positions = useMemo(
-    () => items.map((_, i) => organizedPos(i, items.length)),
-    [items],
-  );
-
-  // Animation sequence: scattered → appear → organized (or instant if reduced motion).
-  const itemAnimate = skip
-    ? "instant"
-    : stage === "scattered"
-      ? "appear"
-      : ["appear", "organized"];
+  const fmAnimate = skip ? "instant" : stage === "scattered" ? "scattered" : "organized";
 
   return (
     <div
@@ -199,48 +163,39 @@ export function ScatteredItems({
       style={{ contain: "layout style" } as React.CSSProperties}
       aria-hidden
     >
-      <style dangerouslySetInnerHTML={{ __html: IDLE_CSS }} />
+      <style dangerouslySetInnerHTML={{ __html: FLOAT_CSS }} />
 
-      {/* House outline — visible only when organized */}
-      <motion.div
-        className="absolute left-1/2 top-1/2 hidden h-[60%] w-[55%] -translate-x-1/2 -translate-y-1/2 rounded-2xl border-2 border-dashed border-border md:block"
-        variants={houseVariants}
-        initial="hidden"
-        animate={skip ? "instant" : "visible"}
-      >
-        {/* Internal room dividers */}
-        <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-border opacity-50" />
-        <div className="absolute left-0 top-[45%] h-px w-full bg-border opacity-50" />
-      </motion.div>
+      {ALL_ITEMS.map((icon, i) => {
+        const s = SLOTS[i]!;
+        const desktopOnly = i >= MD_START && i <= MD_END;
 
-      {/* Scattered / organized items */}
-      {items.map((icon, i) => {
-        const org = positions[i]!;
         return (
-          <motion.span
+          <motion.div
             key={icon}
             custom={i}
             variants={itemVariants}
-            initial="scattered"
-            animate={itemAnimate}
-            className={`material-symbols-rounded absolute -translate-x-1/2 -translate-y-1/2 text-muted will-change-transform ${i >= mobileCount ? "hidden md:block" : ""}`}
-            style={{
-              fontSize: 28,
-              // After the spring animation ends, hand off to CSS idle breathing.
-              // The organized variant sets the final position; CSS animation adds the pulse.
-              animationName: skip || stage === "scattered" ? "none" : "scattered-breathe",
-              animationDuration: `${3.5 + (i % 3) * 0.5}s`,
-              animationTimingFunction: "ease-in-out",
-              animationIterationCount: "infinite",
-              animationDelay: `${2.2 + i * 0.15}s`,
-              "--si-base-opacity": baseOpacity,
-              // Fallback positions for SSR (organized state).
-              left: org.left,
-              top: org.top,
-            } as React.CSSProperties}
+            initial="hidden"
+            animate={fmAnimate}
+            className={`absolute ${desktopOnly ? "hidden md:block" : ""}`}
+            style={{ transform: "translate(-50%, -50%)" }}
           >
-            {icon}
-          </motion.span>
+            <span
+              className="material-symbols-rounded inline-block text-accent will-change-transform"
+              style={{
+                fontSize: 30,
+                transform: floating ? `rotate(${s.r}deg)` : "rotate(0deg)",
+                transition: "transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+                animation: floating
+                  ? `si-float ${5 + (i % 4) * 0.8}s ease-in-out ${i * 0.3}s infinite`
+                  : "none",
+                "--si-r": `${s.r}deg`,
+                "--si-dy": `${-s.dy}px`,
+                "--si-dr": `${s.dr}deg`,
+              } as React.CSSProperties}
+            >
+              {icon}
+            </span>
+          </motion.div>
         );
       })}
     </div>
